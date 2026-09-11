@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colectivos JAHA - Mapa en vivo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-border: #262a34;
+    --text: #e8eaed;
+    --muted: #9aa0aa;
+    --accent: #3aa0ff;
+    --green: #2ecc71;
+    --red: #e74c3c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  #app { display: flex; flex-direction: column; height: 100%; }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--panel-border);
+    flex-wrap: wrap;
+    z-index: 1000;
+  }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  header h1 span { color: var(--accent); }
+
+  select, input[type="text"] {
+    background: #0f1115;
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+  #lineSelect { min-width: 220px; max-width: 320px; }
+
+  #status { font-size: 12.5px; color: var(--muted); margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .dot.ok { background: var(--green); }
+  .dot.bad { background: var(--red); }
+
+  #map { position: absolute; inset: 0; }
+
+  .bus-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    color: white; font-size: 13px; font-weight: bold;
+    border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  }
+  .bus-icon.moving { background: var(--green); }
+  .bus-icon.stopped { background: var(--red); }
+
+  .leaflet-popup-content-wrapper { background: var(--panel); color: var(--text); }
+  .leaflet-popup-tip { background: var(--panel); }
+  .popup-title { font-weight: 700; margin-bottom: 4px; }
+  .popup-row { font-size: 12.5px; color: var(--muted); }
+
+  #empty {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: var(--muted); font-size: 14px; text-align: center; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🚌 JAHA <span>en vivo</span></h1>
+    <select id="lineSelect">
+      <option value="">Cargando lineas...</option>
+    </select>
+    <label style="font-size:13px; color: var(--muted); display:flex; align-items:center; gap:6px;">
+      Actualizar cada
+      <select id="intervalSelect" style="min-width:auto;">
+        <option value="5">5s</option>
+        <option value="10" selected>10s</option>
+        <option value="20">20s</option>
+        <option value="30">30s</option>
+      </select>
+    </label>
+    <div id="status"><span class="dot" id="statusDot"></span><span id="statusText">Esperando seleccion de linea</span></div>
+  </header>
+  <div style="position: relative; flex: 1;">
+    <div id="map"></div>
+    <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map', { zoomControl: true }).setView([-25.2637, -57.5759], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+const markersLayer = L.layerGroup().addTo(map);
+const pathLayer = L.layerGroup().addTo(map);
+
+const lineSelect = document.getElementById('lineSelect');
+const intervalSelect = document.getElementById('intervalSelect');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const emptyMsg = document.getElementById('empty');
+
+let currentLine = null;
+let timer = null;
+let pathLoadedForLine = null;
+
+const DIR_DEGREES = {
+  N: 0, NE: 45, E: 90, SE: 135, S: 180, SO: 225, SW: 225, O: 270, W: 270, NO: 315, NW: 315,
+};
+
+function setStatus(text, ok) {
+  statusText.textContent = text;
+  statusDot.className = 'dot' + (ok === true ? ' ok' : ok === false ? ' bad' : '');
+}
+
+async function loadLines() {
+  setStatus('Cargando lista de lineas...');
+  try {
+    const res = await fetch('/api/lines');
+    const json = await res.json();
+    if (!json.success) throw new Error('la API devolvio success:false');
+    const lines = json.data.sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true }));
+    lineSelect.innerHTML = '<option value="">-- Elegi una linea --</option>' +
+      lines.map(l => `<option value="${l.id}">${l.name}${l.company ? ' - ' + l.company.alias : ''}</option>`).join('');
+    setStatus(`${lines.length} lineas cargadas`, true);
+  } catch (err) {
+    setStatus('Error cargando lineas: ' + err.message, false);
+  }
+}
+
+function iconFor(unit) {
+  const moving = (unit.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
+  const deg = DIR_DEGREES[(unit.sen || '').trim().toUpperCase()] ?? 0;
+  return L.divIcon({
+    className: '',
+    html: `<div class="bus-icon ${moving ? 'moving' : 'stopped'}" style="transform: rotate(${deg}deg)">&#9650;</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
+async function loadPath(lineId) {
+  pathLayer.clearLayers();
+  try {
+    const res = await fetch('/api/path?line=' + encodeURIComponent(lineId));
+    const json = await res.json();
+    if (!json.success || !json.data) return;
+    const colors = ['#3aa0ff', '#ff9f3a', '#c060ff', '#ff5fa2', '#5fe0c0'];
+    let ci = 0;
+    (json.data.services || []).forEach(service => {
+      (service.routes || []).forEach(route => {
+        (route.sections || []).forEach(section => {
+          const pts = (section.traces || [])
+            .sort((a, b) => a.order - b.order)
+            .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)]);
+          if (pts.length > 1) {
+            L.polyline(pts, { color: route.color || colors[ci % colors.length], weight: 3, opacity: 0.7 }).addTo(pathLayer);
+            ci++;
+          }
+        });
+      });
+    });
+  } catch (err) {
+    // el trazado es un extra, no es critico si falla
+    console.warn('no se pudo cargar el trazado de la linea', err);
+  }
+}
+
+async function refreshPositions() {
+  if (!currentLine) return;
+  try {
+    const res = await fetch('/api/positions?line=' + encodeURIComponent(currentLine));
+    const json = await res.json();
+    if (!json.success) throw new Error('la API devolvio success:false');
+    const units = json.data || [];
+    markersLayer.clearLayers();
+    emptyMsg.style.display = units.length ? 'none' : 'block';
+    if (!units.length) emptyMsg.textContent = 'No hay unidades reportando posicion en esta linea ahora mismo';
+
+    const bounds = [];
+    units.forEach(u => {
+      const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
+      if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+      bounds.push([lat, lon]);
+      const marker = L.marker([lat, lon], { icon: iconFor(u) }).addTo(markersLayer);
+      marker.bindPopup(`
+        <div class="popup-title">Unidad ${u.unit}</div>
+        <div class="popup-row">Estado: ${(u.status || '').trim()}</div>
+        <div class="popup-row">Recorrido: ${(u.route || '').trim() || '-'}</div>
+        <div class="popup-row">Hora: ${u.time || '-'}</div>
+        <div class="popup-row">Aire acondicionado: ${u.air ? 'si' : 'no'}</div>
+      `);
+    });
+
+    setStatus(`${units.length} unidad(es) - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
+  } catch (err) {
+    setStatus('Error obteniendo posiciones: ' + err.message, false);
+  }
+}
+
+function scheduleRefresh() {
+  if (timer) clearInterval(timer);
+  const seconds = parseInt(intervalSelect.value, 10) || 10;
+  timer = setInterval(refreshPositions, seconds * 1000);
+}
+
+lineSelect.addEventListener('change', () => {
+  currentLine = lineSelect.value || null;
+  markersLayer.clearLayers();
+  pathLayer.clearLayers();
+  emptyMsg.style.display = currentLine ? 'none' : 'block';
+  emptyMsg.textContent = 'Elegi una linea para ver las unidades en tiempo real';
+  if (currentLine) {
+    loadPath(currentLine);
+    refreshPositions();
+    scheduleRefresh();
+  } else if (timer) {
+    clearInterval(timer);
+  }
+});
+
+intervalSelect.addEventListener('change', scheduleRefresh);
+
+loadLines();
+</script>
+</body>
+</html>
