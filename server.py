@@ -113,6 +113,8 @@ if PUSH_AVAILABLE:
         # todas las suscripciones existentes. Si esta variable esta seteada,
         # se usa esa clave fija en vez de la del archivo.
         _vapid_env_pem = _vapid_env_pem.replace("\\n", "\n")
+        if "BEGIN PRIVATE KEY" not in _vapid_env_pem:
+            _vapid_env_pem = f"-----BEGIN PRIVATE KEY-----\n{_vapid_env_pem.strip()}\n-----END PRIVATE KEY-----"
         _vapid = Vapid.from_pem(_vapid_env_pem.encode("utf-8"))
     else:
         _vapid = Vapid.from_file(str(VAPID_FILE))
