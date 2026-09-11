@@ -37,7 +37,7 @@
   }
 
   .search-pill {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 6px;
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: 999px;
@@ -91,7 +91,7 @@
   .combo-item .star.fav { color: #f5c518; }
   .combo-empty { padding: 16px 12px; color: var(--muted); font-size: 13.5px; text-align: center; }
 
-  #settingsPanel { padding: 14px; }
+  #settingsPanel, #notifyPanel { padding: 14px; }
   .settings-row {
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; font-size: 14px; color: var(--text);
@@ -99,8 +99,17 @@
   .settings-row + .settings-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
   .settings-row select {
     background: var(--panel-2); color: var(--text); border: 1px solid var(--panel-border);
-    border-radius: 8px; padding: 8px 10px; font-size: 14px;
+    border-radius: 8px; padding: 8px 10px; font-size: 14px; max-width: 60%;
   }
+  .notify-intro { font-size: 12.5px; color: var(--muted); margin-bottom: 2px; }
+  .btn-primary {
+    width: 100%; background: var(--accent); color: #06131f; border: none;
+    border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary:disabled { opacity: .6; cursor: default; }
+  .btn-primary.danger { background: var(--red); color: white; }
+  #notifyStatus { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
 
   /* --- pastilla de estado, flotante abajo --- */
   #statusPill {
@@ -120,11 +129,30 @@
   .dot.ok { background: var(--green); }
   .dot.bad { background: var(--red); }
 
+  /* --- boton flotante "mi ubicacion" --- */
+  .locate-btn {
+    position: absolute;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(70px, calc(env(safe-area-inset-bottom) + 70px));
+    z-index: 900;
+    width: 44px; height: 44px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  }
+  .locate-btn.loading { animation: locate-pulse 1s ease-in-out infinite; }
+  @keyframes locate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+  .user-location-icon {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent); border: 3px solid white;
+    box-shadow: 0 0 0 2px rgba(58,160,255,.5), 0 1px 4px rgba(0,0,0,.5);
+  }
+
   .bus-icon {
     display: flex; align-items: center; justify-content: center;
     width: 26px; height: 26px; border-radius: 50%;
     color: white; font-size: 13px; font-weight: bold;
     border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,.5);
+    transition: transform .4s linear;
   }
   .bus-icon.moving { background: var(--green); }
   .bus-icon.stopped { background: var(--red); }
@@ -146,7 +174,7 @@
 
   @media (max-width: 480px) {
     #topBar { max-width: none; }
-    #lineSearch { font-size: 16px; } /* evita el zoom automatico en iOS */
+    #lineSearch, .settings-row select { font-size: 16px; } /* evita el zoom automatico en iOS */
     .leaflet-top.leaflet-left { top: 132px; }
   }
 </style>
@@ -159,9 +187,29 @@
     <div class="search-pill">
       <span class="pill-icon">🚌</span>
       <input type="text" id="lineSearch" placeholder="Buscar linea por nombre o numero..." autocomplete="off">
+      <button class="icon-btn" id="notifyBtn" aria-label="Avisos de proximidad" title="Avisos de proximidad">🔔</button>
       <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">⚙</button>
     </div>
     <div class="float-card" id="lineList"></div>
+    <div class="float-card" id="notifyPanel">
+      <div class="notify-intro">Te avisamos cuando el bus de una linea este cerca tuyo (con la pagina cerrada tambien).</div>
+      <div class="settings-row">
+        <span>Linea a vigilar</span>
+        <select id="notifyLineSelect"><option value="">Elegi una linea</option></select>
+      </div>
+      <div class="settings-row">
+        <span>Radio</span>
+        <select id="notifyRadiusSelect">
+          <option value="1">1 km</option>
+          <option value="5" selected>5 km</option>
+          <option value="10">10 km</option>
+        </select>
+      </div>
+      <div class="settings-row" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--panel-border);">
+        <button class="btn-primary" id="notifyToggleBtn" style="width:100%;">Activar aviso</button>
+      </div>
+      <div id="notifyStatus">Sin avisos activos.</div>
+    </div>
     <div class="float-card" id="settingsPanel">
       <div class="settings-row">
         <span>Actualizar cada</span>
@@ -174,6 +222,13 @@
       </div>
     </div>
   </div>
+
+  <button class="icon-btn locate-btn" id="locateBtn" aria-label="Mi ubicacion" title="Mi ubicacion">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+    </svg>
+  </button>
 
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando seleccion de linea</span></div>
   <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
@@ -193,26 +248,158 @@ const pathLayer = L.layerGroup().addTo(map);
 const topBar = document.getElementById('topBar');
 const lineSearch = document.getElementById('lineSearch');
 const lineList = document.getElementById('lineList');
+const notifyBtn = document.getElementById('notifyBtn');
+const notifyPanel = document.getElementById('notifyPanel');
+const notifyLineSelect = document.getElementById('notifyLineSelect');
+const notifyRadiusSelect = document.getElementById('notifyRadiusSelect');
+const notifyToggleBtn = document.getElementById('notifyToggleBtn');
+const notifyStatus = document.getElementById('notifyStatus');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
 const intervalSelect = document.getElementById('intervalSelect');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const emptyMsg = document.getElementById('empty');
+const locateBtn = document.getElementById('locateBtn');
 
 let currentLine = null;
 let allLines = [];
 let timer = null;
 
+// Estado por unidad (bus fisico) para poder calcular su rumbo real entre
+// actualizaciones. Se reinicia cada vez que se cambia de linea, porque el
+// numero de "unit" solo es unico dentro de una misma linea.
+const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, ... }
+const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
+let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
+
 const DIR_DEGREES = {
   N: 0, NE: 45, E: 90, SE: 135, S: 180, SO: 225, SW: 225, O: 270, W: 270, NO: 315, NW: 315,
 };
 
-const FAVORITES_KEY = 'jaha_favorite_lines';
+// Umbrales para el calculo de rumbo: por debajo de esta distancia entre dos
+// posiciones asumimos que es ruido de GPS (el bus esta parado o casi) y no
+// tocamos la flecha. SNAP_METERS es la distancia maxima para considerar que
+// el bus "esta sobre" un tramo del recorrido conocido.
+const MIN_DISPLACEMENT_M = 12;
+const SMOOTH_ALPHA = 0.35;
+const SNAP_METERS = 150;
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180;
+  const dPhi = (lat2 - lat1) * Math.PI / 180;
+  const dLambda = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dPhi / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dLambda / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+function bearingDeg(lat1, lon1, lat2, lon2) {
+  const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180;
+  const dLambda = (lon2 - lon1) * Math.PI / 180;
+  const y = Math.sin(dLambda) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dLambda);
+  const theta = Math.atan2(y, x);
+  return (theta * 180 / Math.PI + 360) % 360;
+}
+
+function circularSmooth(prevDeg, newDeg, alpha) {
+  const toRad = d => d * Math.PI / 180;
+  const sx = (1 - alpha) * Math.sin(toRad(prevDeg)) + alpha * Math.sin(toRad(newDeg));
+  const cx = (1 - alpha) * Math.cos(toRad(prevDeg)) + alpha * Math.cos(toRad(newDeg));
+  return (Math.atan2(sx, cx) * 180 / Math.PI + 360) % 360;
+}
+
+// Proyeccion aproximada lat/lon -> plano local (valido para distancias de
+// unos pocos km, mas que suficiente para una linea de colectivo urbana).
+function toXY(lat, lon, refLat) {
+  const R = 6371000;
+  const x = R * (lon * Math.PI / 180) * Math.cos(refLat * Math.PI / 180);
+  const y = R * (lat * Math.PI / 180);
+  return [x, y];
+}
+
+// Distancia perpendicular minima de un punto a una polilinea, junto con la
+// posicion a lo largo de ella (longitud de arco acumulada) en el punto mas
+// cercano - eso es lo que permite saber si el bus avanza o retrocede sobre
+// el recorrido conocido.
+function projectToPolyline(lat, lon, poly) {
+  let best = null;
+  const [px, py] = toXY(lat, lon, lat);
+  for (let i = 0; i < poly.points.length - 1; i++) {
+    const [aLat, aLon] = poly.points[i];
+    const [bLat, bLon] = poly.points[i + 1];
+    const [ax, ay] = toXY(aLat, aLon, lat);
+    const [bx, by] = toXY(bLat, bLon, lat);
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    const dist = Math.hypot(px - cx, py - cy);
+    const arc = poly.cum[i] + t * Math.hypot(dx, dy);
+    if (!best || dist < best.dist) best = { dist, arc };
+  }
+  return best;
+}
+
+// Actualiza (o crea) el estado de una unidad con su nueva posicion: calcula
+// el rumbo suavizado y, si hay recorrido cargado, intenta reconocer si va de
+// ida o de vuelta comparando el avance sobre la polilinea mas cercana.
+function updateUnitState(unitId, lat, lon, isMoving) {
+  let st = unitState.get(unitId);
+  if (!st) {
+    st = {
+      lat, lon, bearing: null, routeLabel: null,
+      matchedRouteName: null, lastArc: null,
+      candidateLabel: null, candidateStreak: 0,
+    };
+    unitState.set(unitId, st);
+    return st;
+  }
+
+  const distMoved = haversineMeters(st.lat, st.lon, lat, lon);
+  if (isMoving && distMoved >= MIN_DISPLACEMENT_M) {
+    const raw = bearingDeg(st.lat, st.lon, lat, lon);
+    st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
+
+    if (currentRoutePolylines.length) {
+      let bestRoute = null, bestProj = null;
+      currentRoutePolylines.forEach(poly => {
+        const proj = projectToPolyline(lat, lon, poly);
+        if (proj && (!bestProj || proj.dist < bestProj.dist)) { bestProj = proj; bestRoute = poly; }
+      });
+      if (bestRoute && bestProj.dist <= SNAP_METERS && bestRoute.dirLabel) {
+        let candidate = bestRoute.dirLabel;
+        // si vamos retrocediendo sobre la MISMA polilinea que veniamos siguiendo,
+        // el sentido real es el opuesto al que representa esa polilinea
+        if (st.matchedRouteName === bestRoute.name && st.lastArc != null && bestProj.arc < st.lastArc) {
+          candidate = bestRoute.dirLabel === 'Ida' ? 'Vuelta' : 'Ida';
+        }
+        st.matchedRouteName = bestRoute.name;
+        st.lastArc = bestProj.arc;
+
+        // pequeno debounce: solo confirmamos el sentido si se repite dos veces
+        // seguidas, para no mostrar un cartel que cambia todo el tiempo
+        if (candidate === st.candidateLabel) {
+          st.candidateStreak++;
+        } else {
+          st.candidateLabel = candidate;
+          st.candidateStreak = 1;
+        }
+        if (st.candidateStreak >= 2) st.routeLabel = candidate;
+      }
+    }
+  }
+
+  st.lat = lat;
+  st.lon = lon;
+  return st;
+}
 
 function loadFavorites() {
   try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
+    const raw = localStorage.getItem('jaha_favorite_lines');
     return new Set(raw ? JSON.parse(raw) : []);
   } catch (err) {
     return new Set();
@@ -221,7 +408,7 @@ function loadFavorites() {
 
 function saveFavorites() {
   try {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
+    localStorage.setItem('jaha_favorite_lines', JSON.stringify([...favorites]));
   } catch (err) {
     // localStorage puede no estar disponible (modo privado, etc.), no es critico
   }
@@ -283,9 +470,19 @@ function renderLineList() {
   lineList.innerHTML = renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Todas las lineas', rest);
 }
 
+function closeAllPanels() {
+  lineList.classList.remove('open');
+  settingsPanel.classList.remove('open');
+  settingsBtn.classList.remove('active');
+  notifyPanel.classList.remove('open');
+  notifyBtn.classList.remove('active');
+}
+
 function openLineList() {
   settingsPanel.classList.remove('open');
   settingsBtn.classList.remove('active');
+  notifyPanel.classList.remove('open');
+  notifyBtn.classList.remove('active');
   lineList.classList.add('open');
   renderLineList();
 }
@@ -296,9 +493,20 @@ function closeLineList() {
 
 function toggleSettings() {
   lineList.classList.remove('open');
+  notifyPanel.classList.remove('open');
+  notifyBtn.classList.remove('active');
   const willOpen = !settingsPanel.classList.contains('open');
   settingsPanel.classList.toggle('open', willOpen);
   settingsBtn.classList.toggle('active', willOpen);
+}
+
+function toggleNotifyPanel() {
+  lineList.classList.remove('open');
+  settingsPanel.classList.remove('open');
+  settingsBtn.classList.remove('active');
+  const willOpen = !notifyPanel.classList.contains('open');
+  notifyPanel.classList.toggle('open', willOpen);
+  notifyBtn.classList.toggle('active', willOpen);
 }
 
 function selectLine(id) {
@@ -310,6 +518,10 @@ function selectLine(id) {
 
   markersLayer.clearLayers();
   pathLayer.clearLayers();
+  markersById.clear();
+  unitState.clear();
+  currentRoutePolylines = [];
+
   emptyMsg.style.display = currentLine ? 'none' : 'block';
   emptyMsg.textContent = 'Elegi una linea para ver las unidades en tiempo real';
   if (currentLine) {
@@ -344,13 +556,10 @@ lineSearch.addEventListener('focus', openLineList);
 lineSearch.addEventListener('blur', () => setTimeout(closeLineList, 150));
 
 settingsBtn.addEventListener('click', toggleSettings);
+notifyBtn.addEventListener('click', toggleNotifyPanel);
 
 document.addEventListener('click', (e) => {
-  if (!topBar.contains(e.target)) {
-    closeLineList();
-    settingsPanel.classList.remove('open');
-    settingsBtn.classList.remove('active');
-  }
+  if (!topBar.contains(e.target)) closeAllPanels();
 });
 
 async function loadLines() {
@@ -366,12 +575,11 @@ async function loadLines() {
   }
 }
 
-function iconFor(unit) {
+function iconFor(unit, angleDeg) {
   const moving = (unit.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
-  const deg = DIR_DEGREES[(unit.sen || '').trim().toUpperCase()] ?? 0;
   return L.divIcon({
     className: '',
-    html: `<div class="bus-icon ${moving ? 'moving' : 'stopped'}" style="transform: rotate(${deg}deg)">&#9650;</div>`,
+    html: `<div class="bus-icon ${moving ? 'moving' : 'stopped'}" style="transform: rotate(${angleDeg}deg)">&#9650;</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
   });
@@ -379,6 +587,7 @@ function iconFor(unit) {
 
 async function loadPath(lineId) {
   pathLayer.clearLayers();
+  currentRoutePolylines = [];
   try {
     const res = await fetch('/api/path?line=' + encodeURIComponent(lineId));
     const json = await res.json();
@@ -387,7 +596,10 @@ async function loadPath(lineId) {
     let ci = 0;
     (json.data.services || []).forEach(service => {
       (service.routes || []).forEach(route => {
-        (route.sections || []).forEach(section => {
+        const sortedSections = [...(route.sections || [])].sort((a, b) => a.order - b.order);
+        const routePoints = [];
+
+        sortedSections.forEach(section => {
           const pts = (section.traces || [])
             .sort((a, b) => a.order - b.order)
             .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)]);
@@ -395,7 +607,26 @@ async function loadPath(lineId) {
             L.polyline(pts, { color: route.color || colors[ci % colors.length], weight: 3, opacity: 0.7 }).addTo(pathLayer);
             ci++;
           }
+          routePoints.push(...pts);
         });
+
+        // ademas de dibujarlo, guardamos la polilinea completa de esta ruta
+        // (ida o vuelta) para poder usarla despues al calcular el sentido
+        // de circulacion de cada unidad.
+        if (routePoints.length > 1) {
+          const cum = [0];
+          for (let i = 1; i < routePoints.length; i++) {
+            cum.push(cum[i - 1] + haversineMeters(
+              routePoints[i - 1][0], routePoints[i - 1][1],
+              routePoints[i][0], routePoints[i][1]
+            ));
+          }
+          const nameLower = (route.name || '').toLowerCase();
+          let dirLabel = null;
+          if (nameLower.includes('vuelta')) dirLabel = 'Vuelta';
+          else if (nameLower.includes('ida')) dirLabel = 'Ida';
+          currentRoutePolylines.push({ name: route.name, points: routePoints, cum, dirLabel });
+        }
       });
     });
   } catch (err) {
@@ -411,22 +642,50 @@ async function refreshPositions() {
     const json = await res.json();
     if (!json.success) throw new Error('la API devolvio success:false');
     const units = json.data || [];
-    markersLayer.clearLayers();
     emptyMsg.style.display = units.length ? 'none' : 'block';
     if (!units.length) emptyMsg.textContent = 'No hay unidades reportando posicion en esta linea ahora mismo';
+
+    const seenIds = new Set();
 
     units.forEach(u => {
       const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
       if (Number.isNaN(lat) || Number.isNaN(lon)) return;
-      const marker = L.marker([lat, lon], { icon: iconFor(u) }).addTo(markersLayer);
-      marker.bindPopup(`
+      const unitId = String(u.unit);
+      seenIds.add(unitId);
+
+      const isMoving = (u.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
+      const st = updateUnitState(unitId, lat, lon, isMoving);
+      const angle = st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0);
+
+      const popupHtml = `
         <div class="popup-title">Unidad ${escapeHtml(u.unit)}</div>
         <div class="popup-row">Estado: ${escapeHtml((u.status || '').trim())}</div>
         <div class="popup-row">Recorrido: ${escapeHtml((u.route || '').trim()) || '-'}</div>
+        ${st.routeLabel ? `<div class="popup-row">Sentido: ${escapeHtml(st.routeLabel)}</div>` : ''}
         <div class="popup-row">Hora: ${escapeHtml(u.time) || '-'}</div>
         <div class="popup-row">Aire acondicionado: ${u.air ? 'si' : 'no'}</div>
-      `, { maxWidth: 220 });
+      `;
+
+      let marker = markersById.get(unitId);
+      if (!marker) {
+        marker = L.marker([lat, lon], { icon: iconFor(u, angle) }).addTo(markersLayer);
+        marker.bindPopup(popupHtml, { maxWidth: 220 });
+        markersById.set(unitId, marker);
+      } else {
+        marker.setLatLng([lat, lon]);
+        marker.setIcon(iconFor(u, angle));
+        marker.setPopupContent(popupHtml);
+      }
     });
+
+    // sacar del mapa las unidades que dejaron de reportar posicion
+    for (const [unitId, marker] of markersById) {
+      if (!seenIds.has(unitId)) {
+        markersLayer.removeLayer(marker);
+        markersById.delete(unitId);
+        unitState.delete(unitId);
+      }
+    }
 
     setStatus(`${units.length} unidad(es) - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
   } catch (err) {
@@ -442,7 +701,281 @@ function scheduleRefresh() {
 
 intervalSelect.addEventListener('change', scheduleRefresh);
 
-loadLines();
+// ---------------------------------------------------------------------------
+// Boton "mi ubicacion": centra el mapa en la posicion actual del usuario y
+// la marca con un punto azul + circulo de precision, al estilo Google Maps.
+// Es un pedido puntual (getCurrentPosition, no watch), asi que no consume
+// bateria de fondo como el seguimiento de los avisos de proximidad.
+// ---------------------------------------------------------------------------
+let userLocationMarker = null;
+let userAccuracyCircle = null;
+
+function locateMe() {
+  if (!('geolocation' in navigator)) {
+    setStatus('Tu navegador no soporta geolocalizacion', false);
+    return;
+  }
+  locateBtn.classList.add('loading');
+  locateBtn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      locateBtn.classList.remove('loading');
+      locateBtn.disabled = false;
+      const { latitude, longitude, accuracy } = pos.coords;
+
+      if (userAccuracyCircle) {
+        userAccuracyCircle.setLatLng([latitude, longitude]).setRadius(accuracy);
+      } else {
+        userAccuracyCircle = L.circle([latitude, longitude], {
+          radius: accuracy, color: '#3aa0ff', weight: 1, fillColor: '#3aa0ff', fillOpacity: 0.12,
+        }).addTo(map);
+      }
+
+      if (userLocationMarker) {
+        userLocationMarker.setLatLng([latitude, longitude]);
+      } else {
+        userLocationMarker = L.marker([latitude, longitude], {
+          icon: L.divIcon({ className: '', html: '<div class="user-location-icon"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+          zIndexOffset: 1000,
+        }).addTo(map);
+      }
+
+      map.setView([latitude, longitude], Math.max(map.getZoom(), 15));
+    },
+    (err) => {
+      locateBtn.classList.remove('loading');
+      locateBtn.disabled = false;
+      const msg = err.code === err.PERMISSION_DENIED
+        ? 'No diste permiso de ubicacion'
+        : 'No se pudo obtener tu ubicacion';
+      setStatus(msg, false);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+}
+
+locateBtn.addEventListener('click', locateMe);
+
+// ---------------------------------------------------------------------------
+// Avisos de proximidad (Web Push). Cada navegador se identifica con un
+// clientId propio guardado en localStorage; el servidor guarda, por
+// clientId, que linea vigila, con que radio, y su ultima ubicacion conocida,
+// y es el que decide cuando mandar el push (asi funciona con la pagina
+// cerrada y con muchos usuarios en paralelo sin mezclarse entre si).
+// ---------------------------------------------------------------------------
+
+function getClientId() {
+  try {
+    let id = localStorage.getItem('jaha_client_id');
+    if (!id) {
+      id = (crypto.randomUUID ? crypto.randomUUID() : ('c-' + Math.random().toString(36).slice(2) + Date.now()));
+      localStorage.setItem('jaha_client_id', id);
+    }
+    return id;
+  } catch (err) {
+    return 'c-' + Math.random().toString(36).slice(2);
+  }
+}
+const clientId = getClientId();
+
+function loadNotifyState() {
+  try {
+    const raw = localStorage.getItem('jaha_notify_state');
+    return raw ? JSON.parse(raw) : { active: false, line: '', lineName: '', radiusKm: 5 };
+  } catch (err) {
+    return { active: false, line: '', lineName: '', radiusKm: 5 };
+  }
+}
+function saveNotifyState() {
+  try { localStorage.setItem('jaha_notify_state', JSON.stringify(notifyState)); } catch (err) {}
+}
+let notifyState = loadNotifyState();
+
+let geoWatchId = null;
+let lastLocationSentAt = 0;
+let lastSentLat = null, lastSentLon = null;
+const LOCATION_MIN_INTERVAL_MS = 25000;
+const LOCATION_MIN_DISPLACEMENT_M = 50;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const output = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i);
+  return output;
+}
+
+function renderNotifyLineOptions() {
+  notifyLineSelect.innerHTML = '<option value="">Elegi una linea</option>' +
+    allLines.map(l => `<option value="${l.id}">${escapeHtml(lineLabel(l))}</option>`).join('');
+  if (notifyState.line) notifyLineSelect.value = notifyState.line;
+}
+
+function updateNotifyUI() {
+  notifyRadiusSelect.value = String(notifyState.radiusKm || 5);
+  notifyToggleBtn.classList.toggle('danger', !!notifyState.active);
+  if (notifyState.active) {
+    notifyToggleBtn.textContent = 'Desactivar aviso';
+    notifyStatus.textContent = `Te vamos a avisar cuando "${notifyState.lineName || 'la linea elegida'}" este a ${notifyState.radiusKm} km o menos de tu ubicacion.`;
+  } else {
+    notifyToggleBtn.textContent = 'Activar aviso';
+    notifyStatus.textContent = 'Sin avisos activos.';
+  }
+}
+
+function sendLocationUpdate(lat, lon) {
+  fetch('/api/notify/location', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId, lat, lon }),
+  }).catch(() => {});
+}
+
+function handleGeoUpdate(pos) {
+  const { latitude, longitude } = pos.coords;
+  const now = Date.now();
+  const moved = lastSentLat == null || haversineMeters(lastSentLat, lastSentLon, latitude, longitude) > LOCATION_MIN_DISPLACEMENT_M;
+  if (now - lastLocationSentAt > LOCATION_MIN_INTERVAL_MS || moved) {
+    lastLocationSentAt = now;
+    lastSentLat = latitude;
+    lastSentLon = longitude;
+    sendLocationUpdate(latitude, longitude);
+  }
+}
+
+function startLocationWatch() {
+  if (geoWatchId != null || !('geolocation' in navigator)) return;
+  // enableHighAccuracy en false + maximumAge alto: de sobra para detectar si
+  // un colectivo esta a 1/5/10 km, y bastante mas liviano para la bateria.
+  geoWatchId = navigator.geolocation.watchPosition(handleGeoUpdate, (err) => {
+    console.warn('geolocation error', err);
+  }, { enableHighAccuracy: false, maximumAge: 20000, timeout: 15000 });
+}
+
+function stopLocationWatch() {
+  if (geoWatchId != null) {
+    navigator.geolocation.clearWatch(geoWatchId);
+    geoWatchId = null;
+  }
+}
+
+async function enableProximityAlert(lineId, lineName, radiusKm) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    notifyStatus.textContent = 'Tu navegador no soporta notificaciones push.';
+    return false;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      notifyStatus.textContent = 'No diste permiso para mostrar notificaciones.';
+      return false;
+    }
+
+    const keyRes = await fetch('/api/notify/vapid-public-key');
+    const keyJson = await keyRes.json();
+    if (!keyJson.available || !keyJson.publicKey) {
+      notifyStatus.textContent = 'El servidor no tiene configuradas las notificaciones (falta pywebpush).';
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyJson.publicKey),
+      });
+    }
+
+    const pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, maximumAge: 20000, timeout: 15000 });
+    }).catch(() => null);
+    if (!pos) {
+      notifyStatus.textContent = 'No se pudo obtener tu ubicacion (revisa el permiso de ubicacion del navegador).';
+      return false;
+    }
+    lastSentLat = pos.coords.latitude;
+    lastSentLon = pos.coords.longitude;
+    lastLocationSentAt = Date.now();
+
+    const res = await fetch('/api/notify/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientId, line: lineId, lineName, radiusKm,
+        pushSubscription: subscription.toJSON(),
+        lat: pos.coords.latitude, lon: pos.coords.longitude,
+      }),
+    });
+    const resJson = await res.json();
+    if (!resJson.success) {
+      notifyStatus.textContent = 'Error activando el aviso: ' + (resJson.error || '');
+      return false;
+    }
+
+    startLocationWatch();
+    return true;
+  } catch (err) {
+    notifyStatus.textContent = 'Error activando el aviso: ' + err.message;
+    return false;
+  }
+}
+
+function disableProximityAlert() {
+  stopLocationWatch();
+  fetch('/api/notify/unsubscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId }),
+  }).catch(() => {});
+}
+
+notifyToggleBtn.addEventListener('click', async () => {
+  if (notifyState.active) {
+    disableProximityAlert();
+    notifyState = { active: false, line: '', lineName: '', radiusKm: notifyState.radiusKm };
+    saveNotifyState();
+    updateNotifyUI();
+    return;
+  }
+
+  const lineId = notifyLineSelect.value;
+  if (!lineId) {
+    notifyStatus.textContent = 'Elegi primero una linea.';
+    return;
+  }
+  const line = allLines.find(l => String(l.id) === String(lineId));
+  const radiusKm = parseInt(notifyRadiusSelect.value, 10) || 5;
+
+  notifyToggleBtn.disabled = true;
+  notifyStatus.textContent = 'Activando...';
+  const ok = await enableProximityAlert(lineId, line ? lineLabel(line) : lineId, radiusKm);
+  notifyToggleBtn.disabled = false;
+
+  if (ok) {
+    notifyState = { active: true, line: lineId, lineName: line ? lineLabel(line) : lineId, radiusKm };
+    saveNotifyState();
+  }
+  updateNotifyUI();
+});
+
+loadLines().then(() => {
+  renderNotifyLineOptions();
+  updateNotifyUI();
+  if (notifyState.active) {
+    // reactivamos en silencio (sin volver a pedir permiso si ya estaba
+    // concedido) para retomar el aviso despues de recargar la pagina
+    enableProximityAlert(notifyState.line, notifyState.lineName, notifyState.radiusKm).then(ok => {
+      if (!ok) {
+        notifyState.active = false;
+        saveNotifyState();
+      }
+      updateNotifyUI();
+    });
+  }
+});
 </script>
 </body>
 </html>
