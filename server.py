@@ -112,6 +112,7 @@ if PUSH_AVAILABLE:
         # borraria el .pem local y generaria una clave nueva, invalidando
         # todas las suscripciones existentes. Si esta variable esta seteada,
         # se usa esa clave fija en vez de la del archivo.
+        _vapid_env_pem = _vapid_env_pem.replace("\\n", "\n")
         _vapid = Vapid.from_pem(_vapid_env_pem.encode("utf-8"))
     else:
         _vapid = Vapid.from_file(str(VAPID_FILE))
