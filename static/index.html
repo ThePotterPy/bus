@@ -187,6 +187,7 @@
     <div class="search-pill">
       <span class="pill-icon">🚌</span>
       <input type="text" id="lineSearch" placeholder="Buscar linea por nombre o numero..." autocomplete="off">
+      <button class="icon-btn" id="clearSearchBtn" aria-label="Limpiar busqueda" title="Limpiar busqueda" style="display: none; font-size: 14px; width: 28px; height: 28px; margin-right: 4px; background: transparent;">✕</button>
       <button class="icon-btn" id="notifyBtn" aria-label="Avisos de proximidad" title="Avisos de proximidad">🔔</button>
       <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">⚙</button>
     </div>
@@ -247,6 +248,7 @@ const pathLayer = L.layerGroup().addTo(map);
 
 const topBar = document.getElementById('topBar');
 const lineSearch = document.getElementById('lineSearch');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
 const lineList = document.getElementById('lineList');
 const notifyBtn = document.getElementById('notifyBtn');
 const notifyPanel = document.getElementById('notifyPanel');
@@ -513,6 +515,7 @@ function selectLine(id) {
   currentLine = id;
   const line = allLines.find(l => String(l.id) === String(id));
   lineSearch.value = line ? lineLabel(line) : '';
+  clearSearchBtn.style.display = lineSearch.value ? 'flex' : 'none';
   closeLineList();
   lineSearch.blur();
 
@@ -551,9 +554,16 @@ lineList.addEventListener('mousedown', (e) => {
   }
 });
 
-lineSearch.addEventListener('input', openLineList);
+lineSearch.addEventListener('input', () => {
+  clearSearchBtn.style.display = lineSearch.value ? 'flex' : 'none';
+  openLineList();
+});
 lineSearch.addEventListener('focus', openLineList);
 lineSearch.addEventListener('blur', () => setTimeout(closeLineList, 150));
+
+clearSearchBtn.addEventListener('click', () => {
+  selectLine(null);
+});
 
 settingsBtn.addEventListener('click', toggleSettings);
 notifyBtn.addEventListener('click', toggleNotifyPanel);
