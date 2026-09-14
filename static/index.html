@@ -1070,9 +1070,10 @@ async function loadAllLinePath(line, generation) {
     if (state.polylines.length) {
       loadAllObservedDeviations(lineId, state, generation);
       loadAllActiveTails(lineId, state, generation);
+      loadAllSnappedDeviations(lineId, state, generation);
     }
   } catch (err) {
-    console.warn('no se pudo cargar el recorrido de la línea', lineId, err);
+    console.error('Error loadPath:', err);
   }
 }
 
@@ -1163,7 +1164,7 @@ async function loadAllObservedDeviations(lineId, state, generation) {
     let drawn = false;
     tracks.forEach(track => {
       let segment = [], level = 0;
-      const flush = () => { if (addAllDeviationSegment(segment, level, state.observed)) drawn = true; segment = []; };
+      const flush = () => { if (addAllDeviationSegment(lineId, segment, level, state.observed)) drawn = true; segment = []; };
       track.forEach(point => {
         if (!point) return flush();
         if (segment.length && haversineMeters(...segment[segment.length - 1], ...point) > MAX_OBSERVED_SEGMENT_STEP_METERS) flush();
@@ -1177,13 +1178,23 @@ async function loadAllObservedDeviations(lineId, state, generation) {
   } catch (err) { console.warn('no se pudieron cargar desvíos', lineId, err); }
 }
 
-function addAllDeviationSegment(points, level, layer) {
+function addAllDeviationSegment(lineId, points, level, layer) {
   if (points.length < 3) return false;
   let distance = 0;
   for (let i = 1; i < points.length; i++) distance += haversineMeters(...points[i - 1], ...points[i]);
   if (distance < 140) return false;
   const color = level === 1 ? '#FFA500' : level === 2 ? '#ff4fd8' : '#FF0000';
-  L.polyline(points, { color, weight: 4, opacity: 0.72, dashArray: '8 10', lineCap: 'round' }).addTo(layer);
+  
+  // Dibujar la version cruda
+  L.polyline(points, { color, weight: 3, opacity: 0.5, dashArray: '4 8', lineCap: 'round' }).addTo(layer);
+  
+  // Reportar al servidor (fire and forget)
+  fetch('/api/report-deviation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ line: lineId, points: points })
+  }).catch(() => {});
+  
   return true;
 }
 
@@ -1360,6 +1371,7 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
     // El historial se filtra contra las polilineas oficiales recién cargadas:
     // así nunca se dibuja encima de un tramo que ya forma parte de la ruta.
     if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId) && currentRoutePolylines.length) {
+      loadSnappedDeviations(lineId);
       loadObservedDeviations(lineId);
       loadActiveTails(lineId).then(() => {
         if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId)) refreshPositions();
@@ -1399,13 +1411,40 @@ async function addDeviationSegment(points, supportLevel) {
   if (supportLevel === 2) color = '#ff4fd8'; // 2 trips: Fuchsia
   else if (supportLevel > 2) color = '#FF0000'; // >2 trips: Red
 
-  // Map-match: ajustar los puntos GPS crudos a las calles reales
-  const snapped = await snapToRoads(points);
-
-  L.polyline(snapped, {
-    color: color, weight: 5, opacity: 0.85, dashArray: '8 10', lineCap: 'round',
+  // Dibuja en baja opacidad el crudo
+  L.polyline(points, {
+    color: color, weight: 3, opacity: 0.5, dashArray: '4 8', lineCap: 'round',
   }).addTo(observedDeviationLayer);
+
+  // Reportar al backend
+  fetch('/api/report-deviation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ line: currentLine, points: points })
+  }).catch(() => {});
+
   return true;
+}
+
+async function loadSnappedDeviations(lineId) {
+  try {
+    const res = await fetch('/api/deviations?line=' + encodeURIComponent(lineId));
+    const json = await res.json();
+    if (!json.success || String(currentLine) !== String(lineId)) return;
+    
+    let drawn = false;
+    for (const points of json.deviations) {
+      if (points && points.length > 0) {
+        L.polyline(points, {
+          color: '#FF0000', weight: 5, opacity: 0.9, dashArray: '8 10', lineCap: 'round',
+        }).addTo(observedDeviationLayer);
+        drawn = true;
+      }
+    }
+    if (drawn) observedRouteLegend.classList.add('visible');
+  } catch (err) {
+    console.warn('Error fetching snapped deviations', err);
+  }
 }
 
 async function loadObservedDeviations(lineId) {
@@ -1526,24 +1565,10 @@ async function loadActiveTails(lineId) {
   }
 }
 
-// Cache de estelas ya ajustadas: evita re-llamar a OSRM si el tail no cambió.
-const _tailSnapState = new Map(); // unitId -> { len, snapped }
-
 async function renderLiveTail(unitId, st) {
   let tailPolyline = tailsById.get(unitId);
   if (st.tail && st.tail.length > 1) {
     let drawPoints = st.tail;
-
-    // Solo re-snap si cambió la cantidad de puntos (se agregó uno nuevo)
-    const prev = _tailSnapState.get(unitId);
-    if (!prev || prev.len !== st.tail.length) {
-      try {
-        drawPoints = await snapToRoads([...st.tail]);
-      } catch { /* fallback a puntos crudos */ }
-      _tailSnapState.set(unitId, { len: st.tail.length, snapped: drawPoints });
-    } else {
-      drawPoints = prev.snapped;
-    }
 
     if (!tailPolyline) {
       tailPolyline = L.polyline(drawPoints, {
@@ -1556,7 +1581,6 @@ async function renderLiveTail(unitId, st) {
   } else if (tailPolyline) {
     liveTailLayer.removeLayer(tailPolyline);
     tailsById.delete(unitId);
-    _tailSnapState.delete(unitId);
   }
 }
 

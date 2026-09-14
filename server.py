@@ -389,6 +389,22 @@ def init_tracks_db():
             CREATE INDEX IF NOT EXISTS idx_bus_observations_line_time
             ON bus_observations(line_id, observed_at)
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS raw_deviations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                line_id TEXT NOT NULL,
+                points_json TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS snapped_deviations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                line_id TEXT NOT NULL,
+                points_json TEXT NOT NULL,
+                last_seen INTEGER NOT NULL
+            )
+        """)
 
 
 def record_bus_observations(line: str, body: bytes):
@@ -428,9 +444,8 @@ def record_bus_observations(line: str, body: bytes):
             "INSERT INTO bus_observations(line_id, unit_id, observed_at, lat, lon) VALUES (?, ?, ?, ?, ?)",
             rows,
         )
-        # Conservar tres semanas permite detectar desvíos recientes, pero no
-        # deja que una modificación vieja siga apareciendo para siempre.
-        conn.execute("DELETE FROM bus_observations WHERE observed_at < ?", (int(now - 21 * 86400),))
+        # Conservar una semana permite detectar desvíos, y limpiar los viejos
+        conn.execute("DELETE FROM bus_observations WHERE observed_at < ?", (int(now - 7 * 86400),))
 
 
 def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
@@ -845,6 +860,22 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "tails": active_tails(line)})
             return
 
+        if parsed.path == "/api/deviations":
+            line = qs.get("line", [None])[0]
+            if not line:
+                self._send_json_obj(400, {"success": False, "error": "falta line"})
+                return
+            with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+                rows = conn.execute("SELECT points_json FROM snapped_deviations WHERE line_id = ?", (str(line),)).fetchall()
+            deviations = []
+            for r in rows:
+                try:
+                    deviations.append(json.loads(r[0]))
+                except:
+                    pass
+            self._send_json_obj(200, {"success": True, "deviations": deviations})
+            return
+
         if parsed.path == "/api/planificar":
             try:
                 olat = float(qs.get("olat", [0])[0])
@@ -973,8 +1004,86 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True})
             return
 
+        if parsed.path == "/api/report-deviation":
+            if not body or not body.get("line") or not body.get("points"):
+                self._send_json_obj(400, {"success": False})
+                return
+            line = str(body["line"])
+            points = body["points"]
+            if not isinstance(points, list) or len(points) < 2:
+                self._send_json_obj(400, {"success": False})
+                return
+            # Filtrar si la desviacion es gigante o no valida (ya lo hace el frontend, pero por si acaso)
+            if len(points) > 500:
+                points = points[:500]
+            now = int(time.time())
+            points_json = json.dumps(points)
+            with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+                # Comprobar si ya enviaron este mismo trayecto recien (para no duplicar en OSRM)
+                exists = conn.execute("SELECT 1 FROM raw_deviations WHERE line_id = ? AND points_json = ?", (line, points_json)).fetchone()
+                if not exists:
+                    conn.execute("INSERT INTO raw_deviations (line_id, points_json, created_at) VALUES (?, ?, ?)", (line, points_json, now))
+            self._send_json_obj(200, {"success": True})
+            return
+
         self._send_json_obj(404, {"success": False, "error": "not found"})
 
+def osrm_processor_loop():
+    while True:
+        try:
+            with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+                now = int(time.time())
+                conn.execute("DELETE FROM snapped_deviations WHERE last_seen < ?", (now - 7 * 86400,))
+                rows = conn.execute("SELECT id, line_id, points_json FROM raw_deviations").fetchall()
+            
+            for row in rows:
+                raw_id, line_id, points_json = row
+                try:
+                    points = json.loads(points_json)
+                    if len(points) > 99:
+                        step = len(points) / 99
+                        points = [points[int(i * step)] for i in range(99)]
+                    
+                    coords_str = ";".join(f"{p[1]},{p[0]}" for p in points)
+                    url = f"http://router.project-osrm.org/match/v1/driving/{coords_str}?geometries=geojson&overview=full"
+                    
+                    req = urllib.request.Request(url, headers={"User-Agent": "BusTrackerBot/1.0"}, method="GET")
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        res = json.loads(resp.read())
+                        if res.get("code") == "Ok" and res.get("matchings"):
+                            geometry = res["matchings"][0].get("geometry", {})
+                            if geometry.get("type") == "LineString":
+                                coords = geometry.get("coordinates", [])
+                                snapped_points = [[c[1], c[0]] for c in coords]
+                                snapped_json = json.dumps(snapped_points)
+                                
+                                with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+                                    existing = conn.execute("SELECT id, points_json FROM snapped_deviations WHERE line_id = ?", (line_id,)).fetchall()
+                                    is_dup = False
+                                    for ex_id, ex_json in existing:
+                                        try:
+                                            ex_pts = json.loads(ex_json)
+                                            if len(ex_pts) > 0 and len(snapped_points) > 0:
+                                                d_start = haversine_km(ex_pts[0][0], ex_pts[0][1], snapped_points[0][0], snapped_points[0][1])
+                                                d_end = haversine_km(ex_pts[-1][0], ex_pts[-1][1], snapped_points[-1][0], snapped_points[-1][1])
+                                                if d_start < 0.2 and d_end < 0.2:
+                                                    conn.execute("UPDATE snapped_deviations SET last_seen = ? WHERE id = ?", (int(time.time()), ex_id))
+                                                    is_dup = True
+                                                    break
+                                        except:
+                                            pass
+                                    if not is_dup:
+                                        conn.execute("INSERT INTO snapped_deviations (line_id, points_json, last_seen) VALUES (?, ?, ?)", (line_id, snapped_json, int(time.time())))
+                except Exception as e:
+                    print(f"Error matching OSRM for raw_id {raw_id}: {e}")
+                
+                with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+                    conn.execute("DELETE FROM raw_deviations WHERE id = ?", (raw_id,))
+                    
+        except Exception as e:
+            print(f"Error in osrm_processor_loop: {e}")
+            
+        time.sleep(4 * 3600)  # every 4 hours
 
 def main():
     init_tracks_db()
@@ -982,6 +1091,7 @@ def main():
     
     # Iniciar fetcher en background para el planificador
     threading.Thread(target=path_fetcher_loop, daemon=True).start()
+    threading.Thread(target=osrm_processor_loop, daemon=True).start()
 
     if PUSH_AVAILABLE:
         threading.Thread(target=notifier_loop, daemon=True).start()
