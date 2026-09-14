@@ -846,11 +846,7 @@ function renderLineList() {
     return `<div class="combo-group-label">${label}</div>${rows}`;
   };
 
-  const allOption = (!q && selectedProvider === 'all') ? `
-    <div class="combo-item${currentLine === ALL_LINES_ID ? ' selected' : ''}" data-id="${ALL_LINES_ID}">
-      <span class="item-name">🗺️ Ver todas las líneas en el mapa</span>
-    </div>` : '';
-  lineList.innerHTML = allOption + renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Líneas disponibles', rest);
+  lineList.innerHTML = renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Líneas disponibles', rest);
 }
 
 function closeAllPanels() {
