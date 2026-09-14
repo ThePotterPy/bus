@@ -541,6 +541,8 @@ if ('serviceWorker' in navigator) {
 const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, ... }
 const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
 const tailsById = new Map();      // unitId -> L.Polyline (cola del bus individual)
+const historyPolylinesById = new Map(); // unitId -> L.Polyline (historial completo de la sesion)
+const historyLayer = L.layerGroup().addTo(map); // para las colas del historial de la sesion
 const etaRouteLayer = L.layerGroup().addTo(map); // para dibujar la ruta de llegada (ETA)
 let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
 
@@ -696,6 +698,7 @@ function updateUnitState(unitId, lat, lon, isMoving) {
       matchedRouteName: null, lastArc: null,
       candidateLabel: null, candidateStreak: 0,
       tail: [[lat, lon]],
+      history: [[lat, lon]],
     };
     unitState.set(unitId, st);
     return st;
@@ -703,6 +706,13 @@ function updateUnitState(unitId, lat, lon, isMoving) {
 
   const distMoved = haversineMeters(st.lat, st.lon, lat, lon);
   if (isMoving && distMoved >= MIN_DISPLACEMENT_M) {
+    if (distMoved <= MAX_OBSERVED_SEGMENT_STEP_METERS) {
+      st.history.push([lat, lon]);
+      if (st.history.length > 200) st.history.shift();
+    } else {
+      st.history = [[lat, lon]]; // Si hay un salto, reiniciar historia
+    }
+    
     const raw = bearingDeg(st.lat, st.lon, lat, lon);
     st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
 
@@ -1709,6 +1719,19 @@ async function refreshPositions() {
       }
 
       renderLiveTail(unitId, st);
+      
+      // Renderizar historial de la sesion
+      let histPolyline = historyPolylinesById.get(unitId);
+      if (st.history && st.history.length > 1) {
+        if (!histPolyline) {
+          histPolyline = L.polyline(st.history, {
+            color: isMas ? '#00e676' : '#ff1744', weight: 3, opacity: 0.4
+          }).addTo(historyLayer);
+          historyPolylinesById.set(unitId, histPolyline);
+        } else {
+          histPolyline.setLatLngs(st.history);
+        }
+      }
     });
 
     // sacar del mapa las unidades que dejaron de reportar posicion
@@ -1721,6 +1744,12 @@ async function refreshPositions() {
         if (tailPolyline) {
           liveTailLayer.removeLayer(tailPolyline);
           tailsById.delete(unitId);
+        }
+        
+        let histPolyline = historyPolylinesById.get(unitId);
+        if (histPolyline) {
+          historyLayer.removeLayer(histPolyline);
+          historyPolylinesById.delete(unitId);
         }
         
         unitState.delete(unitId);
