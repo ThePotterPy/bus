@@ -1622,6 +1622,31 @@ async function refreshPositions() {
       const isMas = u.provider === 'mas' || String(currentLine).startsWith('mas_');
       const badge = isMas ? '<span class="badge-prov mas">MÁS</span>' : '<span class="badge-prov jaha">JAHA</span>';
       const speedRow = (u.speed != null && u.speed > 0) ? `<div class="popup-row">Velocidad: ${Math.round(u.speed)} km/h</div>` : '';
+      
+      // Cálculo de ETA
+      let etaHtml = '';
+      if (planOrigin && planDest && currentRoutePolylines && currentRoutePolylines.length > 0) {
+        const poly = currentRoutePolylines[0].points;
+        const speedKmh = (u.speed != null && u.speed > 0) ? u.speed : 20; // 20km/h por defecto si no hay velocidad
+        
+        const distOriginMeters = getDistanceAlongPolyline(poly, [lat, lon], [planOrigin.lat, planOrigin.lon]);
+        const distDestMeters = getDistanceAlongPolyline(poly, [lat, lon], [planDest.lat, planDest.lon]);
+        
+        const etaOriginMins = distOriginMeters >= 0 ? Math.round((distOriginMeters / 1000) / (speedKmh / 60)) : -1;
+        const etaDestMins = distDestMeters >= 0 ? Math.round((distDestMeters / 1000) / (speedKmh / 60)) : -1;
+        
+        etaHtml += '<div style="margin-top:8px; padding-top:8px; border-top:1px solid #eee;">';
+        if (etaOriginMins >= 0) {
+           etaHtml += `<div class="popup-row">📍 Llega a tu ubicación: <b>~${etaOriginMins} min</b></div>`;
+        } else {
+           etaHtml += `<div class="popup-row" style="color:var(--muted)">📍 Bus ya pasó tu ubicación</div>`;
+        }
+        if (etaDestMins >= 0) {
+           etaHtml += `<div class="popup-row">🏁 Llega a tu destino: <b>~${etaDestMins} min</b></div>`;
+        }
+        etaHtml += '</div>';
+      }
+
       const popupHtml = `
         <div class="popup-title" style="display:flex; justify-content:space-between; align-items:center;">
           <span>Unidad ${escapeHtml(u.unit)}</span>
@@ -1633,6 +1658,7 @@ async function refreshPositions() {
         ${st.routeLabel ? `<div class="popup-row">Sentido: ${escapeHtml(st.routeLabel)}</div>` : ''}
         <div class="popup-row">Hora: ${escapeHtml(u.time) || '-'}</div>
         <div class="popup-row">Aire acondicionado: ${u.air ? 'si' : 'no'}</div>
+        ${etaHtml}
         <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow('${unitId}')">
           ${isFollowed ? 'Dejar de seguir' : 'Seguir unidad'}
         </button>
@@ -1994,10 +2020,7 @@ function enterPlanningMode() {
 function exitPlanningMode() {
   isPlanningMode = false;
   document.getElementById('map').style.cursor = '';
-  if (planOriginMarker) { map.removeLayer(planOriginMarker); planOriginMarker = null; }
-  if (planDestMarker) { map.removeLayer(planDestMarker); planDestMarker = null; }
-  planOrigin = null;
-  planDest = null;
+  // Retenemos planOrigin y planDest para el calculo de ETA en los buses.
   originInput.value = '';
   destInput.value = '';
   originList.style.display = 'none';
@@ -2113,6 +2136,34 @@ document.addEventListener('click', (e) => {
   if (!originInput.contains(e.target) && !originList.contains(e.target)) originList.style.display = 'none';
   if (!destInput.contains(e.target) && !destList.contains(e.target)) destList.style.display = 'none';
 });
+
+// ETA Utilities
+function findClosestVertexIdx(poly, latLng) {
+  let minD = Infinity;
+  let idx = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const d = haversineMeters(poly[i][0], poly[i][1], latLng[0], latLng[1]);
+    if (d < minD) { minD = d; idx = i; }
+  }
+  return idx;
+}
+
+function getDistanceAlongPolyline(poly, ptBus, ptTarget) {
+  if (poly.length < 2) return -1;
+  const busIdx = findClosestVertexIdx(poly, ptBus);
+  const targetIdx = findClosestVertexIdx(poly, ptTarget);
+  
+  // Si el busIdx es MAYOR que el targetIdx, significa que el bus ya pasó la parada
+  // asumiendo que el polyline sigue el orden de Ida o Vuelta.
+  // En nuestro caso, el colectivo está avanzando a lo largo del polyline de índice menor a mayor.
+  if (busIdx > targetIdx + 2) return -1; // +2 tolerancia
+  
+  let dist = 0;
+  for (let i = busIdx; i < targetIdx; i++) {
+    dist += haversineMeters(poly[i][0], poly[i][1], poly[i+1][0], poly[i+1][1]);
+  }
+  return dist;
+}
 
 calculatePlanBtn.addEventListener('click', async () => {
   if (!planOrigin || !planDest) return;
