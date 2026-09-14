@@ -20,13 +20,16 @@ Si no esta instalada, el resto de la app (mapa, buscador, favoritos)
 funciona igual; solo se desactiva la funcion de "avisarme".
 """
 
+import gzip
 import json
 import math
 import os
+import sqlite3
 import threading
 import time
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -35,20 +38,36 @@ from urllib.parse import urlparse, parse_qs
 # entorno PORT; en local usamos 8787 si no esta definida.
 PORT = int(os.environ.get("PORT", 8787))
 API_BASE = "https://www.jaha.com.py/rest_backend"
+MAS_API_BASE = "https://geomastarjeta.z1.mastarjeta.net"
+MAS_AUTH_TOKEN = "4d30d2b7cf01ac8cd46fec1da00686f112cb63a5"
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
 DATA_DIR = BASE_DIR / "data"
 SUBS_FILE = DATA_DIR / "notify_subscriptions.json"
 VAPID_FILE = DATA_DIR / "vapid_private.pem"
+TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
 
 POSITIONS_CACHE_TTL = 8  # segundos - compartido entre el proxy de la UI y el chequeo de proximidad
 NOTIFY_CHECK_INTERVAL = 20  # segundos entre chequeos de proximidad
 VAPID_CLAIMS_SUB = "mailto:notificaciones@example.com"
+ACTIVE_TAIL_WINDOW_SECONDS = 5 * 60
+# Las muestras GPS no contienen la geometría de las calles entre dos puntos.
+# Si la separación es demasiado grande, unirlas dibuja una diagonal ficticia
+# que puede atravesar manzanas o edificios.
+MAX_OBSERVED_TRACK_GAP_SECONDS = 75
+MAX_OBSERVED_TRACK_STEP_KM = 0.35
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Content-Type": "application/json",
     "Accept": "application/json",
+}
+
+MAS_HEADERS = {
+    "User-Agent": "Dart/3.0 (dart:io)",
+    "Authorization": f"Token {MAS_AUTH_TOKEN}",
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip",
 }
 
 try:
@@ -75,6 +94,266 @@ def call_api(path: str, method: str = "GET", body: dict | None = None) -> tuple[
         return 502, json.dumps({"success": False, "error": str(e.reason)}).encode()
 
 
+def call_mas_api(path: str, timeout: int = 12) -> tuple[int, any]:
+    url = f"{MAS_API_BASE}{path}" if path.startswith("/") else f"{MAS_API_BASE}/{path}"
+    req = urllib.request.Request(url, headers=MAS_HEADERS, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
+            if data[:2] == b"\x1f\x8b":
+                data = gzip.decompress(data)
+            return resp.status, json.loads(data.decode("utf-8", errors="replace"))
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read()
+            if err_body[:2] == b"\x1f\x8b":
+                err_body = gzip.decompress(err_body)
+            return e.code, json.loads(err_body.decode("utf-8", errors="replace"))
+        except Exception:
+            return e.code, None
+    except Exception as e:
+        return 502, None
+
+
+# ---------------------------------------------------------------------------
+# Caché de empresas y líneas de Más Tarjeta (TTL de 30 minutos)
+# ---------------------------------------------------------------------------
+_mas_lines_cache: list[dict] = []
+_mas_lines_cache_time: float = 0
+_mas_lines_lock = threading.Lock()
+
+
+def get_mas_lines() -> list[dict]:
+    global _mas_lines_cache, _mas_lines_cache_time
+    now = time.time()
+    with _mas_lines_lock:
+        if _mas_lines_cache and (now - _mas_lines_cache_time < 1800):
+            return _mas_lines_cache
+
+    status, empresas = call_mas_api("/api/empresas/v2", timeout=12)
+    if status != 200 or not isinstance(empresas, list):
+        return _mas_lines_cache
+
+    lines = []
+    seen_ids = set()
+    for emp in empresas:
+        linea_obj = emp.get("linea") or {}
+        lid = linea_obj.get("id")
+        if lid is None or lid in seen_ids:
+            continue
+        seen_ids.add(lid)
+
+        nro_str = str(linea_obj.get("nro_linea") or emp.get("nro_linea") or "").strip()
+        nombre_std = (emp.get("nombre_std") or emp.get("nombre") or "").strip()
+        nombre_alias = (emp.get("nombre") or emp.get("nombre_std") or "").strip()
+
+        if nro_str.upper().startswith("LINEA"):
+            line_name = nro_str.upper()
+        elif nro_str and nro_str != "0":
+            line_name = f"LINEA {nro_str}"
+        else:
+            line_name = nombre_std or nombre_alias or f"LÍNEA {lid}"
+
+        rgb = emp.get("color")
+        color_hex = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}" if (isinstance(rgb, list) and len(rgb) >= 3) else "#10b981"
+
+        lines.append({
+            "id": f"mas_{lid}",
+            "name": line_name,
+            "company_id": emp.get("id"),
+            "company": {
+                "id": emp.get("id"),
+                "name": nombre_std,
+                "alias": nombre_alias,
+            },
+            "provider": "mas",
+            "color": color_hex,
+            "marcador": emp.get("marcador")
+        })
+
+    with _mas_lines_lock:
+        _mas_lines_cache = lines
+        _mas_lines_cache_time = now
+    return lines
+
+
+def get_all_lines_combined() -> list[dict]:
+    jaha_lines = []
+    status, body = call_api("/bus/lines")
+    if status == 200:
+        try:
+            parsed = json.loads(body)
+            if parsed.get("success"):
+                for item in parsed.get("data", []):
+                    item["provider"] = "jaha"
+                    jaha_lines.append(item)
+        except Exception:
+            pass
+
+    mas_lines = get_mas_lines()
+    return jaha_lines + mas_lines
+
+
+# ---------------------------------------------------------------------------
+# Caché de trazados (rutas/ramales) de Más Tarjeta (TTL de 15 minutos)
+# ---------------------------------------------------------------------------
+_mas_rutas_cache: dict[str, tuple[float, list[dict]]] = {}
+_mas_rutas_lock = threading.Lock()
+
+
+def get_mas_routes_for_line(mas_line_id: str) -> list[dict]:
+    now = time.time()
+    with _mas_rutas_lock:
+        cached = _mas_rutas_cache.get(mas_line_id)
+        if cached and (now - cached[0] < 900):
+            return cached[1]
+
+    status, rutas = call_mas_api(f"/api/rutas/por_linea/?linea_id={mas_line_id}", timeout=10)
+    if status == 200 and isinstance(rutas, list):
+        with _mas_rutas_lock:
+            _mas_rutas_cache[mas_line_id] = (now, rutas)
+        return rutas
+    return []
+
+
+def get_mas_path(line_str: str) -> tuple[int, dict]:
+    mas_line_id = line_str.replace("mas_", "")
+    rutas = get_mas_routes_for_line(mas_line_id)
+    if not rutas:
+        return 404, {"success": False, "error": "No se encontraron recorridos para esta línea de Más Tarjeta"}
+
+    services = []
+    palette = ["#10b981", "#06b6d4", "#f59e0b", "#ec4899", "#8b5cf6", "#3b82f6"]
+    for idx, r in enumerate(rutas):
+        camino = r.get("camino") or {}
+        coords = camino.get("coordinates") or []
+        if not coords:
+            continue
+        traces = [
+            {"order": i + 1, "latitud": pt[1], "longitud": pt[0]}
+            for i, pt in enumerate(coords)
+        ]
+        color = r.get("color") or palette[idx % len(palette)]
+        services.append({
+            "service_id": r.get("id_ruta"),
+            "name": r.get("nombre") or f"Ramal {idx + 1}",
+            "routes": [
+                {
+                    "route_id": r.get("id_ruta"),
+                    "name": r.get("nombre") or f"Ramal {idx + 1}",
+                    "color": color,
+                    "sections": [
+                        {
+                            "order": 1,
+                            "traces": traces
+                        }
+                    ]
+                }
+            ]
+        })
+
+    return 200, {"success": True, "data": {"services": services}}
+
+
+def get_mas_positions_cached(line_str: str) -> tuple[int, bytes]:
+    with _positions_cache_lock:
+        now = time.time()
+        cached = _positions_cache.get(line_str)
+        if cached and now - cached[0] < POSITIONS_CACHE_TTL:
+            return cached[1], cached[2]
+
+    mas_line_id = line_str.replace("mas_", "")
+    rutas = get_mas_routes_for_line(mas_line_id)
+    if not rutas:
+        body = json.dumps({"success": True, "data": []}).encode("utf-8")
+        with _positions_cache_lock:
+            _positions_cache[line_str] = (time.time(), 200, body)
+        return 200, body
+
+    route_ids = [r.get("id_ruta") for r in rutas if r.get("id_ruta") is not None]
+    all_raw_buses = []
+
+    any_success = False
+    with ThreadPoolExecutor(max_workers=min(8, len(route_ids) or 1)) as executor:
+        futures = {
+            executor.submit(call_mas_api, f"/api/buses/posiciones_bus_v2/?id_ruta={rid}", 5): rid
+            for rid in route_ids
+        }
+        for future in as_completed(futures):
+            try:
+                status, b_list = future.result()
+                if status == 200:
+                    any_success = True
+                    if isinstance(b_list, list):
+                        all_raw_buses.extend(b_list)
+            except Exception:
+                pass
+
+    if not any_success:
+        with _positions_cache_lock:
+            cached = _positions_cache.get(line_str)
+            if cached:
+                return cached[1], cached[2]
+
+    seen_units = set()
+    normalized_units = []
+    
+    current_time_str = datetime.now().isoformat()
+    
+    for u in all_raw_buses:
+        unit_num = str(u.get("nro_coche") or u.get("id") or "")
+        if not unit_num or unit_num in seen_units:
+            continue
+        seen_units.add(unit_num)
+
+        ubicacion = u.get("ubicacion") or {}
+        coords = ubicacion.get("coordinates")
+        if not coords or len(coords) < 2:
+            continue
+        lon, lat = coords[0], coords[1]
+
+        speed = u.get("velocidad") or 0
+        itin = u.get("itinerario") or {}
+        route_name = itin.get("nombre") or ""
+        modified = u.get("modified") or ""
+        
+        # Considerar en movimiento si tiene velocidad o si se actualizó muy recientemente
+        is_moving = speed > 0
+        if not is_moving and modified:
+            try:
+                # modified es algo como "2023-10-25T14:30:00Z"
+                mod_time = datetime.fromisoformat(modified.replace("Z", "+00:00")).timestamp()
+                if time.time() - mod_time < 120:
+                    is_moving = True
+            except:
+                is_moving = True # Ante la duda, mostrar en movimiento para que no queden todos rojos
+        elif not is_moving:
+            is_moving = True
+
+        time_str = modified[11:19] if len(modified) >= 19 else ""
+        bearing = u.get("sentido") if u.get("sentido") is not None else u.get("rotacion_marker")
+
+        normalized_units.append({
+            "unit": unit_num,
+            "lat": float(lat),
+            "lon": float(lon),
+            "status": "EN MOVIMIENTO" if is_moving else "DETENIDO",
+            "route": route_name,
+            "time": time_str,
+            "air": True,
+            "speed": speed,
+            "bearing": bearing,
+            "provider": "mas"
+        })
+
+    body = json.dumps({"success": True, "data": normalized_units}).encode("utf-8")
+    record_bus_observations(line_str, body)
+
+    with _positions_cache_lock:
+        _positions_cache[line_str] = (time.time(), 200, body)
+    return 200, body
+
+
 # ---------------------------------------------------------------------------
 # Cache corta de posiciones por linea. La usan tanto /api/positions (para la
 # UI) como el chequeo de proximidad de fondo, asi si hay varios usuarios
@@ -83,21 +362,232 @@ def call_api(path: str, method: str = "GET", body: dict | None = None) -> tuple[
 # ---------------------------------------------------------------------------
 _positions_cache: dict[str, tuple[float, int, bytes]] = {}
 _positions_cache_lock = threading.Lock()
+_tracks_lock = threading.Lock()
+_last_track_sample: dict[tuple[str, str], tuple[float, float, float]] = {}
 
+
+def init_tracks_db():
+    """Crea un historial local, compartido por todos los usuarios del sitio.
+
+    Solo se guardan posiciones de unidades de transporte publicas, nunca la
+    ubicacion de quien consulta el mapa. El historial se usa para detectar
+    cambios de recorrido y se depura automaticamente.
+    """
+    DATA_DIR.mkdir(exist_ok=True)
+    with sqlite3.connect(TRACKS_DB_FILE) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS bus_observations (
+                line_id TEXT NOT NULL,
+                unit_id TEXT NOT NULL,
+                observed_at INTEGER NOT NULL,
+                lat REAL NOT NULL,
+                lon REAL NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bus_observations_line_time
+            ON bus_observations(line_id, observed_at)
+        """)
+
+
+def record_bus_observations(line: str, body: bytes):
+    """Guarda muestras espaciadas de los buses que ya se consultaron.
+
+    Una muestra cada 20 s (o al moverse 35 m) da suficiente detalle para una
+    ruta urbana sin hacer crecer la base innecesariamente.
+    """
+    try:
+        response = json.loads(body)
+        if not response.get("success"):
+            return
+        units = response.get("data") or []
+    except (ValueError, TypeError):
+        return
+
+    now = time.time()
+    rows = []
+    for unit in units:
+        try:
+            unit_id = str(unit["unit"])
+            lat, lon = float(unit["lat"]), float(unit["lon"])
+        except (KeyError, TypeError, ValueError):
+            continue
+
+        key = (str(line), unit_id)
+        previous = _last_track_sample.get(key)
+        moved = previous is None or haversine_km(previous[1], previous[2], lat, lon) >= 0.035
+        if previous is None or now - previous[0] >= 20 or moved:
+            _last_track_sample[key] = (now, lat, lon)
+            rows.append((str(line), unit_id, int(now), lat, lon))
+
+    if not rows:
+        return
+    with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+        conn.executemany(
+            "INSERT INTO bus_observations(line_id, unit_id, observed_at, lat, lon) VALUES (?, ?, ?, ?, ?)",
+            rows,
+        )
+        # Conservar tres semanas permite detectar desvíos recientes, pero no
+        # deja que una modificación vieja siga apareciendo para siempre.
+        conn.execute("DELETE FROM bus_observations WHERE observed_at < ?", (int(now - 21 * 86400),))
+
+
+def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
+    """Devuelve trazas separadas por viaje para que el navegador filtre los
+    tramos fuera de la ruta oficial que ya tiene cargada."""
+    cutoff = int(time.time() - days * 86400)
+    with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+        rows = conn.execute(
+            """SELECT unit_id, observed_at, lat, lon FROM bus_observations
+               WHERE line_id = ? AND observed_at >= ?
+               ORDER BY unit_id, observed_at""",
+            (str(line), cutoff),
+        ).fetchall()
+
+    tracks: list[list[list[float]]] = []
+    current: list[list[float]] = []
+    previous_unit = previous_at = previous_lat = previous_lon = None
+    for unit_id, observed_at, lat, lon in rows:
+        split = (
+            previous_unit != unit_id
+            or previous_at is None
+            or observed_at - previous_at > MAX_OBSERVED_TRACK_GAP_SECONDS
+            or haversine_km(previous_lat, previous_lon, lat, lon) > MAX_OBSERVED_TRACK_STEP_KM
+        )
+        if split:
+            if len(current) >= 3:
+                tracks.append(current)
+            current = []
+        current.append([lat, lon])
+        previous_unit, previous_at, previous_lat, previous_lon = unit_id, observed_at, lat, lon
+    if len(current) >= 3:
+        tracks.append(current)
+    return tracks
+
+def active_tails(line: str) -> dict[str, list[list[float]]]:
+    """Devuelve las últimas muestras de unidades que siguen activas.
+
+    La clasificación de "fuera de ruta" depende del trazado oficial que el
+    navegador ya descargó. Por eso aquí conservamos el tramo reciente completo
+    (hasta 40 muestras); el cliente se queda únicamente con el último segmento
+    continuo que está fuera de la ruta. La base SQLite hace que sobreviva a un
+    reinicio del proceso, siempre que ``data/`` esté en almacenamiento persistente.
+    """
+    cutoff = int(time.time() - ACTIVE_TAIL_WINDOW_SECONDS)
+    with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
+        rows = conn.execute(
+            """SELECT unit_id, observed_at, lat, lon FROM bus_observations
+               WHERE line_id = ?
+                 AND unit_id IN (
+                    SELECT unit_id FROM bus_observations
+                    WHERE line_id = ? AND observed_at >= ?
+                 )
+               ORDER BY unit_id, observed_at DESC""",
+            (str(line), str(line), cutoff),
+        ).fetchall()
+
+    tails: dict[str, list[list[float]]] = {}
+    for unit_id, _observed_at, lat, lon in rows:
+        # La consulta viene en orden descendente: no necesitamos traer una
+        # hora completa para luego recortarla en memoria.
+        if len(tails.setdefault(unit_id, [])) < 40:
+            tails[unit_id].append([lat, lon])
+
+    # Leaflet espera los puntos en orden cronológico.
+    return {unit_id: list(reversed(points)) for unit_id, points in tails.items()}
 
 def get_positions_cached(line: str) -> tuple[int, bytes]:
-    now = time.time()
+    if str(line).startswith("mas_"):
+        return get_mas_positions_cached(line)
+
     with _positions_cache_lock:
+        now = time.time()
         cached = _positions_cache.get(line)
         if cached and now - cached[0] < POSITIONS_CACHE_TTL:
             return cached[1], cached[2]
+
+    # No mantenemos el candado mientras esperamos la red: el modo "todas"
+    # puede consultar varias líneas en paralelo sin bloquear a quienes miran
+    # una línea puntual.
     status, body = call_api("/bus/positions", method="POST", body={"line": line})
+    if status == 200:
+        record_bus_observations(line, body)
     with _positions_cache_lock:
-        _positions_cache[line] = (now, status, body)
+        _positions_cache[line] = (time.time(), status, body)
     return status, body
 
 
+def get_positions_batch(lines: list[str]) -> dict[str, list[dict]]:
+    """Consulta varias líneas con un máximo pequeño de solicitudes simultáneas.
+
+    Mantiene una respuesta por línea, por lo que los identificadores de unidad
+    nunca se mezclan entre recorridos. La caché corta existente se reutiliza.
+    """
+    unique_lines = list(dict.fromkeys(str(line) for line in lines if str(line)))[:150]
+    results: dict[str, list[dict]] = {}
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {executor.submit(get_positions_cached, line): line for line in unique_lines}
+        for future in as_completed(futures):
+            line = futures[future]
+            try:
+                status, body = future.result()
+                response = json.loads(body)
+                if status == 200 and response.get("success"):
+                    results[line] = response.get("data") or []
+                else:
+                    results[line] = []
+            except (ValueError, TypeError, OSError):
+                results[line] = []
+    return results
+
+
 # ---------------------------------------------------------------------------
+# Caché completa de trazados de líneas para el Planificador de Viajes.
+# Se llena asíncronamente para no bloquear el inicio.
+# ---------------------------------------------------------------------------
+_all_paths_cache = {}
+_all_paths_lock = threading.Lock()
+_all_lines_info = []
+
+def path_fetcher_loop():
+    global _all_lines_info
+    time.sleep(2)  # Dar tiempo al server de iniciar
+    status, body = call_api("/bus/lines")
+    if status == 200:
+        try:
+            data = json.loads(body)
+            if data.get("success"):
+                _all_lines_info = data.get("data", [])
+        except:
+            pass
+
+    for line in _all_lines_info:
+        line_id = str(line.get("id"))
+        status, body = call_api(f"/bus/lineServices/{line_id}")
+        if status == 200:
+            try:
+                data = json.loads(body)
+                if data.get("success"):
+                    routes_list = []
+                    for service in data.get("data", {}).get("services", []):
+                        for route in service.get("routes", []):
+                            for section in route.get("sections", []):
+                                points = []
+                                for tr in section.get("traces", []):
+                                    try:
+                                        points.append((float(tr["latitud"]), float(tr["longitud"])))
+                                    except:
+                                        pass
+                                if points:
+                                    routes_list.append(points)
+                    with _all_paths_lock:
+                        _all_paths_cache[line_id] = routes_list
+            except:
+                pass
+        time.sleep(1) # rate limiting simple
+
+
 # VAPID (identidad del servidor para Web Push) - se genera una sola vez y se
 # guarda en disco para que las suscripciones existentes sigan siendo validas
 # entre reinicios del servidor.
@@ -253,11 +743,14 @@ class Handler(BaseHTTPRequestHandler):
         pass  # silencia el log por defecto, ya lo hacemos mas abajo
 
     def _send_json(self, status: int, payload: bytes):
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(payload)))
-        self.end_headers()
-        self.wfile.write(payload)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionAbortedError):
+            pass  # Cliente cerro conexion antes de terminar
 
     def _send_json_obj(self, status: int, obj: dict):
         self._send_json(status, json.dumps(obj).encode("utf-8"))
@@ -286,11 +779,14 @@ class Handler(BaseHTTPRequestHandler):
         elif rel_path.endswith(".css"):
             content_type = "text/css; charset=utf-8"
         data = file_path.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionAbortedError):
+            pass  # Cliente cerro conexion antes de terminar
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -302,8 +798,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/lines":
-            status, body = call_api("/bus/lines")
-            self._send_json(status, body)
+            all_lines = get_all_lines_combined()
+            self._send_json_obj(200, {"success": True, "data": all_lines})
             return
 
         if parsed.path == "/api/positions":
@@ -320,8 +816,88 @@ class Handler(BaseHTTPRequestHandler):
             if not line:
                 self._send_json(400, b'{"success": false, "error": "falta line"}')
                 return
+            if str(line).startswith("mas_"):
+                status, data = get_mas_path(line)
+                self._send_json_obj(status, data)
+                return
             status, body = call_api(f"/bus/lineServices/{line}")
             self._send_json(status, body)
+            return
+
+        if parsed.path == "/api/observed-tracks":
+            line = qs.get("line", [None])[0]
+            if not line:
+                self._send_json_obj(400, {"success": False, "error": "falta line"})
+                return
+            try:
+                days = max(1, min(21, int(qs.get("days", [14])[0])))
+            except ValueError:
+                days = 14
+            self._send_json_obj(200, {"success": True, "days": days, "tracks": observed_tracks(line, days)})
+            return
+
+        if parsed.path == "/api/active-tails":
+            line = qs.get("line", [None])[0]
+            if not line:
+                self._send_json_obj(400, {"success": False, "error": "falta line"})
+                return
+            self._send_json_obj(200, {"success": True, "tails": active_tails(line)})
+            return
+
+        if parsed.path == "/api/planificar":
+            try:
+                olat = float(qs.get("olat", [0])[0])
+                olon = float(qs.get("olon", [0])[0])
+                dlat = float(qs.get("dlat", [0])[0])
+                dlon = float(qs.get("dlon", [0])[0])
+            except ValueError:
+                self._send_json(400, b'{"success": false, "error": "coordenadas invalidas"}')
+                return
+
+            best_options = []
+
+            with _all_paths_lock:
+                for line_id, routes in _all_paths_cache.items():
+                    if not routes: continue
+                    
+                    best_walk_for_line = float('inf')
+                    
+                    for points in routes:
+                        min_dist_o, best_idx_o = float('inf'), -1
+                        min_dist_d, best_idx_d = float('inf'), -1
+                        
+                        for i, p in enumerate(points):
+                            d_o = haversine_km(olat, olon, p[0], p[1])
+                            if d_o < min_dist_o:
+                                min_dist_o = d_o
+                                best_idx_o = i
+                            
+                            d_d = haversine_km(dlat, dlon, p[0], p[1])
+                            if d_d < min_dist_d:
+                                min_dist_d = d_d
+                                best_idx_d = i
+                        
+                        # Umbral de 1.5km, y debe ir en sentido correcto
+                        if min_dist_o < 1.5 and min_dist_d < 1.5 and best_idx_d > best_idx_o:
+                            total_walk = min_dist_o + min_dist_d
+                            if total_walk < best_walk_for_line:
+                                best_walk_for_line = total_walk
+                    
+                    if best_walk_for_line < float('inf'):
+                        line_name = next((l["name"] for l in _all_lines_info if str(l["id"]) == line_id), f"Linea {line_id}")
+                        best_options.append({
+                            "id": line_id,
+                            "name": line_name,
+                            "walkingDist": int(best_walk_for_line * 1000)
+                        })
+
+            # Ordenar opciones por menor distancia a pie
+            best_options.sort(key=lambda x: x["walkingDist"])
+            top_3 = best_options[:3]
+
+            res = {"success": True, "data": top_3}
+                
+            self._send_json_obj(200, res)
             return
 
         if parsed.path == "/api/notify/vapid-public-key":
@@ -335,6 +911,14 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         body = self._read_json_body()
         print(f"POST {parsed.path}")
+
+        if parsed.path == "/api/positions/batch":
+            lines = body.get("lines") if isinstance(body, dict) else None
+            if not isinstance(lines, list):
+                self._send_json_obj(400, {"success": False, "error": "falta lines"})
+                return
+            self._send_json_obj(200, {"success": True, "lines": get_positions_batch(lines)})
+            return
 
         if parsed.path == "/api/notify/subscribe":
             if not PUSH_AVAILABLE:
@@ -392,7 +976,12 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    init_tracks_db()
     load_subs()
+    
+    # Iniciar fetcher en background para el planificador
+    threading.Thread(target=path_fetcher_loop, daemon=True).start()
+
     if PUSH_AVAILABLE:
         threading.Thread(target=notifier_loop, daemon=True).start()
     else:

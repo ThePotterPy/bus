@@ -4,21 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Colectivos JAHA - Mapa en vivo</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f1115">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --panel-2: #1f232c;
-    --panel-border: #262a34;
-    --text: #e8eaed;
-    --muted: #9aa0aa;
-    --accent: #3aa0ff;
-    --green: #2ecc71;
-    --red: #e74c3c;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); overscroll-behavior: none; }
+      :root {
+        --bg: #090a0f;
+        --panel: rgba(18, 20, 28, 0.85);
+        --panel-2: rgba(26, 29, 39, 0.9);
+        --panel-border: rgba(255, 255, 255, 0.08);
+        --text: #ffffff;
+        --muted: #8b92a5;
+        --accent: #00e5ff;
+        --green: #00ff88;
+        --red: #ff3366;
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { 
+        height: 100%; margin: 0; 
+        font-family: 'Inter', -apple-system, sans-serif; 
+        background: var(--bg); color: var(--text); overscroll-behavior: none; 
+      }
 
   #app { position: relative; height: 100%; height: 100dvh; overflow: hidden; }
   #map { position: absolute; inset: 0; }
@@ -36,15 +45,18 @@
     max-width: 380px;
   }
 
-  .search-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 999px;
-    padding: 6px 8px 6px 14px;
-    box-shadow: 0 6px 20px rgba(0,0,0,.45);
-  }
-  .pill-icon { font-size: 18px; flex-shrink: 0; }
+      .search-pill {
+        display: flex; align-items: center; gap: 6px;
+        background: var(--panel);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        padding: 6px 8px 6px 14px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+      }
+      .pill-icon { flex-shrink: 0; display: flex; align-items: center; color: var(--accent); }
   #lineSearch {
     flex: 1; min-width: 0;
     background: transparent; border: none; outline: none;
@@ -52,23 +64,28 @@
   }
   #lineSearch::placeholder { color: var(--muted); }
 
-  .icon-btn {
-    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
-    background: var(--panel-2); border: none; color: var(--text);
-    font-size: 16px; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; padding: 0;
-  }
-  .icon-btn:active { background: #2a2f3a; }
-  .icon-btn.active { background: var(--accent); color: #06131f; }
+      .icon-btn {
+        flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+        background: var(--panel-2); border: 1px solid transparent; color: var(--text);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; padding: 0; transition: all 0.2s ease;
+      }
+      .icon-btn:hover { background: rgba(255, 255, 255, 0.1); }
+      .icon-btn:active { transform: scale(0.95); }
+      .icon-btn.active { background: var(--accent); color: #06131f; box-shadow: 0 0 12px rgba(58,160,255,0.4); }
 
-  .float-card {
-    display: none;
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 14px;
-    box-shadow: 0 10px 28px rgba(0,0,0,.5);
-    overflow: hidden;
-  }
+      .float-card {
+        display: none;
+        background: var(--panel);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        overflow: hidden;
+        animation: slideDown 0.2s ease-out;
+      }
+      @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
   .float-card.open { display: block; }
 
   #lineList { max-height: 50dvh; overflow-y: auto; }
@@ -81,93 +98,264 @@
     gap: 8px; padding: 11px 12px; cursor: pointer; font-size: 14px;
     min-height: 40px;
   }
-  .combo-item:active { background: var(--panel-2); }
-  .combo-item.selected { background: #1c2733; }
-  .combo-item .item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .combo-item .star {
-    cursor: pointer; color: var(--muted); font-size: 19px; line-height: 1; flex-shrink: 0;
-    padding: 9px; margin: -9px; display: flex; align-items: center; justify-content: center;
-  }
-  .combo-item .star.fav { color: #f5c518; }
-  .combo-empty { padding: 16px 12px; color: var(--muted); font-size: 13.5px; text-align: center; }
+      .combo-item:active { background: rgba(255,255,255,0.05); }
+      .combo-item.selected { background: rgba(58,160,255,0.15); border-left: 3px solid var(--accent); }
+      .combo-item .item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+      .combo-item .star {
+        cursor: pointer; color: var(--muted); flex-shrink: 0;
+        padding: 8px; margin: -8px; display: flex; align-items: center; justify-content: center;
+        transition: transform 0.2s;
+      }
+      .combo-item .star:hover { transform: scale(1.1); }
+      .combo-empty { padding: 20px 12px; color: var(--muted); font-size: 13.5px; text-align: center; }
 
-  #settingsPanel, #notifyPanel { padding: 14px; }
-  .settings-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; font-size: 14px; color: var(--text);
-  }
-  .settings-row + .settings-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
-  .settings-row select {
-    background: var(--panel-2); color: var(--text); border: 1px solid var(--panel-border);
-    border-radius: 8px; padding: 8px 10px; font-size: 14px; max-width: 60%;
-  }
-  .notify-intro { font-size: 12.5px; color: var(--muted); margin-bottom: 2px; }
-  .btn-primary {
-    width: 100%; background: var(--accent); color: #06131f; border: none;
-    border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 600;
-    cursor: pointer;
-  }
-  .btn-primary:disabled { opacity: .6; cursor: default; }
-  .btn-primary.danger { background: var(--red); color: white; }
+      .provider-filter-bar {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        background: var(--panel);
+        border-radius: 999px;
+        border: 1px solid var(--panel-border);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        align-items: center;
+        justify-content: center;
+      }
+      .prov-pill {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .prov-pill:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .prov-pill.active {
+        background: var(--panel-2);
+        color: var(--text);
+        border-color: var(--panel-border);
+      }
+      .prov-pill.active[data-prov="jaha"] {
+        border-color: rgba(58, 160, 255, 0.5);
+        color: #3aa0ff;
+      }
+      .prov-pill.active[data-prov="mas"] {
+        border-color: rgba(16, 185, 129, 0.5);
+        color: #10b981;
+      }
+      .prov-count {
+        font-size: 10px;
+        opacity: 0.8;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1px 6px;
+        border-radius: 10px;
+      }
+      .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .badge-dot.jaha { background: #3aa0ff; box-shadow: 0 0 5px rgba(58,160,255,0.7); }
+      .badge-dot.mas { background: #10b981; box-shadow: 0 0 5px rgba(16,185,129,0.7); }
+
+      .badge-prov {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 5px;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+        text-transform: uppercase;
+      }
+      .badge-prov.jaha {
+        background: rgba(58, 160, 255, 0.15);
+        color: #3aa0ff;
+        border: 1px solid rgba(58, 160, 255, 0.3);
+      }
+      .badge-prov.mas {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      #settingsPanel, #notifyPanel { padding: 16px; }
+      .settings-row {
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--panel-border);
+        color: var(--text);
+        font-size: 14px;
+      }
+      .settings-row:last-child {
+        border-bottom: none;
+      }
+
+      /* Autocomplete estilos */
+      .autocomplete-wrap {
+        position: relative;
+        flex: 1;
+        margin-left: 12px;
+      }
+      .autocomplete-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--panel-border);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+      }
+      .autocomplete-input:focus {
+        border-color: var(--accent);
+      }
+      .autocomplete-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--panel-2);
+        border: 1px solid var(--panel-border);
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        max-height: 150px;
+        overflow-y: auto;
+        z-index: 10000;
+        display: none;
+      }
+      .autocomplete-item {
+        padding: 8px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .autocomplete-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .settings-row select {
+        background: rgba(0,0,0,0.3); color: var(--text); border: 1px solid var(--panel-border);
+        border-radius: 8px; padding: 8px 10px; font-size: 14px; max-width: 60%; outline: none;
+      }
+      .notify-intro { font-size: 13px; color: var(--muted); margin-bottom: 4px; line-height: 1.4; }
+      .btn-primary {
+        width: 100%; background: var(--accent); color: #06131f; border: none;
+        border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s;
+      }
+      .btn-primary:hover { filter: brightness(1.1); }
+      .btn-primary:active { transform: scale(0.98); }
+      .btn-primary:disabled { opacity: .6; cursor: default; transform: none; }
+      .btn-primary.danger { background: var(--red); color: white; }
   #notifyStatus { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
 
   /* --- pastilla de estado, flotante abajo --- */
-  #statusPill {
-    position: absolute;
-    left: 50%; transform: translateX(-50%);
-    bottom: max(14px, env(safe-area-inset-bottom));
-    z-index: 900;
-    display: flex; align-items: center; gap: 8px;
-    background: var(--panel); border: 1px solid var(--panel-border);
-    border-radius: 999px; padding: 8px 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.45);
-    font-size: 12.5px; color: var(--muted);
-    max-width: calc(100vw - 32px);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex-shrink: 0; }
-  .dot.ok { background: var(--green); }
-  .dot.bad { background: var(--red); }
+      #statusPill {
+        position: absolute;
+        left: 50%; transform: translateX(-50%);
+        bottom: max(14px, env(safe-area-inset-bottom));
+        z-index: 900;
+        display: flex; align-items: center; gap: 8px;
+        background: var(--panel); border: 1px solid var(--panel-border);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-radius: 999px; padding: 8px 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        font-size: 12.5px; font-weight: 500; color: var(--muted);
+        max-width: calc(100vw - 32px);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex-shrink: 0; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+      .dot.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+      .dot.bad { background: var(--red); box-shadow: 0 0 8px var(--red); }
 
-  /* --- boton flotante "mi ubicacion" --- */
-  .locate-btn {
-    position: absolute;
-    right: max(14px, env(safe-area-inset-right));
-    bottom: max(70px, calc(env(safe-area-inset-bottom) + 70px));
-    z-index: 900;
-    width: 44px; height: 44px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.45);
-  }
-  .locate-btn.loading { animation: locate-pulse 1s ease-in-out infinite; }
-  @keyframes locate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+      .locate-btn {
+        position: absolute;
+        right: max(14px, env(safe-area-inset-right));
+        bottom: max(70px, calc(env(safe-area-inset-bottom) + 70px));
+        z-index: 900;
+        width: 44px; height: 44px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+      }
+      .locate-btn.loading { animation: locate-pulse 1.5s ease-in-out infinite; }
+      @keyframes locate-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.9); opacity: .7; } }
 
-  .user-location-icon {
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--accent); border: 3px solid white;
-    box-shadow: 0 0 0 2px rgba(58,160,255,.5), 0 1px 4px rgba(0,0,0,.5);
-  }
+      .user-location-icon {
+        width: 18px; height: 18px; border-radius: 50%;
+        background: var(--accent); border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(58,160,255,0.4), 0 2px 8px rgba(0,0,0,0.4);
+      }
 
-  .bus-icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 50%;
-    color: white; font-size: 13px; font-weight: bold;
-    border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,.5);
-    transition: transform .4s linear;
-  }
-  .bus-icon.moving { background: var(--green); }
-  .bus-icon.stopped { background: var(--red); }
+      .bus-icon-wrap {
+        display: flex; align-items: center; justify-content: center;
+        width: 32px; height: 32px; border-radius: 50%;
+        color: white; font-size: 14px; font-weight: bold;
+        background: var(--panel); border: 2px solid white; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .bus-icon-wrap.moving { background: var(--green); border-color: #27ae60; }
+      .bus-icon-wrap.stopped { background: var(--red); border-color: #c0392b; }
+      .bus-icon-wrap svg { transition: transform 0.3s; }
 
-  .leaflet-popup-content-wrapper { background: var(--panel); color: var(--text); }
-  .leaflet-popup-tip { background: var(--panel); }
-  .popup-title { font-weight: 700; margin-bottom: 4px; }
-  .popup-row { font-size: 12.5px; color: var(--muted); }
+      .leaflet-popup-content-wrapper { background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: var(--text); border: 1px solid var(--panel-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      .leaflet-popup-tip { background: var(--panel); border-bottom: 1px solid var(--panel-border); border-right: 1px solid var(--panel-border); }
+      .popup-title { font-weight: 700; margin-bottom: 6px; font-size: 15px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; }
+      .popup-row { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+      
+      .btn-follow {
+        display: block; width: 100%; margin-top: 8px;
+        background: rgba(255,255,255,0.1); border: 1px solid var(--panel-border);
+        color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+        cursor: pointer; text-align: center; transition: all 0.2s;
+      }
+      .btn-follow:hover { background: rgba(255,255,255,0.2); }
+      .btn-follow.following { background: rgba(58,160,255,0.2); color: var(--accent); border-color: var(--accent); }
 
-  #empty {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: var(--muted); font-size: 14px; text-align: center; pointer-events: none;
-    max-width: min(320px, calc(100vw - 40px));
-    background: rgba(15,17,21,.7); padding: 10px 16px; border-radius: 10px;
-  }
+      #empty {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        color: var(--muted); font-size: 15px; text-align: center; pointer-events: none;
+        max-width: min(320px, calc(100vw - 40px));
+        background: rgba(15,17,21,0.8); backdrop-filter: blur(12px);
+        padding: 14px 20px; border-radius: 12px; font-weight: 500; border: 1px solid var(--panel-border);
+      }
+
+      #observedRouteLegend {
+        display: none;
+        position: absolute;
+        left: max(14px, env(safe-area-inset-left));
+        bottom: max(70px, calc(env(safe-area-inset-bottom) + 70px));
+        z-index: 900;
+        max-width: min(280px, calc(100vw - 86px));
+        background: var(--panel); border: 1px solid var(--panel-border);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-radius: 10px; padding: 8px 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        font-size: 11px; line-height: 1.35; color: var(--muted);
+      }
+      #observedRouteLegend.visible { display: block; }
+      .observed-route-swatch {
+        display: inline-block; width: 24px; margin-right: 6px;
+        border-top: 4px dashed #ff4fd8; vertical-align: middle;
+      }
 
   /* Leaflet: alejar los controles de zoom de la barra flotante */
   .leaflet-top.leaflet-left { top: 108px; }
@@ -185,11 +373,28 @@
 
   <div id="topBar">
     <div class="search-pill">
-      <span class="pill-icon">🚌</span>
-      <input type="text" id="lineSearch" placeholder="Buscar linea por nombre o numero..." autocomplete="off">
-      <button class="icon-btn" id="clearSearchBtn" aria-label="Limpiar busqueda" title="Limpiar busqueda" style="display: none; font-size: 14px; width: 28px; height: 28px; margin-right: 4px; background: transparent;">✕</button>
-      <button class="icon-btn" id="notifyBtn" aria-label="Avisos de proximidad" title="Avisos de proximidad">🔔</button>
-      <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <span class="pill-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/><path d="M5 17v-4.5"/><path d="M19 17v-4.5"/><path d="M8 10V6c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v4"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
+      </span>
+      <input type="text" id="lineSearch" placeholder="Buscar linea por nombre..." autocomplete="off">
+      <button class="icon-btn" id="clearSearchBtn" aria-label="Limpiar busqueda" title="Limpiar busqueda" style="display: none; background: transparent;">✕</button>
+      <button class="icon-btn" id="centerRouteBtn" aria-label="Centrar ruta" title="Centrar ruta" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+      </button>
+      <button class="icon-btn" id="planBtn" aria-label="Planificar viaje" title="Planificar viaje">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20v-5.5A2.5 2.5 0 0 1 11.5 12H22"/><path d="m18 8 4 4-4 4"/><circle cx="5" cy="20" r="2"/><circle cx="5" cy="4" r="2"/><line x1="5" y1="6" x2="5" y2="18"/></svg>
+      </button>
+      <button class="icon-btn" id="notifyBtn" aria-label="Avisos" title="Avisos">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      </button>
+      <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      </button>
+    </div>
+    <div class="provider-filter-bar" id="providerTabs">
+      <button class="prov-pill active" data-prov="all">Todos <span class="prov-count" id="countAll"></span></button>
+      <button class="prov-pill" data-prov="jaha"><span class="badge-dot jaha"></span>Jaha <span class="prov-count" id="countJaha"></span></button>
+      <button class="prov-pill" data-prov="mas"><span class="badge-dot mas"></span>Más <span class="prov-count" id="countMas"></span></button>
     </div>
     <div class="float-card" id="lineList"></div>
     <div class="float-card" id="notifyPanel">
@@ -222,6 +427,31 @@
         </select>
       </div>
     </div>
+    <div class="float-card" id="planPanel" style="padding: 16px;">
+      <div class="notify-intro">Escribe una dirección o toca en el mapa para fijar Origen y Destino.</div>
+      <div class="settings-row" style="margin-top: 12px; align-items: flex-start;">
+        <span style="display:flex; align-items:center; gap:8px; margin-top: 6px;">
+          <div class="dot ok"></div> Origen
+        </span>
+        <div class="autocomplete-wrap">
+          <input type="text" id="originInput" class="autocomplete-input" placeholder="Ej. Terminal, Asuncion..." autocomplete="off">
+          <div class="autocomplete-list" id="originList"></div>
+        </div>
+      </div>
+      <div class="settings-row" style="margin-top: 12px; align-items: flex-start;">
+        <span style="display:flex; align-items:center; gap:8px; margin-top: 6px;">
+          <div class="dot bad"></div> Destino
+        </span>
+        <div class="autocomplete-wrap">
+          <input type="text" id="destInput" class="autocomplete-input" placeholder="Ej. Shopping del Sol..." autocomplete="off">
+          <div class="autocomplete-list" id="destList"></div>
+        </div>
+      </div>
+      <div class="settings-row" style="margin-top: 16px; border-top: none;">
+        <button class="btn-primary" id="calculatePlanBtn" disabled>Calcular Ruta</button>
+      </div>
+      <div id="planResult" style="margin-top: 12px; font-size: 14px; font-weight: 500; text-align: center;"></div>
+    </div>
   </div>
 
   <button class="icon-btn locate-btn" id="locateBtn" aria-label="Mi ubicacion" title="Mi ubicacion">
@@ -231,7 +461,15 @@
     </svg>
   </button>
 
-  <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando seleccion de linea</span></div>
+  <div id="observedRouteLegend">
+    <div style="margin-bottom: 4px; font-weight: bold;">Trayectos alternativos observados:</div>
+    <div><span class="observed-route-swatch" style="border-top-color: #FFA500;"></span> Un colectivo (no confirmado / reciente)</div>
+    <div><span class="observed-route-swatch" style="border-top-color: #ff4fd8;"></span> Dos colectivos (confirmado)</div>
+    <div><span class="observed-route-swatch" style="border-top-color: #FF0000;"></span> Más de dos colectivos (muy frecuente)</div>
+  </div>
+
+  <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
+seleccion de linea</span></div>
   <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
 </div>
 
@@ -245,6 +483,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const markersLayer = L.layerGroup().addTo(map);
 const pathLayer = L.layerGroup().addTo(map);
+const observedDeviationLayer = L.layerGroup().addTo(map);
+const liveTailLayer = L.layerGroup().addTo(map);
+// Contenedor del modo panorámico. Cada línea recibe sus propios subgrupos y
+// estado, para que sus rutas, unidades y desvíos nunca se mezclen.
+const allLinesLayer = L.layerGroup().addTo(map);
 
 const topBar = document.getElementById('topBar');
 const lineSearch = document.getElementById('lineSearch');
@@ -256,6 +499,15 @@ const notifyLineSelect = document.getElementById('notifyLineSelect');
 const notifyRadiusSelect = document.getElementById('notifyRadiusSelect');
 const notifyToggleBtn = document.getElementById('notifyToggleBtn');
 const notifyStatus = document.getElementById('notifyStatus');
+const planBtn = document.getElementById('planBtn');
+const planPanel = document.getElementById('planPanel');
+const centerRouteBtn = document.getElementById('centerRouteBtn');
+const originInput = document.getElementById('originInput');
+const destInput = document.getElementById('destInput');
+const originList = document.getElementById('originList');
+const destList = document.getElementById('destList');
+const calculatePlanBtn = document.getElementById('calculatePlanBtn');
+const planResult = document.getElementById('planResult');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
 const intervalSelect = document.getElementById('intervalSelect');
@@ -263,16 +515,32 @@ const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const emptyMsg = document.getElementById('empty');
 const locateBtn = document.getElementById('locateBtn');
+const observedRouteLegend = document.getElementById('observedRouteLegend');
 
 let currentLine = null;
 let allLines = [];
 let timer = null;
+let followedUnitId = null;
+// Evita que una respuesta lenta de una línea anterior pise el recorrido de
+// la línea que el usuario acaba de seleccionar.
+let routeLoadGeneration = 0;
+const ALL_LINES_ID = '__all__';
+const ALL_LINES_REFRESH_SECONDS = 60;
+let allLinesMode = false;
+let allLinesTimer = null;
+let allLinesGeneration = 0;
+const allLineStates = new Map();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(console.error);
+}
 
 // Estado por unidad (bus fisico) para poder calcular su rumbo real entre
 // actualizaciones. Se reinicia cada vez que se cambia de linea, porque el
 // numero de "unit" solo es unico dentro de una misma linea.
 const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, ... }
 const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
+const tailsById = new Map();      // unitId -> L.Polyline (para la estela en vivo)
 let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
 
 const DIR_DEGREES = {
@@ -286,6 +554,77 @@ const DIR_DEGREES = {
 const MIN_DISPLACEMENT_M = 12;
 const SMOOTH_ALPHA = 0.35;
 const SNAP_METERS = 150;
+const OBSERVED_DEVIATION_METERS = 70;
+// Nunca inventar una calle uniendo dos muestras GPS demasiado alejadas.
+// Las muestras se guardan aproximadamente cada 20 s; 350 m admite una
+// circulación urbana rápida, pero descarta saltos que cruzan manzanas.
+const MAX_OBSERVED_SEGMENT_STEP_METERS = 350;
+
+// ---------------------------------------------------------------------------
+// Map-matching via OSRM (Open Source Routing Machine) - ajusta puntos GPS
+// crudos a las calles reales de OpenStreetMap para que las líneas sigan
+// el trazado de la calle en vez de cortar en diagonal entre manzanas.
+// ---------------------------------------------------------------------------
+const OSRM_BASE = 'https://router.project-osrm.org';
+const _osrmQueue = [];           // cola de peticiones para no saturar el servidor
+let _osrmBusy = false;
+const _snapCache = new Map();    // cacheamos resultados para no repetir pedidos
+
+function _osrmKey(points) {
+  return points.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
+}
+
+async function _processOsrmQueue() {
+  if (_osrmBusy || _osrmQueue.length === 0) return;
+  _osrmBusy = true;
+  const { points, resolve } = _osrmQueue.shift();
+  try {
+    const result = await _doSnapToRoads(points);
+    resolve(result);
+  } catch {
+    resolve(points); // fallback
+  }
+  _osrmBusy = false;
+  // Siguiente en la cola, con un pequeño delay para no saturar
+  if (_osrmQueue.length > 0) setTimeout(_processOsrmQueue, 200);
+}
+
+async function _doSnapToRoads(points) {
+  if (points.length < 2) return points;
+  const key = _osrmKey(points);
+  if (_snapCache.has(key)) return _snapCache.get(key);
+
+  // OSRM espera lon,lat (no lat,lon)
+  const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
+  const radiuses = points.map(() => '50').join(';');
+  const timestamps = points.map((_, i) => i * 20).join(';'); // ~20s entre muestras
+
+  const url = `${OSRM_BASE}/match/v1/driving/${coords}?overview=full&geometries=geojson&radiuses=${radiuses}&timestamps=${timestamps}&gaps=ignore`;
+  const res = await fetch(url);
+  const json = await res.json();
+
+  if (json.code === 'Ok' && json.matchings && json.matchings.length > 0) {
+    const snapped = [];
+    json.matchings.forEach(m => {
+      m.geometry.coordinates.forEach(c => snapped.push([c[1], c[0]])); // lon,lat -> lat,lon
+    });
+    if (snapped.length > 1) {
+      _snapCache.set(key, snapped);
+      return snapped;
+    }
+  }
+  return points; // si OSRM no pudo, devolvemos los puntos originales
+}
+
+function snapToRoads(points) {
+  if (points.length < 2) return Promise.resolve(points);
+  const key = _osrmKey(points);
+  if (_snapCache.has(key)) return Promise.resolve(_snapCache.get(key));
+  return new Promise(resolve => {
+    _osrmQueue.push({ points, resolve });
+    _processOsrmQueue();
+  });
+}
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -355,6 +694,7 @@ function updateUnitState(unitId, lat, lon, isMoving) {
       lat, lon, bearing: null, routeLabel: null,
       matchedRouteName: null, lastArc: null,
       candidateLabel: null, candidateStreak: 0,
+      tail: [[lat, lon]],
     };
     unitState.set(unitId, st);
     return st;
@@ -371,6 +711,27 @@ function updateUnitState(unitId, lat, lon, isMoving) {
         const proj = projectToPolyline(lat, lon, poly);
         if (proj && (!bestProj || proj.dist < bestProj.dist)) { bestProj = proj; bestRoute = poly; }
       });
+      
+      const isOffRoute = bestProj && bestProj.dist > OBSERVED_DEVIATION_METERS;
+      
+      if (isOffRoute) {
+        if (st.tail.length === 0) {
+          // No unir un salto de GPS con una diagonal ficticia.
+          if (haversineMeters(st.lat, st.lon, lat, lon) <= MAX_OBSERVED_SEGMENT_STEP_METERS) {
+            st.tail.push([st.lat, st.lon]); // Conectar con el ultimo punto conocido
+          }
+        }
+        st.tail.push([lat, lon]);
+        if (st.tail.length > 1 && haversineMeters(
+          st.tail[st.tail.length - 2][0], st.tail[st.tail.length - 2][1], lat, lon
+        ) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
+          st.tail = [[lat, lon]];
+        }
+        if (st.tail.length > 40) st.tail.shift();
+      } else {
+        st.tail = []; // Limpiar estela si volvio a la ruta oficial
+      }
+
       if (bestRoute && bestProj.dist <= SNAP_METERS && bestRoute.dirLabel) {
         let candidate = bestRoute.dirLabel;
         // si vamos retrocediendo sobre la MISMA polilinea que veniamos siguiendo,
@@ -429,15 +790,23 @@ function escapeHtml(s) {
   }[c]));
 }
 
+let selectedProvider = 'all';
+
 function lineLabel(l) {
-  return l.name + (l.company ? ' - ' + l.company.alias : '');
+  const company = l.company ? (l.company.alias || l.company.name || '') : '';
+  return l.name + (company ? ' - ' + company : '');
 }
 
 function matchesSearch(line, q) {
+  if (selectedProvider !== 'all') {
+    const prov = line.provider || 'jaha';
+    if (prov !== selectedProvider) return false;
+  }
   if (!q) return true;
   const name = line.name.toLowerCase();
-  const alias = (line.company && line.company.alias || '').toLowerCase();
-  if (name.includes(q) || alias.includes(q)) return true;
+  const alias = (line.company && (line.company.alias || line.company.name) || '').toLowerCase();
+  const prov = (line.provider || '').toLowerCase();
+  if (name.includes(q) || alias.includes(q) || prov.includes(q)) return true;
   const qDigits = q.replace(/\D/g, '');
   if (!qDigits) return false;
   const nameDigits = (line.name.match(/\d+/) || [])[0];
@@ -451,7 +820,7 @@ function renderLineList() {
   const rest = filtered.filter(l => !favorites.has(String(l.id)));
 
   if (!filtered.length) {
-    lineList.innerHTML = '<div class="combo-empty">Ninguna linea coincide con la busqueda</div>';
+    lineList.innerHTML = '<div class="combo-empty">Ninguna linea coincide con la busqueda o el filtro</div>';
     return;
   }
 
@@ -460,16 +829,28 @@ function renderLineList() {
     const rows = items.map(l => {
       const isFav = favorites.has(String(l.id));
       const isSelected = String(l.id) === String(currentLine);
+      const isMas = l.provider === 'mas';
+      const badge = isMas
+        ? '<span class="badge-prov mas">MÁS</span>'
+        : '<span class="badge-prov jaha">JAHA</span>';
       return `
         <div class="combo-item${isSelected ? ' selected' : ''}" data-id="${l.id}">
-          <span class="item-name">${escapeHtml(lineLabel(l))}</span>
-          <span class="star${isFav ? ' fav' : ''}" data-fav-id="${l.id}" title="Favorito">${isFav ? '★' : '☆'}</span>
+          <span class="item-name" style="display:flex; align-items:center; gap:6px; min-width:0;">
+            ${badge} <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(lineLabel(l))}</span>
+          </span>
+          <span class="star${isFav ? ' fav' : ''}" data-fav-id="${l.id}" title="Favorito">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </span>
         </div>`;
     }).join('');
     return `<div class="combo-group-label">${label}</div>${rows}`;
   };
 
-  lineList.innerHTML = renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Todas las lineas', rest);
+  const allOption = (!q && selectedProvider === 'all') ? `
+    <div class="combo-item${currentLine === ALL_LINES_ID ? ' selected' : ''}" data-id="${ALL_LINES_ID}">
+      <span class="item-name">🗺️ Ver todas las líneas en el mapa</span>
+    </div>` : '';
+  lineList.innerHTML = allOption + renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Líneas disponibles', rest);
 }
 
 function closeAllPanels() {
@@ -478,6 +859,12 @@ function closeAllPanels() {
   settingsBtn.classList.remove('active');
   notifyPanel.classList.remove('open');
   notifyBtn.classList.remove('active');
+  planPanel.classList.remove('open');
+  planBtn.classList.remove('active');
+  
+  if (!planPanel.classList.contains('open')) {
+    exitPlanningMode();
+  }
 }
 
 function openLineList() {
@@ -488,6 +875,16 @@ function openLineList() {
   lineList.classList.add('open');
   renderLineList();
 }
+
+document.getElementById('providerTabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.prov-pill');
+  if (!btn) return;
+  document.querySelectorAll('.prov-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedProvider = btn.dataset.prov;
+  renderLineList();
+  openLineList();
+});
 
 function closeLineList() {
   lineList.classList.remove('open');
@@ -506,34 +903,329 @@ function toggleNotifyPanel() {
   lineList.classList.remove('open');
   settingsPanel.classList.remove('open');
   settingsBtn.classList.remove('active');
+  planPanel.classList.remove('open');
+  planBtn.classList.remove('active');
+  exitPlanningMode();
+  
   const willOpen = !notifyPanel.classList.contains('open');
   notifyPanel.classList.toggle('open', willOpen);
   notifyBtn.classList.toggle('active', willOpen);
 }
 
+function togglePlanPanel() {
+  lineList.classList.remove('open');
+  settingsPanel.classList.remove('open');
+  settingsBtn.classList.remove('active');
+  notifyPanel.classList.remove('open');
+  notifyBtn.classList.remove('active');
+  
+  const willOpen = !planPanel.classList.contains('open');
+  planPanel.classList.toggle('open', willOpen);
+  planBtn.classList.toggle('active', willOpen);
+  
+  if (willOpen) {
+    enterPlanningMode();
+  } else {
+    exitPlanningMode();
+  }
+}
+
 function selectLine(id) {
+  if (id === ALL_LINES_ID) {
+    selectAllLines();
+    return;
+  }
+  stopAllLinesMode();
+  const loadGeneration = ++routeLoadGeneration;
   currentLine = id;
   const line = allLines.find(l => String(l.id) === String(id));
   lineSearch.value = line ? lineLabel(line) : '';
   clearSearchBtn.style.display = lineSearch.value ? 'flex' : 'none';
+  centerRouteBtn.style.display = currentLine ? 'flex' : 'none';
   closeLineList();
   lineSearch.blur();
 
   markersLayer.clearLayers();
   pathLayer.clearLayers();
+  observedDeviationLayer.clearLayers();
+  liveTailLayer.clearLayers();
+  observedRouteLegend.classList.remove('visible');
   markersById.clear();
+  tailsById.clear();
   unitState.clear();
   currentRoutePolylines = [];
+  followedUnitId = null;
 
   emptyMsg.style.display = currentLine ? 'none' : 'block';
   emptyMsg.textContent = 'Elegi una linea para ver las unidades en tiempo real';
   if (currentLine) {
-    loadPath(currentLine);
+    loadPath(currentLine, loadGeneration);
     refreshPositions();
     scheduleRefresh();
   } else if (timer) {
     clearInterval(timer);
   }
+}
+
+function stopAllLinesMode() {
+  allLinesMode = false;
+  allLinesGeneration++;
+  if (allLinesTimer) clearInterval(allLinesTimer);
+  allLinesTimer = null;
+  allLinesLayer.clearLayers();
+  allLineStates.clear();
+}
+
+function allLineColor(lineId) {
+  const colors = ['#3aa0ff', '#ff9f3a', '#c060ff', '#ff5fa2', '#5fe0c0', '#f5d547', '#4fdcff'];
+  let hash = 0;
+  for (const char of String(lineId)) hash = ((hash * 31) + char.charCodeAt(0)) >>> 0;
+  return colors[hash % colors.length];
+}
+
+function selectAllLines() {
+  stopAllLinesMode();
+  const generation = ++allLinesGeneration;
+  routeLoadGeneration++; // invalida cualquier respuesta pendiente del modo individual
+  currentLine = ALL_LINES_ID;
+  allLinesMode = true;
+  lineSearch.value = 'Todas las líneas';
+  clearSearchBtn.style.display = 'flex';
+  centerRouteBtn.style.display = 'none';
+  closeLineList();
+  lineSearch.blur();
+
+  markersLayer.clearLayers();
+  pathLayer.clearLayers();
+  observedDeviationLayer.clearLayers();
+  liveTailLayer.clearLayers();
+  observedRouteLegend.classList.remove('visible');
+  markersById.clear(); tailsById.clear(); unitState.clear();
+  currentRoutePolylines = [];
+  followedUnitId = null;
+  if (timer) clearInterval(timer);
+
+  emptyMsg.style.display = 'none';
+  setStatus(`Cargando ${allLines.length} líneas…`, null);
+  allLines.forEach(line => {
+    const state = {
+      line,
+      paths: L.layerGroup().addTo(allLinesLayer),
+      observed: L.layerGroup().addTo(allLinesLayer),
+      tails: L.layerGroup().addTo(allLinesLayer),
+      markers: L.layerGroup().addTo(allLinesLayer),
+      polylines: [], unitState: new Map(), markersById: new Map(), tailsById: new Map(),
+    };
+    allLineStates.set(String(line.id), state);
+  });
+
+  runWithConcurrency(allLines, 3, line => loadAllLinePath(line, generation));
+  refreshAllPositions(generation);
+  allLinesTimer = setInterval(() => refreshAllPositions(generation), ALL_LINES_REFRESH_SECONDS * 1000);
+}
+
+async function runWithConcurrency(items, limit, task) {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const item = items[next++];
+      await task(item);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+function appendRoutePolylines(data, state) {
+  (data.services || []).forEach(service => {
+    (service.routes || []).forEach(route => {
+      const routePoints = [];
+      [...(route.sections || [])].sort((a, b) => a.order - b.order).forEach(section => {
+        const pts = (section.traces || []).sort((a, b) => a.order - b.order)
+          .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)])
+          .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+        if (pts.length > 1) {
+          L.polyline(pts, { color: allLineColor(state.line.id), weight: 2, opacity: 0.42 }).addTo(state.paths);
+          routePoints.push(...pts);
+        }
+      });
+      if (routePoints.length > 1) {
+        const cum = [0];
+        for (let i = 1; i < routePoints.length; i++) {
+          cum.push(cum[i - 1] + haversineMeters(...routePoints[i - 1], ...routePoints[i]));
+        }
+        state.polylines.push({ name: route.name, points: routePoints, cum, dirLabel: null });
+      }
+    });
+  });
+}
+
+async function loadAllLinePath(line, generation) {
+  const lineId = String(line.id);
+  const state = allLineStates.get(lineId);
+  try {
+    const res = await fetch('/api/path?line=' + encodeURIComponent(lineId));
+    const json = await res.json();
+    if (!allLinesMode || generation !== allLinesGeneration || !json.success || !json.data || !state) return;
+    appendRoutePolylines(json.data, state);
+    if (state.polylines.length) {
+      loadAllObservedDeviations(lineId, state, generation);
+      loadAllActiveTails(lineId, state, generation);
+    }
+  } catch (err) {
+    console.warn('no se pudo cargar el recorrido de la línea', lineId, err);
+  }
+}
+
+function allOfficialDistanceMeters(lat, lon, polylines) {
+  let best = Infinity;
+  polylines.forEach(poly => {
+    const projection = projectToPolyline(lat, lon, poly);
+    if (projection) best = Math.min(best, projection.dist);
+  });
+  return best;
+}
+
+function renderAllTail(unitId, st, state) {
+  let tailPolyline = state.tailsById.get(unitId);
+  if (st.tail.length > 1) {
+    if (!tailPolyline) {
+      tailPolyline = L.polyline(st.tail, { color: '#00e5ff', weight: 3, opacity: 0.55, dashArray: '5, 5' }).addTo(state.tails);
+      state.tailsById.set(unitId, tailPolyline);
+    } else tailPolyline.setLatLngs(st.tail);
+  } else if (tailPolyline) {
+    state.tails.removeLayer(tailPolyline);
+    state.tailsById.delete(unitId);
+  }
+}
+
+function updateAllUnitState(unitId, lat, lon, isMoving, state) {
+  let st = state.unitState.get(unitId);
+  if (!st) {
+    st = { lat, lon, bearing: null, tail: [] };
+    state.unitState.set(unitId, st);
+    return st;
+  }
+  const moved = haversineMeters(st.lat, st.lon, lat, lon);
+  if (isMoving && moved >= MIN_DISPLACEMENT_M) {
+    const raw = bearingDeg(st.lat, st.lon, lat, lon);
+    st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
+    const offRoute = allOfficialDistanceMeters(lat, lon, state.polylines) > OBSERVED_DEVIATION_METERS;
+    if (offRoute) {
+      if (!st.tail.length && moved <= MAX_OBSERVED_SEGMENT_STEP_METERS) st.tail.push([st.lat, st.lon]);
+      st.tail.push([lat, lon]);
+      if (st.tail.length > 1 && haversineMeters(...st.tail[st.tail.length - 2], lat, lon) > MAX_OBSERVED_SEGMENT_STEP_METERS) st.tail = [[lat, lon]];
+      if (st.tail.length > 40) st.tail.shift();
+    } else st.tail = [];
+  }
+  st.lat = lat; st.lon = lon;
+  return st;
+}
+
+async function loadAllActiveTails(lineId, state, generation) {
+  try {
+    const res = await fetch('/api/active-tails?line=' + encodeURIComponent(lineId));
+    const json = await res.json();
+    if (!allLinesMode || generation !== allLinesGeneration || !json.success) return;
+    for (const [unitId, pts] of Object.entries(json.tails || {})) {
+      if (!Array.isArray(pts)) continue;
+      let tail = [], previous = null;
+      for (const point of pts) {
+        if (!Array.isArray(point) || point.length < 2) continue;
+        if (allOfficialDistanceMeters(point[0], point[1], state.polylines) > OBSERVED_DEVIATION_METERS) {
+          if (!tail.length && previous) tail.push(previous);
+          tail.push(point);
+        } else tail = [];
+        previous = point;
+      }
+      if (tail.length) {
+        const last = tail[tail.length - 1];
+        const st = state.unitState.get(unitId) || { lat: last[0], lon: last[1], bearing: null, tail: [] };
+        st.tail = tail.slice(-40);
+        state.unitState.set(unitId, st);
+        renderAllTail(unitId, st, state);
+      }
+    }
+  } catch (err) { console.warn('no se pudo restaurar una estela', lineId, err); }
+}
+
+async function loadAllObservedDeviations(lineId, state, generation) {
+  try {
+    const res = await fetch('/api/observed-tracks?line=' + encodeURIComponent(lineId) + '&days=14');
+    const json = await res.json();
+    if (!allLinesMode || generation !== allLinesGeneration || !json.success) return;
+    const tracks = (json.tracks || []).map(track => track.map(point =>
+      Array.isArray(point) && allOfficialDistanceMeters(point[0], point[1], state.polylines) > OBSERVED_DEVIATION_METERS ? point : null));
+    const support = new Map();
+    tracks.forEach((track, index) => {
+      const seen = new Set(track.filter(Boolean).map(p => deviationGridKey(p[0], p[1])));
+      seen.forEach(key => { if (!support.has(key)) support.set(key, new Set()); support.get(key).add(index); });
+    });
+    let drawn = false;
+    tracks.forEach(track => {
+      let segment = [], level = 0;
+      const flush = () => { if (addAllDeviationSegment(segment, level, state.observed)) drawn = true; segment = []; };
+      track.forEach(point => {
+        if (!point) return flush();
+        if (segment.length && haversineMeters(...segment[segment.length - 1], ...point) > MAX_OBSERVED_SEGMENT_STEP_METERS) flush();
+        const pointLevel = support.get(deviationGridKey(point[0], point[1])).size;
+        if (segment.length && level !== pointLevel) flush();
+        level = pointLevel; segment.push(point);
+      });
+      flush();
+    });
+    if (drawn) observedRouteLegend.classList.add('visible');
+  } catch (err) { console.warn('no se pudieron cargar desvíos', lineId, err); }
+}
+
+function addAllDeviationSegment(points, level, layer) {
+  if (points.length < 3) return false;
+  let distance = 0;
+  for (let i = 1; i < points.length; i++) distance += haversineMeters(...points[i - 1], ...points[i]);
+  if (distance < 140) return false;
+  const color = level === 1 ? '#FFA500' : level === 2 ? '#ff4fd8' : '#FF0000';
+  L.polyline(points, { color, weight: 4, opacity: 0.72, dashArray: '8 10', lineCap: 'round' }).addTo(layer);
+  return true;
+}
+
+async function refreshAllPositions(generation) {
+  if (!allLinesMode || generation !== allLinesGeneration) return;
+  try {
+    const res = await fetch('/api/positions/batch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lines: allLines.map(line => String(line.id)) }),
+    });
+    const json = await res.json();
+    if (!json.success || !allLinesMode || generation !== allLinesGeneration) return;
+    let total = 0;
+    for (const line of allLines) {
+      const state = allLineStates.get(String(line.id));
+      if (!state) continue;
+      const units = json.lines[String(line.id)] || [], seen = new Set();
+      total += units.length;
+      units.forEach(unit => {
+        const lat = parseFloat(unit.lat), lon = parseFloat(unit.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const unitId = String(unit.unit), moving = (unit.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
+        seen.add(unitId);
+        const st = updateAllUnitState(unitId, lat, lon, moving, state);
+        const angle = st.bearing != null ? st.bearing : (DIR_DEGREES[(unit.sen || '').trim().toUpperCase()] ?? 0);
+        const popup = `<div class="popup-title">${escapeHtml(lineLabel(line))}</div><div class="popup-row">Unidad ${escapeHtml(unit.unit)}</div><div class="popup-row">${escapeHtml((unit.status || '').trim())}</div>`;
+        let marker = state.markersById.get(unitId);
+        if (!marker) {
+          marker = L.marker([lat, lon], { icon: iconFor(unit, angle) }).addTo(state.markers);
+          marker.bindPopup(popup, { maxWidth: 240 }); state.markersById.set(unitId, marker);
+        } else { marker.setLatLng([lat, lon]); marker.setIcon(iconFor(unit, angle)); marker.setPopupContent(popup); }
+        renderAllTail(unitId, st, state);
+      });
+      for (const [unitId, marker] of state.markersById) {
+        if (!seen.has(unitId)) {
+          state.markers.removeLayer(marker); state.markersById.delete(unitId); state.unitState.delete(unitId);
+          const tail = state.tailsById.get(unitId); if (tail) { state.tails.removeLayer(tail); state.tailsById.delete(unitId); }
+        }
+      }
+    }
+    setStatus(`${total} unidades en ${allLines.length} líneas · actualización cada ${ALL_LINES_REFRESH_SECONDS}s`, true);
+  } catch (err) { setStatus('Error obteniendo todas las posiciones: ' + err.message, false); }
 }
 
 lineList.addEventListener('mousedown', (e) => {
@@ -567,6 +1259,19 @@ clearSearchBtn.addEventListener('click', () => {
 
 settingsBtn.addEventListener('click', toggleSettings);
 notifyBtn.addEventListener('click', toggleNotifyPanel);
+planBtn.addEventListener('click', togglePlanPanel);
+
+centerRouteBtn.addEventListener('click', () => {
+  if (currentRoutePolylines && currentRoutePolylines.length > 0) {
+    const bounds = L.latLngBounds([]);
+    currentRoutePolylines.forEach(poly => {
+      poly.points.forEach(pt => bounds.extend(pt));
+    });
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [20, 20], animate: true, duration: 1 });
+    }
+  }
+});
 
 document.addEventListener('click', (e) => {
   if (!topBar.contains(e.target)) closeAllPanels();
@@ -579,7 +1284,15 @@ async function loadLines() {
     const json = await res.json();
     if (!json.success) throw new Error('la API devolvio success:false');
     allLines = json.data.sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true }));
-    setStatus(`${allLines.length} lineas cargadas`, true);
+    const jahaCount = allLines.filter(l => (l.provider || 'jaha') === 'jaha').length;
+    const masCount = allLines.filter(l => l.provider === 'mas').length;
+    const cAll = document.getElementById('countAll');
+    const cJaha = document.getElementById('countJaha');
+    const cMas = document.getElementById('countMas');
+    if (cAll) cAll.textContent = allLines.length;
+    if (cJaha) cJaha.textContent = jahaCount;
+    if (cMas) cMas.textContent = masCount;
+    setStatus(`${allLines.length} líneas cargadas (${jahaCount} Jaha, ${masCount} Más)`, true);
   } catch (err) {
     setStatus('Error cargando lineas: ' + err.message, false);
   }
@@ -589,20 +1302,25 @@ function iconFor(unit, angleDeg) {
   const moving = (unit.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
   return L.divIcon({
     className: '',
-    html: `<div class="bus-icon ${moving ? 'moving' : 'stopped'}" style="transform: rotate(${angleDeg}deg)">&#9650;</div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    html: `<div class="bus-icon-wrap ${moving ? 'moving' : 'stopped'}">
+             <svg style="transform: rotate(${angleDeg}deg)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 22 20 12 17 2 20 12 2"></polygon></svg>
+           </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
 }
 
-async function loadPath(lineId) {
+async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
   pathLayer.clearLayers();
+  observedDeviationLayer.clearLayers();
+  observedRouteLegend.classList.remove('visible');
   currentRoutePolylines = [];
   try {
     const res = await fetch('/api/path?line=' + encodeURIComponent(lineId));
     const json = await res.json();
     if (!json.success || !json.data) return;
-    const colors = ['#3aa0ff', '#ff9f3a', '#c060ff', '#ff5fa2', '#5fe0c0'];
+    if (loadGeneration !== routeLoadGeneration || String(currentLine) !== String(lineId)) return;
+    const colors = ['#0033cc', '#990099', '#006699', '#cc0055', '#008855'];
     let ci = 0;
     (json.data.services || []).forEach(service => {
       (service.routes || []).forEach(route => {
@@ -614,7 +1332,7 @@ async function loadPath(lineId) {
             .sort((a, b) => a.order - b.order)
             .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)]);
           if (pts.length > 1) {
-            L.polyline(pts, { color: route.color || colors[ci % colors.length], weight: 3, opacity: 0.7 }).addTo(pathLayer);
+            L.polyline(pts, { color: colors[ci % colors.length], weight: 5, opacity: 1.0 }).addTo(pathLayer);
             ci++;
           }
           routePoints.push(...pts);
@@ -639,9 +1357,206 @@ async function loadPath(lineId) {
         }
       });
     });
+    // El historial se filtra contra las polilineas oficiales recién cargadas:
+    // así nunca se dibuja encima de un tramo que ya forma parte de la ruta.
+    if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId) && currentRoutePolylines.length) {
+      loadObservedDeviations(lineId);
+      loadActiveTails(lineId).then(() => {
+        if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId)) refreshPositions();
+      });
+    }
   } catch (err) {
     // el trazado es un extra, no es critico si falla
     console.warn('no se pudo cargar el trazado de la linea', err);
+  }
+}
+
+function officialDistanceMeters(lat, lon) {
+  let best = Infinity;
+  currentRoutePolylines.forEach(poly => {
+    const projection = projectToPolyline(lat, lon, poly);
+    if (projection) best = Math.min(best, projection.dist);
+  });
+  return best;
+}
+
+function deviationGridKey(lat, lon) {
+  // Celdas de aproximadamente 75 m: absorben la pequeña imprecisión de GPS
+  // al decidir si el mismo desvío se repitió en recorridos independientes.
+  return `${Math.round(lat / 0.0007)}:${Math.round(lon / 0.0007)}`;
+}
+
+async function addDeviationSegment(points, supportLevel) {
+  if (points.length < 3) return false;
+  let distance = 0;
+  for (let i = 1; i < points.length; i++) {
+    distance += haversineMeters(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1]);
+  }
+  // Evita pintar una calle paralela por un único salto corto de GPS.
+  if (distance < 140) return false;
+
+  let color = '#FFA500'; // 1 trip: Orange
+  if (supportLevel === 2) color = '#ff4fd8'; // 2 trips: Fuchsia
+  else if (supportLevel > 2) color = '#FF0000'; // >2 trips: Red
+
+  // Map-match: ajustar los puntos GPS crudos a las calles reales
+  const snapped = await snapToRoads(points);
+
+  L.polyline(snapped, {
+    color: color, weight: 5, opacity: 0.85, dashArray: '8 10', lineCap: 'round',
+  }).addTo(observedDeviationLayer);
+  return true;
+}
+
+async function loadObservedDeviations(lineId) {
+  try {
+    const res = await fetch('/api/observed-tracks?line=' + encodeURIComponent(lineId) + '&days=14');
+    const json = await res.json();
+    if (!json.success || String(currentLine) !== String(lineId)) return;
+
+    const tracks = (json.tracks || []).map(track => track.map(point => {
+      if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
+      return officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS ? point : null;
+    }));
+
+    // Contamos en cuántos viajes aparece cada tramo (por cuadrícula)
+    const support = new Map();
+    tracks.forEach((track, trackIndex) => {
+      const seenInThisTrack = new Set();
+      track.forEach(point => {
+        if (point) seenInThisTrack.add(deviationGridKey(point[0], point[1]));
+      });
+      seenInThisTrack.forEach(key => {
+        if (!support.has(key)) support.set(key, new Set());
+        support.get(key).add(trackIndex);
+      });
+    });
+
+    let drawn = false;
+    tracks.forEach(track => {
+      let segment = [];
+      let currentSupportLevel = 0;
+      
+      const flush = () => {
+        if (segment.length > 0) {
+          if (addDeviationSegment(segment, currentSupportLevel)) drawn = true;
+          segment = [];
+        }
+      };
+      
+      track.forEach(point => {
+        if (!point) {
+          flush();
+          return;
+        }
+
+        // Un corte de telemetría o un salto de GPS no describe el camino
+        // recorrido entre ambos extremos. Sin map-matching de calles, la
+        // representación honesta es no dibujar esa conexión.
+        if (segment.length > 0 && haversineMeters(
+          segment[segment.length - 1][0], segment[segment.length - 1][1], point[0], point[1]
+        ) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
+          flush();
+        }
+        
+        const supporters = support.get(deviationGridKey(point[0], point[1]));
+        const pointSupportLevel = supporters ? supporters.size : 0;
+        
+        if (pointSupportLevel > 0) {
+          // Si el nivel de soporte cambia, se corta el segmento para dibujarlo con su color
+          if (segment.length > 0 && currentSupportLevel !== pointSupportLevel) {
+            flush();
+          }
+          currentSupportLevel = pointSupportLevel;
+          segment.push(point);
+        } else {
+          flush();
+        }
+      });
+      flush();
+    });
+    observedRouteLegend.classList.toggle('visible', drawn);
+  } catch (err) {
+    console.warn('no se pudo cargar el historial de desvíos', err);
+  }
+}
+
+async function loadActiveTails(lineId) {
+  try {
+    const res = await fetch('/api/active-tails?line=' + encodeURIComponent(lineId));
+    const json = await res.json();
+    if (!json.success || String(currentLine) !== String(lineId)) return;
+
+    for (const [unitId, rawPoints] of Object.entries(json.tails || {})) {
+      const pts = Array.isArray(rawPoints) ? rawPoints : rawPoints.points;
+      if (Array.isArray(pts) && pts.length > 0) {
+        let st = unitState.get(unitId);
+        if (!st) {
+          st = {
+            lat: pts[pts.length - 1][0], lon: pts[pts.length - 1][1],
+            bearing: null, routeLabel: null,
+            matchedRouteName: null, lastArc: null,
+            candidateLabel: null, candidateStreak: 0,
+            tail: [],
+          };
+          unitState.set(unitId, st);
+        }
+        
+        // Conservamos exclusivamente el último desvío continuo. Incluimos el
+        // último punto sobre la ruta para que la línea celeste quede conectada
+        // visualmente al momento en que el colectivo se desvió.
+        let offRouteTail = [];
+        let previousPoint = null;
+        pts.forEach(point => {
+          if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
+          if (officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS) {
+            if (offRouteTail.length === 0 && previousPoint) offRouteTail.push(previousPoint);
+            offRouteTail.push(point);
+          } else {
+            offRouteTail = [];
+          }
+          previousPoint = point;
+        });
+        st.tail = offRouteTail.slice(-40);
+        renderLiveTail(unitId, st);
+      }
+    }
+  } catch (err) {
+    console.warn('no se pudieron cargar las estelas activas', err);
+  }
+}
+
+// Cache de estelas ya ajustadas: evita re-llamar a OSRM si el tail no cambió.
+const _tailSnapState = new Map(); // unitId -> { len, snapped }
+
+async function renderLiveTail(unitId, st) {
+  let tailPolyline = tailsById.get(unitId);
+  if (st.tail && st.tail.length > 1) {
+    let drawPoints = st.tail;
+
+    // Solo re-snap si cambió la cantidad de puntos (se agregó uno nuevo)
+    const prev = _tailSnapState.get(unitId);
+    if (!prev || prev.len !== st.tail.length) {
+      try {
+        drawPoints = await snapToRoads([...st.tail]);
+      } catch { /* fallback a puntos crudos */ }
+      _tailSnapState.set(unitId, { len: st.tail.length, snapped: drawPoints });
+    } else {
+      drawPoints = prev.snapped;
+    }
+
+    if (!tailPolyline) {
+      tailPolyline = L.polyline(drawPoints, {
+        color: '#00e5ff', weight: 4, opacity: 0.6, dashArray: '5, 5',
+      }).addTo(liveTailLayer);
+      tailsById.set(unitId, tailPolyline);
+    } else {
+      tailPolyline.setLatLngs(drawPoints);
+    }
+  } else if (tailPolyline) {
+    liveTailLayer.removeLayer(tailPolyline);
+    tailsById.delete(unitId);
+    _tailSnapState.delete(unitId);
   }
 }
 
@@ -665,27 +1580,49 @@ async function refreshPositions() {
 
       const isMoving = (u.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
       const st = updateUnitState(unitId, lat, lon, isMoving);
-      const angle = st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0);
+      const angle = (u.bearing != null && !isNaN(u.bearing)) ? u.bearing : (st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0));
 
+      const isFollowed = followedUnitId === unitId;
+      const isMas = u.provider === 'mas' || String(currentLine).startsWith('mas_');
+      const badge = isMas ? '<span class="badge-prov mas">MÁS</span>' : '<span class="badge-prov jaha">JAHA</span>';
+      const speedRow = (u.speed != null && u.speed > 0) ? `<div class="popup-row">Velocidad: ${Math.round(u.speed)} km/h</div>` : '';
       const popupHtml = `
-        <div class="popup-title">Unidad ${escapeHtml(u.unit)}</div>
+        <div class="popup-title" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Unidad ${escapeHtml(u.unit)}</span>
+          ${badge}
+        </div>
         <div class="popup-row">Estado: ${escapeHtml((u.status || '').trim())}</div>
         <div class="popup-row">Recorrido: ${escapeHtml((u.route || '').trim()) || '-'}</div>
+        ${speedRow}
         ${st.routeLabel ? `<div class="popup-row">Sentido: ${escapeHtml(st.routeLabel)}</div>` : ''}
         <div class="popup-row">Hora: ${escapeHtml(u.time) || '-'}</div>
         <div class="popup-row">Aire acondicionado: ${u.air ? 'si' : 'no'}</div>
+        <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow('${unitId}')">
+          ${isFollowed ? 'Dejar de seguir' : 'Seguir unidad'}
+        </button>
       `;
 
       let marker = markersById.get(unitId);
       if (!marker) {
         marker = L.marker([lat, lon], { icon: iconFor(u, angle) }).addTo(markersLayer);
-        marker.bindPopup(popupHtml, { maxWidth: 220 });
+        marker.bindPopup(popupHtml, { maxWidth: 240, minWidth: 200 });
         markersById.set(unitId, marker);
       } else {
         marker.setLatLng([lat, lon]);
         marker.setIcon(iconFor(u, angle));
-        marker.setPopupContent(popupHtml);
+        if (marker.getPopup().isOpen()) {
+          marker.setPopupContent(popupHtml);
+        } else {
+          marker.bindPopup(popupHtml, { maxWidth: 240, minWidth: 200 });
+        }
       }
+      
+      // Si estamos siguiendo a esta unidad, centramos el mapa
+      if (isFollowed) {
+        map.panTo([lat, lon], { animate: true, duration: 1 });
+      }
+
+      renderLiveTail(unitId, st);
     });
 
     // sacar del mapa las unidades que dejaron de reportar posicion
@@ -693,7 +1630,18 @@ async function refreshPositions() {
       if (!seenIds.has(unitId)) {
         markersLayer.removeLayer(marker);
         markersById.delete(unitId);
+        
+        let tailPolyline = tailsById.get(unitId);
+        if (tailPolyline) {
+          liveTailLayer.removeLayer(tailPolyline);
+          tailsById.delete(unitId);
+        }
+        
         unitState.delete(unitId);
+        if (followedUnitId === unitId) {
+          followedUnitId = null;
+          setStatus('La unidad que seguías se desconectó', false);
+        }
       }
     }
 
@@ -710,6 +1658,18 @@ function scheduleRefresh() {
 }
 
 intervalSelect.addEventListener('change', scheduleRefresh);
+
+window.toggleFollow = function(unitId) {
+  if (followedUnitId === unitId) {
+    followedUnitId = null;
+  } else {
+    followedUnitId = unitId;
+    const st = unitState.get(unitId);
+    if (st) map.panTo([st.lat, st.lon], { animate: true });
+  }
+  // Forzar repintado del popup abierto
+  refreshPositions();
+};
 
 // ---------------------------------------------------------------------------
 // Boton "mi ubicacion": centra el mapa en la posicion actual del usuario y
@@ -740,25 +1700,21 @@ function locateMe() {
           radius: accuracy, color: '#3aa0ff', weight: 1, fillColor: '#3aa0ff', fillOpacity: 0.12,
         }).addTo(map);
       }
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
 
-      if (userLocationMarker) {
-        userLocationMarker.setLatLng([latitude, longitude]);
-      } else {
-        userLocationMarker = L.marker([latitude, longitude], {
-          icon: L.divIcon({ className: '', html: '<div class="user-location-icon"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
-          zIndexOffset: 1000,
+      if (!userLocationMarker) {
+        userLocationMarker = L.marker([lat, lon], {
+          icon: L.divIcon({ className: '', html: '<div class="user-location-icon"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
         }).addTo(map);
+      } else {
+        userLocationMarker.setLatLng([lat, lon]);
       }
-
-      map.setView([latitude, longitude], Math.max(map.getZoom(), 15));
+      map.flyTo([lat, lon], 15, { animate: true, duration: 1.5 });
     },
     (err) => {
       locateBtn.classList.remove('loading');
-      locateBtn.disabled = false;
-      const msg = err.code === err.PERMISSION_DENIED
-        ? 'No diste permiso de ubicacion'
-        : 'No se pudo obtener tu ubicacion';
-      setStatus(msg, false);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
   );
@@ -818,7 +1774,7 @@ function urlBase64ToUint8Array(base64String) {
 
 function renderNotifyLineOptions() {
   notifyLineSelect.innerHTML = '<option value="">Elegi una linea</option>' +
-    allLines.map(l => `<option value="${l.id}">${escapeHtml(lineLabel(l))}</option>`).join('');
+    allLines.map(l => `<option value="${l.id}">[${(l.provider || 'jaha').toUpperCase()}] ${escapeHtml(lineLabel(l))}</option>`).join('');
   if (notifyState.line) notifyLineSelect.value = notifyState.line;
 }
 
@@ -986,6 +1942,182 @@ loadLines().then(() => {
     });
   }
 });
+// --- Lógica del Planificador de Viajes ---
+let planOrigin = null;
+let planDest = null;
+let planOriginMarker = null;
+let planDestMarker = null;
+let isPlanningMode = false;
+
+function enterPlanningMode() {
+  isPlanningMode = true;
+  document.getElementById('map').style.cursor = 'crosshair';
+  setStatus('Haz clic en el mapa para seleccionar el ORIGEN', true);
+}
+
+function exitPlanningMode() {
+  isPlanningMode = false;
+  document.getElementById('map').style.cursor = '';
+  if (planOriginMarker) { map.removeLayer(planOriginMarker); planOriginMarker = null; }
+  if (planDestMarker) { map.removeLayer(planDestMarker); planDestMarker = null; }
+  planOrigin = null;
+  planDest = null;
+  originInput.value = '';
+  destInput.value = '';
+  originList.style.display = 'none';
+  destList.style.display = 'none';
+  planResult.textContent = '';
+  calculatePlanBtn.disabled = true;
+  if (!currentLine) setStatus('Elegi una linea para ver las unidades', true);
+}
+
+function updatePlannerUI() {
+  if (planOrigin && planDest) {
+    calculatePlanBtn.disabled = false;
+  } else {
+    calculatePlanBtn.disabled = true;
+  }
+}
+
+function setPlanPoint(type, lat, lon, label) {
+  if (type === 'origin') {
+    if (planOriginMarker) map.removeLayer(planOriginMarker);
+    planOrigin = { lat, lon };
+    planOriginMarker = L.marker([lat, lon], {
+      icon: L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:var(--green);border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+    }).addTo(map);
+    if (label) originInput.value = label;
+  } else {
+    if (planDestMarker) map.removeLayer(planDestMarker);
+    planDest = { lat, lon };
+    planDestMarker = L.marker([lat, lon], {
+      icon: L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+    }).addTo(map);
+    if (label) destInput.value = label;
+  }
+  map.setView([lat, lon], 14);
+  updatePlannerUI();
+}
+
+map.on('click', (e) => {
+  if (!isPlanningMode) return;
+  const lat = e.latlng.lat;
+  const lon = e.latlng.lng;
+  const coordStr = lat.toFixed(4) + ', ' + lon.toFixed(4);
+  
+  if (!planOrigin) {
+    setPlanPoint('origin', lat, lon, coordStr);
+    setStatus('Ahora haz clic en el mapa para seleccionar el DESTINO', true);
+  } else if (!planDest) {
+    setPlanPoint('dest', lat, lon, coordStr);
+    setStatus('Origen y destino seleccionados', true);
+  } else {
+    setPlanPoint('origin', lat, lon, coordStr);
+    map.removeLayer(planDestMarker);
+    planDestMarker = null;
+    planDest = null;
+    destInput.value = '';
+    planResult.textContent = '';
+    updatePlannerUI();
+    setStatus('Ahora haz clic en el mapa para seleccionar el DESTINO', true);
+  }
+});
+
+let geocodeTimer = null;
+async function fetchGeocode(query, listEl, type) {
+  listEl.innerHTML = '<div class="autocomplete-item">Buscando...</div>';
+  listEl.style.display = 'block';
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=py&q=${encodeURIComponent(query)}`);
+    const json = await res.json();
+    if (!json || json.length === 0) {
+      listEl.innerHTML = '<div class="autocomplete-item">Sin resultados</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    json.slice(0, 5).forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      div.textContent = item.display_name;
+      div.title = item.display_name;
+      div.addEventListener('click', () => {
+        setPlanPoint(type, parseFloat(item.lat), parseFloat(item.lon), item.display_name.split(',')[0]);
+        listEl.style.display = 'none';
+      });
+      listEl.appendChild(div);
+    });
+  } catch (e) {
+    listEl.innerHTML = '<div class="autocomplete-item">Error de red</div>';
+  }
+}
+
+function setupAutocomplete(inputEl, listEl, type) {
+  inputEl.addEventListener('input', () => {
+    const val = inputEl.value.trim();
+    if (val.length < 3) {
+      listEl.style.display = 'none';
+      return;
+    }
+    clearTimeout(geocodeTimer);
+    geocodeTimer = setTimeout(() => {
+      fetchGeocode(val, listEl, type);
+    }, 500);
+  });
+  inputEl.addEventListener('focus', () => {
+    if (listEl.children.length > 0 && inputEl.value.trim().length >= 3) {
+      listEl.style.display = 'block';
+    }
+  });
+}
+
+setupAutocomplete(originInput, originList, 'origin');
+setupAutocomplete(destInput, destList, 'dest');
+
+document.addEventListener('click', (e) => {
+  if (!originInput.contains(e.target) && !originList.contains(e.target)) originList.style.display = 'none';
+  if (!destInput.contains(e.target) && !destList.contains(e.target)) destList.style.display = 'none';
+});
+
+calculatePlanBtn.addEventListener('click', async () => {
+  if (!planOrigin || !planDest) return;
+  calculatePlanBtn.disabled = true;
+  planResult.innerHTML = '<div class="autocomplete-item">Calculando ruta optima...</div>';
+  
+  try {
+    const res = await fetch(`/api/planificar?olat=${planOrigin.lat}&olon=${planOrigin.lon}&dlat=${planDest.lat}&dlon=${planDest.lon}`);
+    const json = await res.json();
+    if (json.success && json.data && json.data.length > 0) {
+      planResult.innerHTML = '<div style="margin-bottom: 8px;">Mejores opciones:</div>';
+      
+      json.data.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-primary';
+        btn.style.width = '100%';
+        btn.style.marginTop = '6px';
+        btn.style.background = index === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.1)';
+        btn.style.color = index === 0 ? '#000' : 'var(--text)';
+        
+        btn.innerHTML = `🚌 <b>${option.name}</b> (caminar ~${option.walkingDist}m)`;
+        
+        btn.addEventListener('click', () => {
+          lineSearch.value = option.name;
+          renderLines();
+          selectLine(option.id, option.name);
+          exitPlanningMode();
+        });
+        
+        planResult.appendChild(btn);
+      });
+      
+    } else {
+      planResult.textContent = 'No hay lineas directas cerca (max 1.5km)';
+    }
+  } catch(e) {
+    planResult.textContent = 'Error al calcular ruta';
+  }
+  calculatePlanBtn.disabled = false;
+});
+
 </script>
 </body>
 </html>

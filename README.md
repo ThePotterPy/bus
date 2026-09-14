@@ -48,6 +48,14 @@ el boton de aviso de proximidad.
   evitar notificaciones repetidas, el servidor solo avisa en la transicion
   de "fuera del radio" a "dentro del radio"; si el bus se queda adentro no
   vuelve a avisar hasta que salga y vuelva a entrar.
+- **Desvíos observados**: el servidor conserva muestras de GPS públicas de
+  los buses por hasta 21 días. Al elegir una línea, el mapa compara ese
+  historial con el trazado oficial y dibuja en fucsia discontinuo únicamente
+  los tramos que quedan fuera de él. Para evitar falsos positivos por ruido
+  GPS o una maniobra aislada, un tramo debe aparecer en al menos dos viajes
+  distintos y superar 140 m antes de mostrarse. El historial es compartido:
+  lo que se aprende mientras una persona consulta una línea queda disponible
+  para las demás. Al principio estará vacío y se completa gradualmente.
 
 ## Estructura
 
@@ -60,7 +68,8 @@ el boton de aviso de proximidad.
 - `static/sw.js` - service worker minimo, solo recibe el push y muestra la
   notificacion.
 - `data/` - generado en el primer uso (clave VAPID + suscripciones activas).
-  No se sube al repositorio.
+  También incluye `observed_bus_tracks.sqlite3`, el historial compartido de
+  posiciones de buses. No se sube al repositorio.
 
 ## Notas y limitaciones
 
@@ -73,6 +82,10 @@ el boton de aviso de proximidad.
 - Web Push solo funciona en `https://` o en `localhost`. Para probarlo en
   tu PC anda perfecto; si esto se va a usar desde varios telefonos/PCs
   distintos de verdad, el servidor tiene que estar en un hosting con HTTPS.
+- Para que el historial y las estelas compartidas sobrevivan a un reinicio en
+  ese hosting, `data/observed_bus_tracks.sqlite3` debe estar en un volumen
+  persistente. Si el proveedor descarta el disco en cada despliegue, también
+  descartará ese aprendizaje compartido.
 - El estado de las suscripciones vive en memoria + un JSON en `data/`; si
   el servidor se reinicia no se pierden (se recargan del archivo), pero no
   es una base de datos pensada para volumenes grandes.

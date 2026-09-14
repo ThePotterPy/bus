@@ -1,0 +1,17 @@
+{
+  "name": "Colectivos JAHA Tracker",
+  "short_name": "JahaTracker",
+  "description": "Mapa en vivo de los colectivos de Asunción",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMjgsMjBBMTQ0LjcsMTQ0LjcsMCwwLDAsMzIsMTA0djU2YTMyLDMyLDAsMCwwLDMyLDMyYTE2LDE2LDAsMCwxLDMyLDBhMTYsMTYsMCwwLDEsMzIsMGExNiwxNiwwLDAsMSwzMiwwYTE2LDE2LDAsMCwxLDMyLDBhMzIsMzIsMCwwLDAsMzItMzJWMTA0QTE0NC43LDE0NC43LDAsMCwwLDEyOCwyMFoiIGZpbGw9IiMzYWEwZmYiLz48L3N2Zz4=",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
