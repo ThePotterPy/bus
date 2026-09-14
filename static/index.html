@@ -1616,6 +1616,7 @@ async function refreshPositions() {
 
       const isMoving = (u.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
       const st = updateUnitState(unitId, lat, lon, isMoving);
+      st.speed = u.speed; // Guardar velocidad para usar en toggleFollow
       const angle = (u.bearing != null && !isNaN(u.bearing)) ? u.bearing : (st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0));
 
       const isFollowed = followedUnitId === unitId;
@@ -1724,10 +1725,30 @@ intervalSelect.addEventListener('change', scheduleRefresh);
 window.toggleFollow = function(unitId) {
   if (followedUnitId === unitId) {
     followedUnitId = null;
+    setStatus('Dejaste de seguir la unidad', true);
   } else {
     followedUnitId = unitId;
     const st = unitState.get(unitId);
     if (st) map.panTo([st.lat, st.lon], { animate: true });
+    
+    let etaMsg = '';
+    if (userLocationMarker && currentRoutePolylines && currentRoutePolylines.length > 0 && st) {
+      const poly = currentRoutePolylines[0].points;
+      const userLatLon = userLocationMarker.getLatLng();
+      const dist = getDistanceAlongPolyline(poly, [st.lat, st.lon], [userLatLon.lat, userLatLon.lng]);
+      
+      if (dist >= 0) {
+        const speedKmh = (st.speed != null && st.speed > 0) ? st.speed : 20; 
+        const etaMins = Math.round((dist / 1000) / (speedKmh / 60));
+        etaMsg = ` Estará en tu zona en ~${etaMins} min.`;
+      } else {
+        etaMsg = ` (El bus ya pasó tu zona o está en otra ruta).`;
+      }
+    } else if (!userLocationMarker) {
+      etaMsg = ` (Activa "Mi ubicación" para ver el tiempo estimado).`;
+    }
+    
+    setStatus(`Siguiendo unidad ${unitId}.${etaMsg}`, true);
   }
   // Forzar repintado del popup abierto
   refreshPositions();
