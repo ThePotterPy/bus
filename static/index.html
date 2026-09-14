@@ -802,7 +802,7 @@ function matchesSearch(line, q) {
     const prov = line.provider || 'jaha';
     if (prov !== selectedProvider) return false;
   }
-  if (!q) return true;
+  if (!q || q === 'todas las líneas') return true;
   const name = line.name.toLowerCase();
   const alias = (line.company && (line.company.alias || line.company.name) || '').toLowerCase();
   const prov = (line.provider || '').toLowerCase();
@@ -882,6 +882,14 @@ document.getElementById('providerTabs')?.addEventListener('click', (e) => {
   document.querySelectorAll('.prov-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedProvider = btn.dataset.prov;
+
+  const lineObj = currentLine && currentLine !== ALL_LINES_ID ? allLines.find(l => String(l.id) === String(currentLine)) : null;
+  const currentLineName = lineObj ? lineLabel(lineObj) : 'Todas las líneas';
+  if (lineSearch.value === currentLineName || lineSearch.value === 'Todas las líneas') {
+    lineSearch.value = '';
+    clearSearchBtn.style.display = 'none';
+  }
+
   renderLineList();
   openLineList();
 });
@@ -1261,7 +1269,15 @@ lineSearch.addEventListener('input', () => {
   clearSearchBtn.style.display = lineSearch.value ? 'flex' : 'none';
   openLineList();
 });
-lineSearch.addEventListener('focus', openLineList);
+lineSearch.addEventListener('focus', () => {
+  const lineObj = currentLine && currentLine !== ALL_LINES_ID ? allLines.find(l => String(l.id) === String(currentLine)) : null;
+  const currentLineName = lineObj ? lineLabel(lineObj) : 'Todas las líneas';
+  if (lineSearch.value === currentLineName || lineSearch.value === 'Todas las líneas') {
+    lineSearch.value = '';
+    clearSearchBtn.style.display = 'none';
+  }
+  openLineList();
+});
 lineSearch.addEventListener('blur', () => setTimeout(closeLineList, 150));
 
 clearSearchBtn.addEventListener('click', () => {
