@@ -540,7 +540,8 @@ if ('serviceWorker' in navigator) {
 // numero de "unit" solo es unico dentro de una misma linea.
 const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, ... }
 const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
-const tailsById = new Map();      // unitId -> L.Polyline (para la estela en vivo)
+const tailsById = new Map();      // unitId -> L.Polyline (cola del bus individual)
+const etaRouteLayer = L.layerGroup().addTo(map); // para dibujar la ruta de llegada (ETA)
 let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
 
 const DIR_DEGREES = {
@@ -1561,6 +1562,10 @@ async function loadActiveTails(lineId) {
         pts.forEach(point => {
           if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
           if (officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS) {
+            if (previousPoint && haversineMeters(previousPoint[0], previousPoint[1], point[0], point[1]) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
+              // Si hay un salto enorme (ej. teletransporte a la parada), se rompe la continuidad
+              offRouteTail = [];
+            }
             if (offRouteTail.length === 0 && previousPoint) offRouteTail.push(previousPoint);
             offRouteTail.push(point);
           } else {
@@ -1607,6 +1612,7 @@ async function refreshPositions() {
     if (!units.length) emptyMsg.textContent = 'No hay unidades reportando posicion en esta linea ahora mismo';
 
     const seenIds = new Set();
+    etaRouteLayer.clearLayers(); // Limpiar ruta ETA anterior
 
     units.forEach(u => {
       const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
@@ -1646,6 +1652,23 @@ async function refreshPositions() {
            etaHtml += `<div class="popup-row">🏁 Llega a tu destino: <b>~${etaDestMins} min</b></div>`;
         }
         etaHtml += '</div>';
+        
+        // Dibujar el trayecto si estamos siguiendo este bus
+        if (isFollowed && userLocationMarker && distOriginMeters >= 0) {
+          const busIdx = findClosestVertexIdx(poly, [lat, lon]);
+          const targetIdx = findClosestVertexIdx(poly, [userLocationMarker.getLatLng().lat, userLocationMarker.getLatLng().lng]);
+          
+          if (busIdx <= targetIdx + 2) {
+            const etaPoints = poly.slice(busIdx, targetIdx + 1);
+            // Agregar posicion exacta del bus y usuario para que quede conectado perfecto
+            etaPoints.unshift([lat, lon]);
+            etaPoints.push([userLocationMarker.getLatLng().lat, userLocationMarker.getLatLng().lng]);
+            
+            L.polyline(etaPoints, {
+              color: '#00e676', weight: 6, opacity: 0.8
+            }).addTo(etaRouteLayer);
+          }
+        }
       }
 
       const popupHtml = `
