@@ -1573,11 +1573,12 @@ async function loadActiveTails(lineId) {
           if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
           if (officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS) {
             if (previousPoint && haversineMeters(previousPoint[0], previousPoint[1], point[0], point[1]) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
-              // Si hay un salto enorme (ej. teletransporte a la parada), se rompe la continuidad
-              offRouteTail = [];
+              // Si hay un salto enorme (ej. teletransporte a la terminal), no conectar con el punto anterior
+              offRouteTail = [point];
+            } else {
+              if (offRouteTail.length === 0 && previousPoint) offRouteTail.push(previousPoint);
+              offRouteTail.push(point);
             }
-            if (offRouteTail.length === 0 && previousPoint) offRouteTail.push(previousPoint);
-            offRouteTail.push(point);
           } else {
             offRouteTail = [];
           }
