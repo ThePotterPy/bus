@@ -21,8 +21,10 @@ funciona igual; solo se desactiva la funcion de "avisarme".
 """
 
 import gzip
+import ipaddress
 import json
 import math
+import mimetypes
 import os
 import re
 import sqlite3
@@ -43,9 +45,9 @@ from observed_routes import ObservedRoutes
 PORT = int(os.environ.get("PORT", 8787))
 API_BASE = "https://www.jaha.com.py/rest_backend"
 MAS_API_BASE = "https://geomastarjeta.z1.mastarjeta.net"
-MAS_AUTH_TOKEN = "4d30d2b7cf01ac8cd46fec1da00686f112cb63a5"
+MAS_AUTH_TOKEN = os.environ.get("MAS_AUTH_TOKEN", "").strip()
 BASE_DIR = Path(__file__).parent
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR = (BASE_DIR / "static").resolve()
 DATA_DIR = Path(os.environ.get("DATA_DIR") or os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or BASE_DIR / "data")
 SUBS_FILE = DATA_DIR / "notify_subscriptions.json"
 VAPID_FILE = DATA_DIR / "vapid_private.pem"
@@ -55,11 +57,19 @@ observed_routes = ObservedRoutes(
     osrm_url=os.environ.get("OSRM_MATCH_URL", "https://router.project-osrm.org"),
     poll_seconds=int(os.environ.get("OBSERVED_POLL_SECONDS", "30")),
 )
-_line_fetch_locks = {}
-_line_fetch_locks_guard = threading.Lock()
+# Un conjunto fijo de candados evita que identificadores arbitrarios enviados
+# por Internet hagan crecer un diccionario para siempre.
+_line_fetch_locks = [threading.Lock() for _ in range(64)]
+_batch_executor = ThreadPoolExecutor(max_workers=6, thread_name_prefix="positions")
+
+MAX_JSON_BODY_BYTES = 64 * 1024
+MAX_BATCH_LINES = 120
+LINE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
+CATALOG_CACHE_TTL = 300
 
 POSITIONS_CACHE_TTL = 8  # segundos - compartido entre el proxy de la UI y el chequeo de proximidad
 NOTIFY_CHECK_INTERVAL = 20  # segundos entre chequeos de proximidad
+SUBSCRIPTION_TTL_SECONDS = 30 * 86400
 VAPID_CLAIMS_SUB = "mailto:notificaciones@example.com"
 ACTIVE_TAIL_WINDOW_SECONDS = 5 * 60
 # Las muestras GPS no contienen la geometría de las calles entre dos puntos.
@@ -76,10 +86,11 @@ HEADERS = {
 
 MAS_HEADERS = {
     "User-Agent": "Dart/3.0 (dart:io)",
-    "Authorization": f"Token {MAS_AUTH_TOKEN}",
     "Accept": "application/json",
     "Accept-Encoding": "gzip",
 }
+if MAS_AUTH_TOKEN:
+    MAS_HEADERS["Authorization"] = f"Token {MAS_AUTH_TOKEN}"
 
 try:
     from py_vapid import Vapid
@@ -211,13 +222,52 @@ def mas_line_mirrors_jaha(line: dict, jaha_names: set[str]) -> bool:
     )
 
 
+_combined_lines_cache: list[dict] = []
+_combined_lines_cache_time = 0.0
+_combined_lines_cache_lock = threading.Lock()
+_combined_lines_refresh_lock = threading.Lock()
+
+
 def get_all_lines_combined() -> list[dict]:
+    """Devuelve el catálogo unificado sin consultar proveedores por usuario.
+
+    El catálogo cambia poco. Una caché compartida reduce demoras y evita que
+    una ráfaga de visitantes se convierta en la misma ráfaga contra JAHA.
+    Ante una caída temporal conservamos la última copia completa conocida.
+    """
+    global _combined_lines_cache, _combined_lines_cache_time
+    now = time.time()
+    with _combined_lines_cache_lock:
+        if _combined_lines_cache and now - _combined_lines_cache_time < CATALOG_CACHE_TTL:
+            return list(_combined_lines_cache)
+
+    with _combined_lines_refresh_lock:
+        now = time.time()
+        with _combined_lines_cache_lock:
+            if _combined_lines_cache and now - _combined_lines_cache_time < CATALOG_CACHE_TTL:
+                return list(_combined_lines_cache)
+            previous = list(_combined_lines_cache)
+
+        combined, jaha_available = _fetch_all_lines_combined()
+        # Si JAHA falla, no reemplazamos un catálogo completo por uno parcial.
+        if previous and not jaha_available:
+            return previous
+        if combined:
+            with _combined_lines_cache_lock:
+                _combined_lines_cache = list(combined)
+                _combined_lines_cache_time = now
+        return combined or previous
+
+
+def _fetch_all_lines_combined() -> tuple[list[dict], bool]:
     jaha_lines = []
+    jaha_available = False
     status, body = call_api("/bus/lines")
     if status == 200:
         try:
             parsed = json.loads(body)
             if parsed.get("success"):
+                jaha_available = True
                 for item in parsed.get("data", []):
                     item["provider"] = "jaha"
                     jaha_lines.append(item)
@@ -241,7 +291,27 @@ def get_all_lines_combined() -> list[dict]:
             if not mas_line_mirrors_jaha(line, jaha_names)
         ]
 
-    return jaha_lines + mas_lines
+    return jaha_lines + mas_lines, jaha_available
+
+
+def known_line_ids() -> set[str]:
+    return {str(line.get("id")) for line in get_all_lines_combined() if line.get("id") is not None}
+
+
+def valid_line_id(value) -> bool:
+    return isinstance(value, str) and bool(LINE_ID_RE.fullmatch(value))
+
+
+def valid_coordinates(lat, lon) -> bool:
+    try:
+        lat_value, lon_value = float(lat), float(lon)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(lat_value) and math.isfinite(lon_value) and -90 <= lat_value <= 90 and -180 <= lon_value <= 180
+
+
+def valid_client_id(value) -> bool:
+    return isinstance(value, str) and 1 <= len(value) <= 128 and bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
 
 
 # ---------------------------------------------------------------------------
@@ -546,8 +616,7 @@ def active_tails(line: str) -> dict[str, list[list[float]]]:
 def get_positions_cached(line: str) -> tuple[int, bytes]:
     # One upstream request per line even if the collector and many clients
     # hit an expired cache simultaneously.
-    with _line_fetch_locks_guard:
-        lock = _line_fetch_locks.setdefault(str(line), threading.Lock())
+    lock = _line_fetch_locks[hash(str(line)) % len(_line_fetch_locks)]
     with lock:
         return _get_positions_cached(str(line))
 
@@ -579,22 +648,21 @@ def get_positions_batch(lines: list[str]) -> dict[str, list[dict]]:
     Mantiene una respuesta por línea, por lo que los identificadores de unidad
     nunca se mezclan entre recorridos. La caché corta existente se reutiliza.
     """
-    unique_lines = list(dict.fromkeys(str(line) for line in lines if str(line)))[:150]
+    unique_lines = list(dict.fromkeys(str(line) for line in lines if str(line)))[:MAX_BATCH_LINES]
     results: dict[str, list[dict]] = {}
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = {executor.submit(get_positions_cached, line): line for line in unique_lines}
-        for future in as_completed(futures):
-            line = futures[future]
-            try:
-                status, body = future.result()
-                response = json.loads(body)
-                if status == 200 and response.get("success"):
-                    results[line] = response.get("data") or []
-                else:
-                    results[line] = []
-            except (ValueError, TypeError, OSError):
+    futures = {_batch_executor.submit(get_positions_cached, line): line for line in unique_lines}
+    for future in as_completed(futures):
+        line = futures[future]
+        try:
+            status, body = future.result()
+            response = json.loads(body)
+            if status == 200 and response.get("success"):
+                results[line] = response.get("data") or []
+            else:
                 results[line] = []
+        except (ValueError, TypeError, OSError):
+            results[line] = []
     return results
 
 
@@ -681,7 +749,16 @@ def load_subs():
     global _subs
     if SUBS_FILE.is_file():
         try:
-            _subs = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
+            loaded = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
+            cutoff = time.time() - SUBSCRIPTION_TTL_SECONDS
+            retained = {}
+            for client_id, sub in loaded.items() if isinstance(loaded, dict) else []:
+                try:
+                    if isinstance(sub, dict) and float(sub.get("updatedAt") or 0) >= cutoff:
+                        retained[client_id] = sub
+                except (TypeError, ValueError):
+                    continue
+            _subs = retained
         except Exception:
             _subs = {}
 
@@ -690,7 +767,9 @@ def save_subs():
     DATA_DIR.mkdir(exist_ok=True)
     with _subs_lock:
         snapshot = json.dumps(_subs)
-    SUBS_FILE.write_text(snapshot, encoding="utf-8")
+        temporary = SUBS_FILE.with_suffix(".tmp")
+        temporary.write_text(snapshot, encoding="utf-8")
+        os.replace(temporary, SUBS_FILE)
 
 
 def haversine_km(lat1, lon1, lat2, lon2) -> float:
@@ -735,12 +814,17 @@ def notifier_loop():
             snapshot = list(_subs.items())
 
         by_line: dict[str, list[tuple[str, dict]]] = {}
+        stale_ids = []
+        cutoff = time.time() - SUBSCRIPTION_TTL_SECONDS
         for client_id, sub in snapshot:
+            if float(sub.get("updatedAt") or 0) < cutoff:
+                stale_ids.append(client_id)
+                continue
             if not sub.get("line") or sub.get("lat") is None or sub.get("lon") is None:
                 continue
             by_line.setdefault(sub["line"], []).append((client_id, sub))
 
-        expired_ids = []
+        expired_ids = list(stale_ids)
         changed = False
 
         for line, entries in by_line.items():
@@ -794,51 +878,155 @@ def notifier_loop():
             save_subs()
 
 
+class RequestBodyError(ValueError):
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+
+
+class FixedWindowRateLimiter:
+    """Límite sencillo en memoria para las rutas públicas más costosas."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.buckets: dict[str, tuple[float, int, float]] = {}
+
+    def allow(self, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
+        now = time.monotonic()
+        with self.lock:
+            started, count, _last_seen = self.buckets.get(key, (now, 0, now))
+            if now - started >= window_seconds:
+                started, count = now, 0
+            count += 1
+            self.buckets[key] = (started, count, now)
+
+            if len(self.buckets) > 2048:
+                cutoff = now - 2 * window_seconds
+                stale = [bucket_key for bucket_key, bucket in self.buckets.items() if bucket[2] < cutoff]
+                for bucket_key in stale:
+                    self.buckets.pop(bucket_key, None)
+                if len(self.buckets) > 2048:
+                    oldest = sorted(self.buckets, key=lambda bucket_key: self.buckets[bucket_key][2])
+                    for bucket_key in oldest[:len(self.buckets) - 2048]:
+                        self.buckets.pop(bucket_key, None)
+
+            retry_after = max(1, math.ceil(window_seconds - (now - started)))
+            return count <= limit, retry_after
+
+
+_rate_limiter = FixedWindowRateLimiter()
+
+
+def resolve_static_file(rel_path: str) -> Path | None:
+    """Resuelve un archivo únicamente si permanece dentro de static/."""
+    try:
+        candidate = (STATIC_DIR / rel_path).resolve()
+        candidate.relative_to(STATIC_DIR)
+    except (OSError, ValueError):
+        return None
+    return candidate if candidate.is_file() else None
+
+
+def static_content_type(path: Path) -> str:
+    explicit = {
+        ".html": "text/html; charset=utf-8",
+        ".js": "application/javascript; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".json": "application/manifest+json; charset=utf-8" if path.name == "manifest.json" else "application/json; charset=utf-8",
+        ".webmanifest": "application/manifest+json; charset=utf-8",
+        ".svg": "image/svg+xml",
+    }
+    return explicit.get(path.suffix.lower()) or mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass  # silencia el log por defecto, ya lo hacemos mas abajo
 
-    def _send_json(self, status: int, payload: bytes):
+    def end_headers(self):
+        # Cabeceras compatibles con la PWA actual. La política permite los
+        # proveedores de mapa/fuentes existentes, pero bloquea marcos, cámara,
+        # micrófono y contenido inesperado.
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "same-origin")
+        self.send_header("Permissions-Policy", "geolocation=(self), camera=(), microphone=()")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
+            "font-src https://fonts.gstatic.com; "
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://unpkg.com; "
+            "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org; "
+            "worker-src 'self'; manifest-src 'self'",
+        )
+        super().end_headers()
+
+    def _client_ip(self) -> str:
+        forwarded = self.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+        candidate = forwarded or self.client_address[0]
+        try:
+            return str(ipaddress.ip_address(candidate))
+        except ValueError:
+            return str(self.client_address[0])[:64]
+
+    def _allow_request(self, group: str, limit: int, window_seconds: int = 60) -> bool:
+        allowed, retry_after = _rate_limiter.allow(
+            f"{group}:{self._client_ip()}", limit, window_seconds
+        )
+        if allowed:
+            return True
+        self._send_json_obj(
+            429,
+            {"success": False, "error": "demasiadas solicitudes; intenta nuevamente en unos segundos"},
+            {"Retry-After": str(retry_after)},
+        )
+        return False
+
+    def _send_json(self, status: int, payload: bytes, extra_headers: dict[str, str] | None = None):
         try:
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(payload)))
+            self.send_header("Cache-Control", "no-store")
+            for name, value in (extra_headers or {}).items():
+                self.send_header(name, value)
             self.end_headers()
             self.wfile.write(payload)
         except (BrokenPipeError, ConnectionAbortedError):
             pass  # Cliente cerro conexion antes de terminar
 
-    def _send_json_obj(self, status: int, obj: dict):
-        self._send_json(status, json.dumps(obj).encode("utf-8"))
+    def _send_json_obj(self, status: int, obj: dict, extra_headers: dict[str, str] | None = None):
+        self._send_json(status, json.dumps(obj).encode("utf-8"), extra_headers)
 
     def _read_json_body(self) -> dict | None:
         try:
             length = int(self.headers.get("Content-Length", 0))
         except ValueError:
-            return None
+            raise RequestBodyError(400, "Content-Length invalido")
         if length <= 0:
             return None
+        if length > MAX_JSON_BODY_BYTES:
+            raise RequestBodyError(413, "la solicitud supera el limite de 64 KB")
         raw = self.rfile.read(length)
         try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return None
+            return json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise RequestBodyError(400, "JSON invalido")
 
     def _send_file(self, rel_path: str):
-        file_path = STATIC_DIR / rel_path
-        if not file_path.is_file():
+        file_path = resolve_static_file(rel_path)
+        if file_path is None:
             self.send_error(404, "Not found")
             return
-        content_type = "text/html; charset=utf-8"
-        if rel_path.endswith(".js"):
-            content_type = "application/javascript; charset=utf-8"
-        elif rel_path.endswith(".css"):
-            content_type = "text/css; charset=utf-8"
         data = file_path.read_bytes()
         try:
             self.send_response(200)
-            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Type", static_content_type(file_path))
             self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             self.wfile.write(data)
         except (BrokenPipeError, ConnectionAbortedError):
@@ -847,7 +1035,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
-        print(f"GET {parsed.path} {qs}")
+        # No registrar parámetros: el planificador contiene coordenadas exactas.
+        print(f"GET {parsed.path}")
 
         if parsed.path == "/" or parsed.path == "/index.html":
             self._send_file("index.html")
@@ -878,8 +1067,13 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/positions":
             line = qs.get("line", [None])[0]
-            if not line:
-                self._send_json(400, b'{"success": false, "error": "falta line"}')
+            if not valid_line_id(line):
+                self._send_json(400, b'{"success": false, "error": "line invalida"}')
+                return
+            if line not in known_line_ids():
+                self._send_json_obj(404, {"success": False, "error": "linea inexistente"})
+                return
+            if not self._allow_request("positions", 120):
                 return
             status, body = get_positions_cached(line)
             self._send_json(status, body)
@@ -887,8 +1081,13 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/path":
             line = qs.get("line", [None])[0]
-            if not line:
-                self._send_json(400, b'{"success": false, "error": "falta line"}')
+            if not valid_line_id(line):
+                self._send_json(400, b'{"success": false, "error": "line invalida"}')
+                return
+            if line not in known_line_ids():
+                self._send_json_obj(404, {"success": False, "error": "linea inexistente"})
+                return
+            if not self._allow_request("path", 60):
                 return
             if str(line).startswith("mas_"):
                 status, data = get_mas_path(line)
@@ -938,12 +1137,17 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/planificar":
+            if not self._allow_request("planificar", 60):
+                return
             try:
                 olat = float(qs.get("olat", [0])[0])
                 olon = float(qs.get("olon", [0])[0])
                 dlat = float(qs.get("dlat", [0])[0])
                 dlon = float(qs.get("dlon", [0])[0])
             except ValueError:
+                self._send_json(400, b'{"success": false, "error": "coordenadas invalidas"}')
+                return
+            if not valid_coordinates(olat, olon) or not valid_coordinates(dlat, dlon):
                 self._send_json(400, b'{"success": false, "error": "coordenadas invalidas"}')
                 return
 
@@ -1002,21 +1206,42 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        body = self._read_json_body()
         print(f"POST {parsed.path}")
+        try:
+            body = self._read_json_body()
+        except RequestBodyError as exc:
+            self._send_json_obj(exc.status, {"success": False, "error": exc.message})
+            return
 
         if parsed.path == "/api/positions/batch":
             lines = body.get("lines") if isinstance(body, dict) else None
-            if not isinstance(lines, list):
-                self._send_json_obj(400, {"success": False, "error": "falta lines"})
+            if (
+                not isinstance(lines, list)
+                or not lines
+                or len(lines) > MAX_BATCH_LINES
+                or any(not valid_line_id(line) for line in lines)
+            ):
+                self._send_json_obj(400, {
+                    "success": False,
+                    "error": f"se requieren entre 1 y {MAX_BATCH_LINES} lineas validas",
+                })
                 return
-            self._send_json_obj(200, {"success": True, "lines": get_positions_batch(lines)})
+            unique_lines = list(dict.fromkeys(lines))
+            unknown = [line for line in unique_lines if line not in known_line_ids()]
+            if unknown:
+                self._send_json_obj(400, {"success": False, "error": "una o mas lineas no existen"})
+                return
+            if not self._allow_request("positions-batch", 12):
+                return
+            self._send_json_obj(200, {"success": True, "lines": get_positions_batch(unique_lines)})
             return
 
         if parsed.path == "/api/observed-routes/batch":
             lines = body.get("lines") if isinstance(body, dict) else None
             if not isinstance(lines, list) or len(lines) > 25 or any(not isinstance(x, str) or len(x)>80 for x in lines):
                 self._send_json_obj(400, {"success": False, "error": "se requieren hasta 25 lineas"})
+                return
+            if not self._allow_request("observed-routes-batch", 30):
                 return
             self._send_json_obj(200, {"success": True, "lines": {
                 line: observed_routes.snapshot(line, body.get("history") is True) for line in set(lines)
@@ -1030,15 +1255,35 @@ class Handler(BaseHTTPRequestHandler):
             if not body or not body.get("clientId") or not body.get("pushSubscription") or not body.get("line"):
                 self._send_json_obj(400, {"success": False, "error": "faltan datos (clientId, pushSubscription, line)"})
                 return
-            client_id = str(body["clientId"])
+            client_id = body["clientId"]
+            line = body["line"]
+            try:
+                radius = float(body.get("radiusKm", 5))
+            except (TypeError, ValueError):
+                radius = -1
+            if (
+                not valid_client_id(client_id)
+                or not valid_line_id(line)
+                or line not in known_line_ids()
+                or not isinstance(body.get("pushSubscription"), dict)
+                or not valid_coordinates(body.get("lat"), body.get("lon"))
+                or not math.isfinite(radius)
+                or not 0.1 <= radius <= 50
+            ):
+                self._send_json_obj(400, {"success": False, "error": "datos de aviso invalidos"})
+                return
+            if not self._allow_request("notify", 30):
+                return
             with _subs_lock:
                 _subs[client_id] = {
-                    "line": str(body["line"]),
-                    "lineName": body.get("lineName"),
-                    "radiusKm": float(body.get("radiusKm", 5)),
+                    "line": line,
+                    "lineName": str(body.get("lineName") or "")[:120],
+                    "radiusKm": radius,
                     "pushSubscription": body["pushSubscription"],
-                    "lat": body.get("lat"),
-                    "lon": body.get("lon"),
+                    # Un aviso de 100 m o más no necesita conservar la
+                    # precisión completa del GPS del usuario (~11 m alcanza).
+                    "lat": round(float(body["lat"]), 4),
+                    "lon": round(float(body["lon"]), 4),
                     "insideRadius": False,
                     "updatedAt": time.time(),
                 }
@@ -1050,11 +1295,16 @@ class Handler(BaseHTTPRequestHandler):
             if not body or not body.get("clientId"):
                 self._send_json_obj(400, {"success": False, "error": "falta clientId"})
                 return
-            client_id = str(body["clientId"])
+            client_id = body["clientId"]
+            if not valid_client_id(client_id) or not valid_coordinates(body.get("lat"), body.get("lon")):
+                self._send_json_obj(400, {"success": False, "error": "ubicacion invalida"})
+                return
+            if not self._allow_request("notify-location", 60):
+                return
             with _subs_lock:
                 if client_id in _subs:
-                    _subs[client_id]["lat"] = body.get("lat")
-                    _subs[client_id]["lon"] = body.get("lon")
+                    _subs[client_id]["lat"] = round(float(body["lat"]), 4)
+                    _subs[client_id]["lon"] = round(float(body["lon"]), 4)
                     _subs[client_id]["updatedAt"] = time.time()
                     found = True
                 else:
@@ -1068,7 +1318,10 @@ class Handler(BaseHTTPRequestHandler):
             if not body or not body.get("clientId"):
                 self._send_json_obj(400, {"success": False, "error": "falta clientId"})
                 return
-            client_id = str(body["clientId"])
+            client_id = body["clientId"]
+            if not valid_client_id(client_id):
+                self._send_json_obj(400, {"success": False, "error": "clientId invalido"})
+                return
             with _subs_lock:
                 _subs.pop(client_id, None)
             save_subs()
