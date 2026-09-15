@@ -39,6 +39,12 @@ el boton de aviso de proximidad.
   hay recorrido cargado para la linea, tambien intenta reconocer si la
   unidad va de "Ida" o de "Vuelta" comparando su avance contra las
   polilineas de la ruta.
+- **Filtro por ramal**: cuando una línea tiene varios recorridos aparece una
+  barra horizontal con “Todos” y cada ramal, junto con su cantidad de buses
+  activos. El cambio es inmediato: oculta los otros trazados, marcadores,
+  estelas y desvíos sin volver a descargar la línea ni detener su seguimiento.
+  Las observaciones nuevas guardan también el nombre del recorrido para que
+  los desvíos persistentes permanezcan asociados a su ramal.
 - **Avisos de proximidad**: se puede elegir una linea y un radio (1/5/10 km)
   para recibir una notificacion push cuando algun bus de esa linea entre en
   ese radio de tu ubicacion. Usa Web Push estandar (Service Worker + VAPID),

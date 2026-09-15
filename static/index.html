@@ -162,6 +162,41 @@
         padding: 1px 6px;
         border-radius: 10px;
       }
+      .branch-bar {
+        display: none;
+        gap: 7px;
+        overflow-x: auto;
+        padding: 7px;
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        scrollbar-width: none;
+        overscroll-behavior-x: contain;
+      }
+      .branch-bar.visible { display: flex; }
+      .branch-bar::-webkit-scrollbar { display: none; }
+      .branch-pill {
+        flex: 0 0 auto;
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+        color: var(--muted);
+        padding: 7px 11px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .branch-pill.active {
+        color: #06131f;
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .branch-pill-count { opacity: .75; margin-left: 3px; }
       .badge-dot {
         width: 6px;
         height: 6px;
@@ -396,6 +431,7 @@
       <button class="prov-pill" data-prov="jaha"><span class="badge-dot jaha"></span>Jaha <span class="prov-count" id="countJaha"></span></button>
       <button class="prov-pill" data-prov="mas"><span class="badge-dot mas"></span>Más <span class="prov-count" id="countMas"></span></button>
     </div>
+    <div class="branch-bar" id="branchBar" aria-label="Filtrar por ramal"></div>
     <div class="float-card" id="lineList"></div>
     <div class="float-card" id="notifyPanel">
       <div class="notify-intro">Te avisamos cuando el bus de una linea este cerca tuyo (con la pagina cerrada tambien).</div>
@@ -462,10 +498,13 @@
   </button>
 
   <div id="observedRouteLegend">
-    <div style="margin-bottom: 4px; font-weight: bold;">Trayectos alternativos observados:</div>
-    <div><span class="observed-route-swatch" style="border-top-color: #FFA500;"></span> Un colectivo (no confirmado / reciente)</div>
-    <div><span class="observed-route-swatch" style="border-top-color: #ff4fd8;"></span> Dos colectivos (confirmado)</div>
-    <div><span class="observed-route-swatch" style="border-top-color: #FF0000;"></span> Más de dos colectivos (muy frecuente)</div>
+    <div style="margin-bottom:4px;font-weight:bold">Trayectos observados · últimos 14 días</div>
+    <div><span class="observed-route-swatch" style="border-top-color:#00e5ff"></span> 1 bus / puntos pendientes de ajuste</div>
+    <div><span class="observed-route-swatch" style="border-top-color:#FFA500"></span> 2 buses distintos</div>
+    <div><span class="observed-route-swatch" style="border-top-color:#2684ff"></span> 3 buses distintos</div>
+    <div><span class="observed-route-swatch" style="border-top-color:#a855f7"></span> 4 o más buses · frecuente</div>
+    <label style="display:block;margin-top:6px"><input type="checkbox" id="observedHistory"> Mostrar históricas (gris)</label>
+    <div id="observedNotice" style="max-width:280px;margin-top:4px"></div>
   </div>
 
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
@@ -516,6 +555,7 @@ const statusText = document.getElementById('statusText');
 const emptyMsg = document.getElementById('empty');
 const locateBtn = document.getElementById('locateBtn');
 const observedRouteLegend = document.getElementById('observedRouteLegend');
+const branchBar = document.getElementById('branchBar');
 
 let currentLine = null;
 let allLines = [];
@@ -530,6 +570,11 @@ let allLinesMode = false;
 let allLinesTimer = null;
 let allLinesGeneration = 0;
 const allLineStates = new Map();
+const BRANCH_ALL = '__all__';
+let currentBranch = BRANCH_ALL;
+let lineBranches = [];
+let latestLineUnits = [];
+const observedDeviationItems = [];
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(console.error);
@@ -688,14 +733,15 @@ function projectToPolyline(lat, lon, poly) {
 // Actualiza (o crea) el estado de una unidad con su nueva posicion: calcula
 // el rumbo suavizado y, si hay recorrido cargado, intenta reconocer si va de
 // ida o de vuelta comparando el avance sobre la polilinea mas cercana.
-function updateUnitState(unitId, lat, lon, isMoving) {
+function updateUnitState(unitId, lat, lon, isMoving, branchKey = null) {
   let st = unitState.get(unitId);
   if (!st) {
     st = {
       lat, lon, bearing: null, routeLabel: null,
       matchedRouteName: null, lastArc: null,
       candidateLabel: null, candidateStreak: 0,
-      tail: [[lat, lon]],
+      branchKey,
+      tail: [],
     };
     unitState.set(unitId, st);
     return st;
@@ -706,33 +752,16 @@ function updateUnitState(unitId, lat, lon, isMoving) {
     const raw = bearingDeg(st.lat, st.lon, lat, lon);
     st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
 
-    if (currentRoutePolylines.length) {
+    const unitRoutes = branchKey
+      ? currentRoutePolylines.filter(poly => poly.branchKey === branchKey)
+      : currentRoutePolylines;
+    if (unitRoutes.length) {
       let bestRoute = null, bestProj = null;
-      currentRoutePolylines.forEach(poly => {
+      unitRoutes.forEach(poly => {
         const proj = projectToPolyline(lat, lon, poly);
         if (proj && (!bestProj || proj.dist < bestProj.dist)) { bestProj = proj; bestRoute = poly; }
       });
       
-      const isOffRoute = bestProj && bestProj.dist > OBSERVED_DEVIATION_METERS;
-      
-      if (isOffRoute) {
-        if (st.tail.length === 0) {
-          // No unir un salto de GPS con una diagonal ficticia.
-          if (haversineMeters(st.lat, st.lon, lat, lon) <= MAX_OBSERVED_SEGMENT_STEP_METERS) {
-            st.tail.push([st.lat, st.lon]); // Conectar con el ultimo punto conocido
-          }
-        }
-        st.tail.push([lat, lon]);
-        if (st.tail.length > 1 && haversineMeters(
-          st.tail[st.tail.length - 2][0], st.tail[st.tail.length - 2][1], lat, lon
-        ) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
-          st.tail = [[lat, lon]];
-        }
-        if (st.tail.length > 40) st.tail.shift();
-      } else {
-        st.tail = []; // Limpiar estela si volvio a la ruta oficial
-      }
-
       if (bestRoute && bestProj.dist <= SNAP_METERS && bestRoute.dirLabel) {
         let candidate = bestRoute.dirLabel;
         // si vamos retrocediendo sobre la MISMA polilinea que veniamos siguiendo,
@@ -758,6 +787,7 @@ function updateUnitState(unitId, lat, lon, isMoving) {
 
   st.lat = lat;
   st.lon = lon;
+  st.branchKey = branchKey;
   return st;
 }
 
@@ -790,6 +820,185 @@ function escapeHtml(s) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
 }
+
+function normalizeBranchText(value) {
+  return String(value || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\((?:i|v|ida|vuelta)\)/g, ' ')
+    .replace(/(?:^|[\s_-])(?:ida|vuelta)(?=$|[\s_-])/g, ' ')
+    .replace(/\(\d+\)/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim().replace(/\s+/g, ' ');
+}
+
+function cleanBranchLabel(value) {
+  const cleaned = String(value || '')
+    .replace(/\((?:I|V|IDA|VUELTA)\)/gi, ' ')
+    .replace(/(?:^|[\s_-])(?:IDA|VUELTA)(?=$|[\s_-])/gi, ' ')
+    .replace(/\(\d+\)/g, ' ')
+    .replace(/[\s_-]+/g, ' ').trim();
+  if (!cleaned) return 'Principal';
+  return cleaned.toLowerCase().replace(/(^|\s)\p{L}/gu, letter => letter.toUpperCase());
+}
+
+function cleanReportedBranchLabel(value) {
+  const cleaned = String(value || '')
+    .replace(/\((?:I|V|IDA|VUELTA)\)/gi, ' ')
+    .replace(/(?:^|[\s_-])(?:IDA|VUELTA)(?=$|[\s_-])/gi, ' ')
+    .replace(/[\s_-]+/g, ' ').trim();
+  return cleaned.toLowerCase().replace(/(^|\s)\p{L}/gu, letter => letter.toUpperCase());
+}
+
+function routeDirection(value) {
+  const text = String(value || '').toLowerCase();
+  if (/\((?:v|vuelta)\)|(?:^|[\s_-])vuelta(?:$|[\s_-])/.test(text)) return 'Vuelta';
+  if (/\((?:i|ida)\)|(?:^|[\s_-])ida(?:$|[\s_-])/.test(text)) return 'Ida';
+  return null;
+}
+
+function branchByKey(key) {
+  return lineBranches.find(branch => branch.key === key) || null;
+}
+
+function learnBranchLabel(branchKey, routeName) {
+  const branch = branchByKey(branchKey);
+  const candidateKey = normalizeBranchText(routeName);
+  if (!branch || branch.key === '__principal__' || branch.key.split(' ').length !== 1) return;
+  if (!candidateKey.startsWith(branch.key + ' ')) return;
+  const candidate = cleanReportedBranchLabel(routeName);
+  if (normalizeBranchText(candidate).split(' ').length > normalizeBranchText(branch.label).split(' ').length) {
+    branch.label = candidate;
+  }
+}
+
+function ensureLineBranch(routeName) {
+  const normalized = normalizeBranchText(routeName);
+  const key = normalized || '__principal__';
+  let branch = branchByKey(key);
+  if (!branch) {
+    branch = { key, label: cleanBranchLabel(routeName), polylines: [], layers: [] };
+    lineBranches.push(branch);
+  }
+  return branch;
+}
+
+function closestBranchByGeometry(lat, lon) {
+  let best = null, secondDistance = Infinity;
+  lineBranches.forEach(branch => {
+    let distance = Infinity;
+    branch.polylines.forEach(poly => {
+      const projection = projectToPolyline(lat, lon, poly);
+      if (projection) distance = Math.min(distance, projection.dist);
+    });
+    if (!best || distance < best.distance) {
+      secondDistance = best ? best.distance : Infinity;
+      best = { key: branch.key, distance };
+    } else secondDistance = Math.min(secondDistance, distance);
+  });
+  return best && best.distance <= 130 && secondDistance - best.distance >= 25 ? best.key : null;
+}
+
+function matchRouteToBranch(routeName, lat = null, lon = null) {
+  if (!lineBranches.length) return null;
+  const normalized = normalizeBranchText(routeName);
+  if (normalized) {
+    const exact = branchByKey(normalized);
+    if (exact) return exact.key;
+    const unitTokens = new Set(normalized.split(' ').filter(Boolean));
+    let best = null, tied = false;
+    lineBranches.forEach(branch => {
+      const branchTokens = branch.key === '__principal__' ? [] : branch.key.split(' ');
+      const common = branchTokens.filter(token => unitTokens.has(token)).length;
+      if (!common) return;
+      const score = common * 10 + common / Math.max(1, branchTokens.length) * 4 + common / unitTokens.size;
+      if (!best || score > best.score + 0.01) { best = { key: branch.key, score }; tied = false; }
+      else if (Math.abs(score - best.score) <= 0.01) tied = true;
+    });
+    if (best && !tied) return best.key;
+  }
+  return Number.isFinite(lat) && Number.isFinite(lon) ? closestBranchByGeometry(lat, lon) : null;
+}
+
+function branchIsVisible(branchKey) {
+  return currentBranch === BRANCH_ALL || (branchKey && currentBranch === branchKey);
+}
+
+function visibleRoutePolylines() {
+  return currentBranch === BRANCH_ALL
+    ? currentRoutePolylines
+    : currentRoutePolylines.filter(poly => poly.branchKey === currentBranch);
+}
+
+function renderBranchSelector() {
+  const show = !allLinesMode && currentLine && lineBranches.length > 1;
+  branchBar.classList.toggle('visible', !!show);
+  if (!show) { branchBar.innerHTML = ''; return; }
+  const counts = new Map();
+  latestLineUnits.forEach(unit => {
+    if (unit._branchKey) counts.set(unit._branchKey, (counts.get(unit._branchKey) || 0) + 1);
+  });
+  const total = latestLineUnits.length;
+  const pills = [{ key: BRANCH_ALL, label: 'Todos', count: total }, ...lineBranches.map(branch => ({
+    key: branch.key, label: branch.label, count: counts.get(branch.key) || 0,
+  }))];
+  branchBar.innerHTML = pills.map(pill => `
+    <button class="branch-pill${currentBranch === pill.key ? ' active' : ''}" data-branch="${escapeHtml(pill.key)}">
+      ${escapeHtml(pill.label)} <span class="branch-pill-count">(${pill.count})</span>
+    </button>`).join('');
+}
+
+function applyBranchVisibility() {
+  currentRoutePolylines.forEach(poly => {
+    (poly.layers || (poly.layer ? [poly.layer] : [])).forEach(layer => {
+      if (branchIsVisible(poly.branchKey)) {
+        if (!pathLayer.hasLayer(layer)) pathLayer.addLayer(layer);
+      } else if (pathLayer.hasLayer(layer)) pathLayer.removeLayer(layer);
+    });
+  });
+  for (const [unitId, marker] of markersById) {
+    const st = unitState.get(unitId);
+    if (branchIsVisible(st && st.branchKey)) {
+      if (!markersLayer.hasLayer(marker)) markersLayer.addLayer(marker);
+    } else if (markersLayer.hasLayer(marker)) markersLayer.removeLayer(marker);
+  }
+  for (const [unitId, tail] of tailsById) {
+    const st = unitState.get(unitId);
+    if (branchIsVisible(st && st.branchKey)) {
+      if (!liveTailLayer.hasLayer(tail)) liveTailLayer.addLayer(tail);
+    } else if (liveTailLayer.hasLayer(tail)) liveTailLayer.removeLayer(tail);
+  }
+  observedDeviationItems.forEach(item => {
+    const visible = currentBranch === BRANCH_ALL || (item.branchKey && item.branchKey === currentBranch);
+    if (visible) {
+      if (!observedDeviationLayer.hasLayer(item.layer)) observedDeviationLayer.addLayer(item.layer);
+    } else if (observedDeviationLayer.hasLayer(item.layer)) observedDeviationLayer.removeLayer(item.layer);
+  });
+  if (!allLinesMode) {
+    const hasVisibleDeviation = observedDeviationItems.some(item =>
+      currentBranch === BRANCH_ALL || (item.branchKey && item.branchKey === currentBranch));
+    observedRouteLegend.classList.toggle('visible', hasVisibleDeviation);
+  }
+}
+
+branchBar.addEventListener('click', event => {
+  const button = event.target.closest('.branch-pill');
+  if (!button) return;
+  currentBranch = button.dataset.branch;
+  if (followedUnitId) {
+    const followed = unitState.get(followedUnitId);
+    if (!branchIsVisible(followed && followed.branchKey)) followedUnitId = null;
+  }
+  renderBranchSelector();
+  applyBranchVisibility();
+  const branch = branchByKey(currentBranch);
+  const visibleCount = currentBranch === BRANCH_ALL
+    ? latestLineUnits.length
+    : latestLineUnits.filter(unit => unit._branchKey === currentBranch).length;
+  emptyMsg.style.display = visibleCount ? 'none' : 'block';
+  if (!visibleCount) emptyMsg.textContent = 'No hay unidades reportando en este ramal ahora mismo';
+  setStatus(`${visibleCount} unidad(es)${branch ? ` · ${branch.label}` : ''}`, true);
+});
 
 let selectedProvider = 'all';
 
@@ -943,6 +1152,12 @@ function selectLine(id) {
   stopAllLinesMode();
   const loadGeneration = ++routeLoadGeneration;
   currentLine = id;
+  currentBranch = BRANCH_ALL;
+  lineBranches = [];
+  latestLineUnits = [];
+  observedDeviationItems.length = 0;
+  branchBar.classList.remove('visible');
+  branchBar.innerHTML = '';
   const line = allLines.find(l => String(l.id) === String(id));
   lineSearch.value = line ? lineLabel(line) : '';
   clearSearchBtn.style.display = lineSearch.value ? 'flex' : 'none';
@@ -993,6 +1208,12 @@ function selectAllLines() {
   const generation = ++allLinesGeneration;
   routeLoadGeneration++; // invalida cualquier respuesta pendiente del modo individual
   currentLine = ALL_LINES_ID;
+  currentBranch = BRANCH_ALL;
+  lineBranches = [];
+  latestLineUnits = [];
+  observedDeviationItems.length = 0;
+  branchBar.classList.remove('visible');
+  branchBar.innerHTML = '';
   allLinesMode = true;
   lineSearch.value = 'Todas las líneas';
   clearSearchBtn.style.display = 'flex';
@@ -1072,11 +1293,6 @@ async function loadAllLinePath(line, generation) {
     const json = await res.json();
     if (!allLinesMode || generation !== allLinesGeneration || !json.success || !json.data || !state) return;
     appendRoutePolylines(json.data, state);
-    if (state.polylines.length) {
-      loadAllObservedDeviations(lineId, state, generation);
-      loadAllActiveTails(lineId, state, generation);
-      loadAllSnappedDeviations(lineId, state, generation);
-    }
   } catch (err) {
     console.error('Error loadPath:', err);
   }
@@ -1091,19 +1307,6 @@ function allOfficialDistanceMeters(lat, lon, polylines) {
   return best;
 }
 
-function renderAllTail(unitId, st, state) {
-  let tailPolyline = state.tailsById.get(unitId);
-  if (st.tail.length > 1) {
-    if (!tailPolyline) {
-      tailPolyline = L.polyline(st.tail, { color: '#00e5ff', weight: 3, opacity: 0.55, dashArray: '5, 5' }).addTo(state.tails);
-      state.tailsById.set(unitId, tailPolyline);
-    } else tailPolyline.setLatLngs(st.tail);
-  } else if (tailPolyline) {
-    state.tails.removeLayer(tailPolyline);
-    state.tailsById.delete(unitId);
-  }
-}
-
 function updateAllUnitState(unitId, lat, lon, isMoving, state) {
   let st = state.unitState.get(unitId);
   if (!st) {
@@ -1115,92 +1318,9 @@ function updateAllUnitState(unitId, lat, lon, isMoving, state) {
   if (isMoving && moved >= MIN_DISPLACEMENT_M) {
     const raw = bearingDeg(st.lat, st.lon, lat, lon);
     st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
-    const offRoute = allOfficialDistanceMeters(lat, lon, state.polylines) > OBSERVED_DEVIATION_METERS;
-    if (offRoute) {
-      if (!st.tail.length && moved <= MAX_OBSERVED_SEGMENT_STEP_METERS) st.tail.push([st.lat, st.lon]);
-      st.tail.push([lat, lon]);
-      if (st.tail.length > 1 && haversineMeters(...st.tail[st.tail.length - 2], lat, lon) > MAX_OBSERVED_SEGMENT_STEP_METERS) st.tail = [[lat, lon]];
-      if (st.tail.length > 40) st.tail.shift();
-    } else st.tail = [];
   }
   st.lat = lat; st.lon = lon;
   return st;
-}
-
-async function loadAllActiveTails(lineId, state, generation) {
-  try {
-    const res = await fetch('/api/active-tails?line=' + encodeURIComponent(lineId));
-    const json = await res.json();
-    if (!allLinesMode || generation !== allLinesGeneration || !json.success) return;
-    for (const [unitId, pts] of Object.entries(json.tails || {})) {
-      if (!Array.isArray(pts)) continue;
-      let tail = [], previous = null;
-      for (const point of pts) {
-        if (!Array.isArray(point) || point.length < 2) continue;
-        if (allOfficialDistanceMeters(point[0], point[1], state.polylines) > OBSERVED_DEVIATION_METERS) {
-          if (!tail.length && previous) tail.push(previous);
-          tail.push(point);
-        } else tail = [];
-        previous = point;
-      }
-      if (tail.length) {
-        const last = tail[tail.length - 1];
-        const st = state.unitState.get(unitId) || { lat: last[0], lon: last[1], bearing: null, tail: [] };
-        st.tail = tail.slice(-40);
-        state.unitState.set(unitId, st);
-        renderAllTail(unitId, st, state);
-      }
-    }
-  } catch (err) { console.warn('no se pudo restaurar una estela', lineId, err); }
-}
-
-async function loadAllObservedDeviations(lineId, state, generation) {
-  try {
-    const res = await fetch('/api/observed-tracks?line=' + encodeURIComponent(lineId) + '&days=14');
-    const json = await res.json();
-    if (!allLinesMode || generation !== allLinesGeneration || !json.success) return;
-    const tracks = (json.tracks || []).map(track => track.map(point =>
-      Array.isArray(point) && allOfficialDistanceMeters(point[0], point[1], state.polylines) > OBSERVED_DEVIATION_METERS ? point : null));
-    const support = new Map();
-    tracks.forEach((track, index) => {
-      const seen = new Set(track.filter(Boolean).map(p => deviationGridKey(p[0], p[1])));
-      seen.forEach(key => { if (!support.has(key)) support.set(key, new Set()); support.get(key).add(index); });
-    });
-    let drawn = false;
-    tracks.forEach(track => {
-      let segment = [], level = 0;
-      const flush = () => { if (addAllDeviationSegment(lineId, segment, level, state.observed)) drawn = true; segment = []; };
-      track.forEach(point => {
-        if (!point) return flush();
-        if (segment.length && haversineMeters(...segment[segment.length - 1], ...point) > MAX_OBSERVED_SEGMENT_STEP_METERS) flush();
-        const pointLevel = support.get(deviationGridKey(point[0], point[1])).size;
-        if (segment.length && level !== pointLevel) flush();
-        level = pointLevel; segment.push(point);
-      });
-      flush();
-    });
-    if (drawn) observedRouteLegend.classList.add('visible');
-  } catch (err) { console.warn('no se pudieron cargar desvíos', lineId, err); }
-}
-
-function addAllDeviationSegment(lineId, points, level, layer) {
-  if (points.length < 3) return false;
-  let distance = 0;
-  for (let i = 1; i < points.length; i++) distance += haversineMeters(...points[i - 1], ...points[i]);
-  if (distance < 140) return false;
-  const color = level === 1 ? '#FFA500' : level === 2 ? '#ff4fd8' : '#FF0000';
-  
-  // Dibujar la version cruda
-  L.polyline(points, { color, weight: 3, opacity: 0.5, dashArray: '4 8', lineCap: 'round' }).addTo(layer);
-  
-  // Reportar al servidor (fire and forget)
-  fetch('/api/report-deviation', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ line: lineId, points: points })
-  }).catch(() => {});
-  
-  return true;
 }
 
 async function refreshAllPositions(generation) {
@@ -1231,7 +1351,6 @@ async function refreshAllPositions(generation) {
           marker = L.marker([lat, lon], { icon: iconFor(unit, angle) }).addTo(state.markers);
           marker.bindPopup(popup, { maxWidth: 240 }); state.markersById.set(unitId, marker);
         } else { marker.setLatLng([lat, lon]); marker.setIcon(iconFor(unit, angle)); marker.setPopupContent(popup); }
-        renderAllTail(unitId, st, state);
       });
       for (const [unitId, marker] of state.markersById) {
         if (!seen.has(unitId)) {
@@ -1286,9 +1405,10 @@ notifyBtn.addEventListener('click', toggleNotifyPanel);
 planBtn.addEventListener('click', togglePlanPanel);
 
 centerRouteBtn.addEventListener('click', () => {
-  if (currentRoutePolylines && currentRoutePolylines.length > 0) {
+  const routes = visibleRoutePolylines();
+  if (routes.length > 0) {
     const bounds = L.latLngBounds([]);
-    currentRoutePolylines.forEach(poly => {
+    routes.forEach(poly => {
       poly.points.forEach(pt => bounds.extend(pt));
     });
     if (bounds.isValid()) {
@@ -1339,6 +1459,8 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
   observedDeviationLayer.clearLayers();
   observedRouteLegend.classList.remove('visible');
   currentRoutePolylines = [];
+  lineBranches = [];
+  observedDeviationItems.length = 0;
   try {
     const res = await fetch('/api/path?line=' + encodeURIComponent(lineId));
     const json = await res.json();
@@ -1348,15 +1470,20 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
     let ci = 0;
     (json.data.services || []).forEach(service => {
       (service.routes || []).forEach(route => {
+        const routeName = route.name || service.name || 'Principal';
+        const branch = ensureLineBranch(routeName);
         const sortedSections = [...(route.sections || [])].sort((a, b) => a.order - b.order);
         const routePoints = [];
+        const routeLayers = [];
 
         sortedSections.forEach(section => {
           const pts = (section.traces || [])
             .sort((a, b) => a.order - b.order)
             .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)]);
           if (pts.length > 1) {
-            L.polyline(pts, { color: colors[ci % colors.length], weight: 5, opacity: 1.0 }).addTo(pathLayer);
+            const routeLayer = L.polyline(pts, { color: colors[ci % colors.length], weight: 5, opacity: 1.0 }).addTo(pathLayer);
+            routeLayers.push(routeLayer);
+            branch.layers.push(routeLayer);
             ci++;
           }
           routePoints.push(...pts);
@@ -1373,32 +1500,27 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
               routePoints[i][0], routePoints[i][1]
             ));
           }
-          const nameLower = (route.name || '').toLowerCase();
+          const nameLower = routeName.toLowerCase();
           let dirLabel = null;
           if (nameLower.includes('vuelta')) dirLabel = 'Vuelta';
           else if (nameLower.includes('ida')) dirLabel = 'Ida';
-          currentRoutePolylines.push({ name: route.name, points: routePoints, cum, dirLabel });
+          const poly = { name: routeName, points: routePoints, cum, dirLabel, branchKey: branch.key, layers: routeLayers, layer: routeLayers[0] || null };
+          currentRoutePolylines.push(poly);
+          branch.polylines.push(poly);
         }
       });
     });
-    // El historial se filtra contra las polilineas oficiales recién cargadas:
-    // así nunca se dibuja encima de un tramo que ya forma parte de la ruta.
-    if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId) && currentRoutePolylines.length) {
-      loadSnappedDeviations(lineId);
-      loadObservedDeviations(lineId);
-      loadActiveTails(lineId).then(() => {
-        if (loadGeneration === routeLoadGeneration && String(currentLine) === String(lineId)) refreshPositions();
-      });
-    }
+    renderBranchSelector();
+    applyBranchVisibility();
   } catch (err) {
     // el trazado es un extra, no es critico si falla
     console.warn('no se pudo cargar el trazado de la linea', err);
   }
 }
 
-function officialDistanceMeters(lat, lon) {
+function officialDistanceMeters(lat, lon, routes = currentRoutePolylines) {
   let best = Infinity;
-  currentRoutePolylines.forEach(poly => {
+  routes.forEach(poly => {
     const projection = projectToPolyline(lat, lon, poly);
     if (projection) best = Math.min(best, projection.dist);
   });
@@ -1409,212 +1531,6 @@ function deviationGridKey(lat, lon) {
   // Celdas de aproximadamente 75 m: absorben la pequeña imprecisión de GPS
   // al decidir si el mismo desvío se repitió en recorridos independientes.
   return `${Math.round(lat / 0.0007)}:${Math.round(lon / 0.0007)}`;
-}
-
-async function addDeviationSegment(points, supportLevel) {
-  if (points.length < 3) return false;
-  let distance = 0;
-  for (let i = 1; i < points.length; i++) {
-    distance += haversineMeters(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1]);
-  }
-  // Evita pintar una calle paralela por un único salto corto de GPS.
-  if (distance < 140) return false;
-
-  let color = '#FFA500'; // 1 trip: Orange
-  if (supportLevel === 2) color = '#ff4fd8'; // 2 trips: Fuchsia
-  else if (supportLevel > 2) color = '#FF0000'; // >2 trips: Red
-
-  // Dibuja en baja opacidad el crudo
-  const poly = L.polyline(points, {
-    color: color, weight: 3, opacity: 0.5, dashArray: '4 8', lineCap: 'round',
-  });
-  
-  poly.bindPopup(`
-    <div style="font-size:13px; font-family:'Inter',sans-serif; color: #333;">
-      <b style="color: #ff3366;">Trayecto Alternativo</b><br>
-      Se detectó que buses pasaron por aquí <b>${supportLevel}</b> ve${supportLevel > 1 ? 'ces' : 'z'} en los últimos días.
-    </div>
-  `);
-  poly.addTo(observedDeviationLayer);
-
-  // Reportar al backend
-  fetch('/api/report-deviation', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ line: currentLine, points: points })
-  }).catch(() => {});
-
-  return true;
-}
-
-async function loadSnappedDeviations(lineId) {
-  try {
-    const res = await fetch('/api/deviations?line=' + encodeURIComponent(lineId));
-    const json = await res.json();
-    if (!json.success || String(currentLine) !== String(lineId)) return;
-    
-    let drawn = false;
-    for (const points of json.deviations) {
-      if (points && points.length > 0) {
-        const poly = L.polyline(points, {
-          color: '#FF0000', weight: 5, opacity: 0.9, dashArray: '8 10', lineCap: 'round',
-        });
-        poly.bindPopup(`
-          <div style="font-size:13px; font-family:'Inter',sans-serif; color: #333;">
-            <b style="color: #ff3366;">Desvío Frecuente Confirmado</b><br>
-            Varios colectivos de esta línea usan esta calle en lugar de la ruta oficial.
-          </div>
-        `);
-        poly.addTo(observedDeviationLayer);
-        drawn = true;
-      }
-    }
-    if (drawn) observedRouteLegend.classList.add('visible');
-  } catch (err) {
-    console.warn('Error fetching snapped deviations', err);
-  }
-}
-
-async function loadObservedDeviations(lineId) {
-  try {
-    const res = await fetch('/api/observed-tracks?line=' + encodeURIComponent(lineId) + '&days=14');
-    const json = await res.json();
-    if (!json.success || String(currentLine) !== String(lineId)) return;
-
-    const tracks = (json.tracks || []).map(track => track.map(point => {
-      if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
-      return officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS ? point : null;
-    }));
-
-    // Contamos en cuántos viajes aparece cada tramo (por cuadrícula)
-    const support = new Map();
-    tracks.forEach((track, trackIndex) => {
-      const seenInThisTrack = new Set();
-      track.forEach(point => {
-        if (point) seenInThisTrack.add(deviationGridKey(point[0], point[1]));
-      });
-      seenInThisTrack.forEach(key => {
-        if (!support.has(key)) support.set(key, new Set());
-        support.get(key).add(trackIndex);
-      });
-    });
-
-    let drawn = false;
-    tracks.forEach(track => {
-      let segment = [];
-      let currentSupportLevel = 0;
-      
-      const flush = () => {
-        if (segment.length > 0) {
-          if (addDeviationSegment(segment, currentSupportLevel)) drawn = true;
-          segment = [];
-        }
-      };
-      
-      track.forEach(point => {
-        if (!point) {
-          flush();
-          return;
-        }
-
-        // Un corte de telemetría o un salto de GPS no describe el camino
-        // recorrido entre ambos extremos. Sin map-matching de calles, la
-        // representación honesta es no dibujar esa conexión.
-        if (segment.length > 0 && haversineMeters(
-          segment[segment.length - 1][0], segment[segment.length - 1][1], point[0], point[1]
-        ) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
-          flush();
-        }
-        
-        const supporters = support.get(deviationGridKey(point[0], point[1]));
-        const pointSupportLevel = supporters ? supporters.size : 0;
-        
-        if (pointSupportLevel > 0) {
-          // Si el nivel de soporte cambia, se corta el segmento para dibujarlo con su color
-          if (segment.length > 0 && currentSupportLevel !== pointSupportLevel) {
-            flush();
-          }
-          currentSupportLevel = pointSupportLevel;
-          segment.push(point);
-        } else {
-          flush();
-        }
-      });
-      flush();
-    });
-    observedRouteLegend.classList.toggle('visible', drawn);
-  } catch (err) {
-    console.warn('no se pudo cargar el historial de desvíos', err);
-  }
-}
-
-async function loadActiveTails(lineId) {
-  try {
-    const res = await fetch('/api/active-tails?line=' + encodeURIComponent(lineId));
-    const json = await res.json();
-    if (!json.success || String(currentLine) !== String(lineId)) return;
-
-    for (const [unitId, rawPoints] of Object.entries(json.tails || {})) {
-      const pts = Array.isArray(rawPoints) ? rawPoints : rawPoints.points;
-      if (Array.isArray(pts) && pts.length > 0) {
-        let st = unitState.get(unitId);
-        if (!st) {
-          st = {
-            lat: pts[pts.length - 1][0], lon: pts[pts.length - 1][1],
-            bearing: null, routeLabel: null,
-            matchedRouteName: null, lastArc: null,
-            candidateLabel: null, candidateStreak: 0,
-            tail: [],
-          };
-          unitState.set(unitId, st);
-        }
-        
-        // Conservamos exclusivamente el último desvío continuo. Incluimos el
-        // último punto sobre la ruta para que la línea celeste quede conectada
-        // visualmente al momento en que el colectivo se desvió.
-        let offRouteTail = [];
-        let previousPoint = null;
-        pts.forEach(point => {
-          if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
-          if (officialDistanceMeters(point[0], point[1]) > OBSERVED_DEVIATION_METERS) {
-            if (previousPoint && haversineMeters(previousPoint[0], previousPoint[1], point[0], point[1]) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
-              // Si hay un salto enorme (ej. teletransporte a la terminal), no conectar con el punto anterior
-              offRouteTail = [point];
-            } else {
-              if (offRouteTail.length === 0 && previousPoint) offRouteTail.push(previousPoint);
-              offRouteTail.push(point);
-            }
-          } else {
-            offRouteTail = [];
-          }
-          previousPoint = point;
-        });
-        st.tail = offRouteTail.slice(-40);
-        renderLiveTail(unitId, st);
-      }
-    }
-  } catch (err) {
-    console.warn('no se pudieron cargar las estelas activas', err);
-  }
-}
-
-async function renderLiveTail(unitId, st) {
-  let tailPolyline = tailsById.get(unitId);
-  if (st.tail && st.tail.length > 1) {
-    let drawPoints = st.tail;
-
-    if (!tailPolyline) {
-      tailPolyline = L.polyline(drawPoints, {
-        color: '#00e5ff', weight: 4, opacity: 0.6, dashArray: '5, 5',
-      }).addTo(liveTailLayer);
-      tailsById.set(unitId, tailPolyline);
-    } else {
-      tailPolyline.setLatLngs(drawPoints);
-    }
-  } else if (tailPolyline) {
-    liveTailLayer.removeLayer(tailPolyline);
-    tailsById.delete(unitId);
-  }
 }
 
 async function refreshPositions() {
@@ -1637,7 +1553,10 @@ async function refreshPositions() {
       seenIds.add(unitId);
 
       const isMoving = (u.status || '').trim().toUpperCase() === 'EN MOVIMIENTO';
-      const st = updateUnitState(unitId, lat, lon, isMoving);
+      const branchKey = matchRouteToBranch(u.route, lat, lon);
+      u._branchKey = branchKey;
+      learnBranchLabel(branchKey, u.route);
+      const st = updateUnitState(unitId, lat, lon, isMoving, branchKey);
       st.speed = u.speed; // Guardar velocidad para usar en toggleFollow
       const angle = (u.bearing != null && !isNaN(u.bearing)) ? u.bearing : (st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0));
 
@@ -1645,6 +1564,8 @@ async function refreshPositions() {
       const isMas = u.provider === 'mas' || String(currentLine).startsWith('mas_');
       const badge = isMas ? '<span class="badge-prov mas">MÁS</span>' : '<span class="badge-prov jaha">JAHA</span>';
       const speedRow = (u.speed != null && u.speed > 0) ? `<div class="popup-row">Velocidad: ${Math.round(u.speed)} km/h</div>` : '';
+      const unitBranch = branchByKey(branchKey);
+      const branchRow = `<div class="popup-row">Ramal: ${escapeHtml(unitBranch ? unitBranch.label : 'Sin identificar')}</div>`;
       
       // Cálculo de ETA
       let etaHtml = '';
@@ -1694,6 +1615,7 @@ async function refreshPositions() {
         </div>
         <div class="popup-row">Estado: ${escapeHtml((u.status || '').trim())}</div>
         <div class="popup-row">Recorrido: ${escapeHtml((u.route || '').trim()) || '-'}</div>
+        ${branchRow}
         ${speedRow}
         ${st.routeLabel ? `<div class="popup-row">Sentido: ${escapeHtml(st.routeLabel)}</div>` : ''}
         <div class="popup-row">Hora: ${escapeHtml(u.time) || '-'}</div>
@@ -1724,7 +1646,6 @@ async function refreshPositions() {
         map.panTo([lat, lon], { animate: true, duration: 1 });
       }
 
-      renderLiveTail(unitId, st);
     });
 
     // sacar del mapa las unidades que dejaron de reportar posicion
@@ -1747,7 +1668,16 @@ async function refreshPositions() {
       }
     }
 
-    setStatus(`${units.length} unidad(es) - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
+    latestLineUnits = units;
+    renderBranchSelector();
+    applyBranchVisibility();
+    const visibleUnits = currentBranch === BRANCH_ALL
+      ? units
+      : units.filter(unit => unit._branchKey === currentBranch);
+    emptyMsg.style.display = visibleUnits.length ? 'none' : 'block';
+    if (!visibleUnits.length) emptyMsg.textContent = 'No hay unidades reportando en este ramal ahora mismo';
+    const selectedBranch = branchByKey(currentBranch);
+    setStatus(`${visibleUnits.length} unidad(es)${selectedBranch ? ` · ${selectedBranch.label}` : ''} - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
   } catch (err) {
     setStatus('Error obteniendo posiciones: ' + err.message, false);
   }
@@ -2266,5 +2196,6 @@ calculatePlanBtn.addEventListener('click', async () => {
 });
 
 </script>
+<script src="/observed-routes.js"></script>
 </body>
 </html>

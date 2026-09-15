@@ -1,10 +1,11 @@
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open('jaha-tracker-v4').then((cache) => {
+    caches.open('jaha-tracker-v8').then((cache) => {
       return cache.addAll([
         '/',
         '/index.html',
+        '/observed-routes.js',
         '/manifest.json'
       ]);
     })
@@ -15,7 +16,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
-        if (key !== 'jaha-tracker-v4') {
+        if (key !== 'jaha-tracker-v8') {
           return caches.delete(key);
         }
       }));
@@ -33,7 +34,7 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((response) => {
       return response || fetch(e.request).then((res) => {
-          return caches.open('jaha-tracker-v4').then((cache) => {
+          return caches.open('jaha-tracker-v8').then((cache) => {
               cache.put(e.request, res.clone());
               return res;
           });

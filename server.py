@@ -24,9 +24,11 @@ import gzip
 import json
 import math
 import os
+import re
 import sqlite3
 import threading
 import time
+import unicodedata
 from datetime import datetime
 import urllib.request
 import urllib.error
@@ -34,6 +36,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
+from observed_routes import ObservedRoutes
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
 # entorno PORT; en local usamos 8787 si no esta definida.
@@ -43,10 +46,17 @@ MAS_API_BASE = "https://geomastarjeta.z1.mastarjeta.net"
 MAS_AUTH_TOKEN = "4d30d2b7cf01ac8cd46fec1da00686f112cb63a5"
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(os.environ.get("DATA_DIR") or os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or BASE_DIR / "data")
 SUBS_FILE = DATA_DIR / "notify_subscriptions.json"
 VAPID_FILE = DATA_DIR / "vapid_private.pem"
 TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
+observed_routes = ObservedRoutes(
+    TRACKS_DB_FILE,
+    osrm_url=os.environ.get("OSRM_MATCH_URL", "https://router.project-osrm.org"),
+    poll_seconds=int(os.environ.get("OBSERVED_POLL_SECONDS", "30")),
+)
+_line_fetch_locks = {}
+_line_fetch_locks_guard = threading.Lock()
 
 POSITIONS_CACHE_TTL = 8  # segundos - compartido entre el proxy de la UI y el chequeo de proximidad
 NOTIFY_CHECK_INTERVAL = 20  # segundos entre chequeos de proximidad
@@ -178,6 +188,29 @@ def get_mas_lines() -> list[dict]:
     return lines
 
 
+def catalog_identity(value) -> str:
+    """Normaliza nombres del catálogo para comparar JAHA con Más."""
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    return re.sub(r"[^A-Z0-9]+", "", text.upper())
+
+
+def mas_line_mirrors_jaha(line: dict, jaha_names: set[str]) -> bool:
+    """Detecta las fichas de Más que solamente replican una línea de JAHA.
+
+    En esas fichas, Más usa como nombre o alias de empresa el nombre oficial
+    de la línea JAHA (por ejemplo, ``LINEA 30`` o ``LINEA 5 CH``). Se exige esa
+    coincidencia de empresa para no eliminar por accidente dos líneas propias
+    de operadores diferentes que compartan el mismo número.
+    """
+    company = line.get("company") or {}
+    company_labels = (company.get("name"), company.get("alias"))
+    return any(
+        identity and identity in jaha_names
+        for identity in (catalog_identity(label) for label in company_labels)
+    )
+
+
 def get_all_lines_combined() -> list[dict]:
     jaha_lines = []
     status, body = call_api("/bus/lines")
@@ -192,6 +225,22 @@ def get_all_lines_combined() -> list[dict]:
             pass
 
     mas_lines = get_mas_lines()
+
+    # Más también publica copias de varias líneas metropolitanas de JAHA.
+    # Cuando JAHA está disponible conservamos su ficha, que contiene más
+    # información, y dejamos en Más solamente sus servicios propios. Si JAHA
+    # falla, no filtramos nada y las copias de Más sirven como respaldo.
+    if jaha_lines:
+        jaha_names = {
+            catalog_identity(line.get("name"))
+            for line in jaha_lines
+            if catalog_identity(line.get("name"))
+        }
+        mas_lines = [
+            line for line in mas_lines
+            if not mas_line_mirrors_jaha(line, jaha_names)
+        ]
+
     return jaha_lines + mas_lines
 
 
@@ -340,6 +389,7 @@ def get_mas_positions_cached(line_str: str) -> tuple[int, bytes]:
             "lon": float(lon),
             "status": "EN MOVIMIENTO" if is_moving else "DETENIDO",
             "route": route_name,
+            "observed_at": modified,
             "time": time_str,
             "air": True,
             "speed": speed,
@@ -367,6 +417,13 @@ _tracks_lock = threading.Lock()
 _last_track_sample: dict[tuple[str, str], tuple[float, float, float]] = {}
 
 
+def ensure_sqlite_column(conn: sqlite3.Connection, table: str, column: str, definition: str):
+    """Agrega una columna sin invalidar las bases creadas por versiones anteriores."""
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in existing:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
 def init_tracks_db():
     """Crea un historial local, compartido por todos los usuarios del sitio.
 
@@ -374,7 +431,7 @@ def init_tracks_db():
     ubicacion de quien consulta el mapa. El historial se usa para detectar
     cambios de recorrido y se depura automaticamente.
     """
-    DATA_DIR.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(TRACKS_DB_FILE) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS bus_observations (
@@ -405,6 +462,9 @@ def init_tracks_db():
                 last_seen INTEGER NOT NULL
             )
         """)
+        ensure_sqlite_column(conn, "bus_observations", "route_name", "TEXT NOT NULL DEFAULT ''")
+        ensure_sqlite_column(conn, "raw_deviations", "route_name", "TEXT NOT NULL DEFAULT ''")
+        ensure_sqlite_column(conn, "snapped_deviations", "route_name", "TEXT NOT NULL DEFAULT ''")
 
 
 def record_bus_observations(line: str, body: bytes):
@@ -422,11 +482,13 @@ def record_bus_observations(line: str, body: bytes):
         return
 
     now = time.time()
+    observed_routes.observe(str(line), units, now)
     rows = []
     for unit in units:
         try:
             unit_id = str(unit["unit"])
             lat, lon = float(unit["lat"]), float(unit["lon"])
+            route_name = str(unit.get("route") or "").strip()[:160]
         except (KeyError, TypeError, ValueError):
             continue
 
@@ -435,13 +497,13 @@ def record_bus_observations(line: str, body: bytes):
         moved = previous is None or haversine_km(previous[1], previous[2], lat, lon) >= 0.035
         if previous is None or now - previous[0] >= 20 or moved:
             _last_track_sample[key] = (now, lat, lon)
-            rows.append((str(line), unit_id, int(now), lat, lon))
+            rows.append((str(line), unit_id, int(now), lat, lon, route_name))
 
     if not rows:
         return
     with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
         conn.executemany(
-            "INSERT INTO bus_observations(line_id, unit_id, observed_at, lat, lon) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO bus_observations(line_id, unit_id, observed_at, lat, lon, route_name) VALUES (?, ?, ?, ?, ?, ?)",
             rows,
         )
         # Conservar una semana permite detectar desvíos, y limpiar los viejos
@@ -454,7 +516,7 @@ def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
     cutoff = int(time.time() - days * 86400)
     with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
         rows = conn.execute(
-            """SELECT unit_id, observed_at, lat, lon FROM bus_observations
+            """SELECT unit_id, observed_at, lat, lon, route_name FROM bus_observations
                WHERE line_id = ? AND observed_at >= ?
                ORDER BY unit_id, observed_at""",
             (str(line), cutoff),
@@ -463,7 +525,7 @@ def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
     tracks: list[list[list[float]]] = []
     current: list[list[float]] = []
     previous_unit = previous_at = previous_lat = previous_lon = None
-    for unit_id, observed_at, lat, lon in rows:
+    for unit_id, observed_at, lat, lon, route_name in rows:
         split = (
             previous_unit != unit_id
             or previous_at is None
@@ -474,7 +536,7 @@ def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
             if len(current) >= 3:
                 tracks.append(current)
             current = []
-        current.append([lat, lon])
+        current.append([lat, lon, route_name or ""])
         previous_unit, previous_at, previous_lat, previous_lon = unit_id, observed_at, lat, lon
     if len(current) >= 3:
         tracks.append(current)
@@ -492,7 +554,7 @@ def active_tails(line: str) -> dict[str, list[list[float]]]:
     cutoff = int(time.time() - ACTIVE_TAIL_WINDOW_SECONDS)
     with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
         rows = conn.execute(
-            """SELECT unit_id, observed_at, lat, lon FROM bus_observations
+            """SELECT unit_id, observed_at, lat, lon, route_name FROM bus_observations
                WHERE line_id = ?
                  AND unit_id IN (
                     SELECT unit_id FROM bus_observations
@@ -503,16 +565,25 @@ def active_tails(line: str) -> dict[str, list[list[float]]]:
         ).fetchall()
 
     tails: dict[str, list[list[float]]] = {}
-    for unit_id, _observed_at, lat, lon in rows:
+    for unit_id, _observed_at, lat, lon, route_name in rows:
         # La consulta viene en orden descendente: no necesitamos traer una
         # hora completa para luego recortarla en memoria.
         if len(tails.setdefault(unit_id, [])) < 40:
-            tails[unit_id].append([lat, lon])
+            tails[unit_id].append([lat, lon, route_name or ""])
 
     # Leaflet espera los puntos en orden cronológico.
     return {unit_id: list(reversed(points)) for unit_id, points in tails.items()}
 
 def get_positions_cached(line: str) -> tuple[int, bytes]:
+    # One upstream request per line even if the collector and many clients
+    # hit an expired cache simultaneously.
+    with _line_fetch_locks_guard:
+        lock = _line_fetch_locks.setdefault(str(line), threading.Lock())
+    with lock:
+        return _get_positions_cached(str(line))
+
+
+def _get_positions_cached(line: str) -> tuple[int, bytes]:
     if str(line).startswith("mas_"):
         return get_mas_positions_cached(line)
 
@@ -818,6 +889,24 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "data": all_lines})
             return
 
+        if parsed.path == "/api/observed-routes":
+            line = qs.get("line", [""])[0]
+            if not line or len(line) > 80:
+                self._send_json_obj(400, {"success": False, "error": "falta line"})
+                return
+            self._send_json_obj(200, observed_routes.snapshot(line, qs.get("history") == ["1"]))
+            return
+
+        if parsed.path == "/api/observed-health":
+            self._send_json_obj(200, {
+                "success": True,
+                "collector_enabled": os.environ.get("OBSERVED_COLLECTOR", "1") != "0",
+                "last_cycle": observed_routes.last_cycle,
+                "matching_enabled": bool(observed_routes.osrm_url),
+                "railway_volume_configured": bool(os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")),
+            })
+            return
+
         if parsed.path == "/api/positions":
             line = qs.get("line", [None])[0]
             if not line:
@@ -866,11 +955,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json_obj(400, {"success": False, "error": "falta line"})
                 return
             with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
-                rows = conn.execute("SELECT points_json FROM snapped_deviations WHERE line_id = ?", (str(line),)).fetchall()
+                rows = conn.execute(
+                    "SELECT points_json, route_name FROM snapped_deviations WHERE line_id = ?",
+                    (str(line),),
+                ).fetchall()
             deviations = []
-            for r in rows:
+            for points_json, route_name in rows:
                 try:
-                    deviations.append(json.loads(r[0]))
+                    deviations.append({"points": json.loads(points_json), "route": route_name or ""})
                 except:
                     pass
             self._send_json_obj(200, {"success": True, "deviations": deviations})
@@ -952,6 +1044,16 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "lines": get_positions_batch(lines)})
             return
 
+        if parsed.path == "/api/observed-routes/batch":
+            lines = body.get("lines") if isinstance(body, dict) else None
+            if not isinstance(lines, list) or len(lines) > 25 or any(not isinstance(x, str) or len(x)>80 for x in lines):
+                self._send_json_obj(400, {"success": False, "error": "se requieren hasta 25 lineas"})
+                return
+            self._send_json_obj(200, {"success": True, "lines": {
+                line: observed_routes.snapshot(line, body.get("history") is True) for line in set(lines)
+            }})
+            return
+
         if parsed.path == "/api/notify/subscribe":
             if not PUSH_AVAILABLE:
                 self._send_json_obj(503, {"success": False, "error": "pywebpush no esta instalado en el servidor"})
@@ -1005,11 +1107,15 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/report-deviation":
+            # Legacy browsers cannot create evidence or alter the shared counts.
+            self._send_json_obj(410, {"success": False, "error": "Las observaciones se registran en el servidor"})
+            return
             if not body or not body.get("line") or not body.get("points"):
                 self._send_json_obj(400, {"success": False})
                 return
             line = str(body["line"])
             points = body["points"]
+            route_name = str(body.get("route") or "").strip()[:160]
             if not isinstance(points, list) or len(points) < 2:
                 self._send_json_obj(400, {"success": False})
                 return
@@ -1020,9 +1126,15 @@ class Handler(BaseHTTPRequestHandler):
             points_json = json.dumps(points)
             with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
                 # Comprobar si ya enviaron este mismo trayecto recien (para no duplicar en OSRM)
-                exists = conn.execute("SELECT 1 FROM raw_deviations WHERE line_id = ? AND points_json = ?", (line, points_json)).fetchone()
+                exists = conn.execute(
+                    "SELECT 1 FROM raw_deviations WHERE line_id = ? AND route_name = ? AND points_json = ?",
+                    (line, route_name, points_json),
+                ).fetchone()
                 if not exists:
-                    conn.execute("INSERT INTO raw_deviations (line_id, points_json, created_at) VALUES (?, ?, ?)", (line, points_json, now))
+                    conn.execute(
+                        "INSERT INTO raw_deviations (line_id, points_json, created_at, route_name) VALUES (?, ?, ?, ?)",
+                        (line, points_json, now, route_name),
+                    )
             self._send_json_obj(200, {"success": True})
             return
 
@@ -1034,10 +1146,10 @@ def osrm_processor_loop():
             with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
                 now = int(time.time())
                 conn.execute("DELETE FROM snapped_deviations WHERE last_seen < ?", (now - 7 * 86400,))
-                rows = conn.execute("SELECT id, line_id, points_json FROM raw_deviations").fetchall()
+                rows = conn.execute("SELECT id, line_id, points_json, route_name FROM raw_deviations").fetchall()
             
             for row in rows:
-                raw_id, line_id, points_json = row
+                raw_id, line_id, points_json, route_name = row
                 try:
                     points = json.loads(points_json)
                     if len(points) > 99:
@@ -1058,7 +1170,10 @@ def osrm_processor_loop():
                                 snapped_json = json.dumps(snapped_points)
                                 
                                 with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
-                                    existing = conn.execute("SELECT id, points_json FROM snapped_deviations WHERE line_id = ?", (line_id,)).fetchall()
+                                    existing = conn.execute(
+                                        "SELECT id, points_json FROM snapped_deviations WHERE line_id = ? AND route_name = ?",
+                                        (line_id, route_name or ""),
+                                    ).fetchall()
                                     is_dup = False
                                     for ex_id, ex_json in existing:
                                         try:
@@ -1073,7 +1188,10 @@ def osrm_processor_loop():
                                         except:
                                             pass
                                     if not is_dup:
-                                        conn.execute("INSERT INTO snapped_deviations (line_id, points_json, last_seen) VALUES (?, ?, ?)", (line_id, snapped_json, int(time.time())))
+                                        conn.execute(
+                                            "INSERT INTO snapped_deviations (line_id, points_json, last_seen, route_name) VALUES (?, ?, ?, ?)",
+                                            (line_id, snapped_json, int(time.time()), route_name or ""),
+                                        )
                 except Exception as e:
                     print(f"Error matching OSRM for raw_id {raw_id}: {e}")
                 
@@ -1086,12 +1204,37 @@ def osrm_processor_loop():
         time.sleep(4 * 3600)  # every 4 hours
 
 def main():
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     init_tracks_db()
+    observed_routes.init()
     load_subs()
     
     # Iniciar fetcher en background para el planificador
     threading.Thread(target=path_fetcher_loop, daemon=True).start()
-    threading.Thread(target=osrm_processor_loop, daemon=True).start()
+    # The old queue remains on disk as legacy evidence; it has no reliable
+    # unit identities and must not be counted as confirmed bus passages.
+    def official_path(line):
+        if line.startswith("mas_"):
+            # Empty successful Más catalogs are distinct from network failures.
+            status, raw = call_mas_api(f"/api/rutas/por_linea/?linea_id={line[4:]}", timeout=10)
+            if status != 200 or not isinstance(raw, list): return None
+            if not raw: return {"services": []}
+            with _mas_rutas_lock:
+                _mas_rutas_cache[line[4:]] = (time.time(), raw)
+            status, data = get_mas_path(line)
+        else:
+            status, body = call_api(f"/bus/lineServices/{line}")
+            data = json.loads(body)
+        return data.get("data") if status == 200 and data.get("success") else None
+
+    if os.environ.get("OBSERVED_COLLECTOR", "1") != "0":
+        threading.Thread(target=observed_routes.collector,
+                         args=(get_all_lines_combined, get_positions_cached, official_path), daemon=True).start()
+    threading.Thread(target=observed_routes.matcher_loop, daemon=True).start()
+    if os.environ.get("RAILWAY_ENVIRONMENT_ID") and not os.environ.get("RAILWAY_VOLUME_MOUNT_PATH"):
+        print("ATENCION: Railway no tiene un volumen montado; el historial no sobrevivira a un despliegue.")
+    if not observed_routes.osrm_url:
+        print("OSRM_MATCH_URL no configurado: las estelas se conservan como puntos GPS pendientes de ajuste.")
 
     if PUSH_AVAILABLE:
         threading.Thread(target=notifier_loop, daemon=True).start()
@@ -1106,6 +1249,7 @@ def main():
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nDeteniendo servidor...")
+        observed_routes.stop.set()
         server.shutdown()
 
 
