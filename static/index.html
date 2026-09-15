@@ -541,8 +541,6 @@ if ('serviceWorker' in navigator) {
 const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, ... }
 const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
 const tailsById = new Map();      // unitId -> L.Polyline (cola del bus individual)
-const historyPolylinesById = new Map(); // unitId -> L.Polyline (historial completo de la sesion)
-const historyLayer = L.layerGroup().addTo(map); // para las colas del historial de la sesion
 const etaRouteLayer = L.layerGroup().addTo(map); // para dibujar la ruta de llegada (ETA)
 let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
 
@@ -698,7 +696,6 @@ function updateUnitState(unitId, lat, lon, isMoving) {
       matchedRouteName: null, lastArc: null,
       candidateLabel: null, candidateStreak: 0,
       tail: [[lat, lon]],
-      history: [[lat, lon]],
     };
     unitState.set(unitId, st);
     return st;
@@ -706,13 +703,6 @@ function updateUnitState(unitId, lat, lon, isMoving) {
 
   const distMoved = haversineMeters(st.lat, st.lon, lat, lon);
   if (isMoving && distMoved >= MIN_DISPLACEMENT_M) {
-    if (distMoved <= MAX_OBSERVED_SEGMENT_STEP_METERS) {
-      st.history.push([lat, lon]);
-      if (st.history.length > 200) st.history.shift();
-    } else {
-      st.history = [[lat, lon]]; // Si hay un salto, reiniciar historia
-    }
-    
     const raw = bearingDeg(st.lat, st.lon, lat, lon);
     st.bearing = st.bearing == null ? raw : circularSmooth(st.bearing, raw, SMOOTH_ALPHA);
 
@@ -1560,23 +1550,9 @@ async function loadActiveTails(lineId) {
             matchedRouteName: null, lastArc: null,
             candidateLabel: null, candidateStreak: 0,
             tail: [],
-            history: [],
           };
           unitState.set(unitId, st);
         }
-        
-        let validHistory = [];
-        let prevHistPt = null;
-        pts.forEach(point => {
-          if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
-          if (prevHistPt && haversineMeters(prevHistPt[0], prevHistPt[1], point[0], point[1]) > MAX_OBSERVED_SEGMENT_STEP_METERS) {
-            validHistory = [point];
-          } else {
-            validHistory.push(point);
-          }
-          prevHistPt = point;
-        });
-        st.history = validHistory.slice(-200);
         
         // Conservamos exclusivamente el último desvío continuo. Incluimos el
         // último punto sobre la ruta para que la línea celeste quede conectada
@@ -1599,10 +1575,7 @@ async function loadActiveTails(lineId) {
           previousPoint = point;
         });
         st.tail = offRouteTail.slice(-40);
-        
-        const isMas = String(currentLine).startsWith('mas_');
         renderLiveTail(unitId, st);
-        renderHistory(unitId, st, isMas);
       }
     }
   } catch (err) {
@@ -1626,20 +1599,6 @@ async function renderLiveTail(unitId, st) {
   } else if (tailPolyline) {
     liveTailLayer.removeLayer(tailPolyline);
     tailsById.delete(unitId);
-  }
-}
-
-function renderHistory(unitId, st, isMas) {
-  let histPolyline = historyPolylinesById.get(unitId);
-  if (st.history && st.history.length > 1) {
-    if (!histPolyline) {
-      histPolyline = L.polyline(st.history, {
-        color: isMas ? '#00e676' : '#ff1744', weight: 3, opacity: 0.4
-      }).addTo(historyLayer);
-      historyPolylinesById.set(unitId, histPolyline);
-    } else {
-      histPolyline.setLatLngs(st.history);
-    }
   }
 }
 
@@ -1751,7 +1710,6 @@ async function refreshPositions() {
       }
 
       renderLiveTail(unitId, st);
-      renderHistory(unitId, st, isMas);
     });
 
     // sacar del mapa las unidades que dejaron de reportar posicion
@@ -1764,12 +1722,6 @@ async function refreshPositions() {
         if (tailPolyline) {
           liveTailLayer.removeLayer(tailPolyline);
           tailsById.delete(unitId);
-        }
-        
-        let histPolyline = historyPolylinesById.get(unitId);
-        if (histPolyline) {
-          historyLayer.removeLayer(histPolyline);
-          historyPolylinesById.delete(unitId);
         }
         
         unitState.delete(unitId);
