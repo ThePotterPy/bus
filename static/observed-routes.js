@@ -5,7 +5,9 @@
   const renderer = L.canvas({ padding: 0.2 });
   let signature = '', nextRefresh = 0, controller = null;
   let busy = false;
-  const color = n => n >= 4 ? '#a855f7' : n === 3 ? '#2684ff' : n === 2 ? '#FFA500' : '#00e5ff';
+  // Granate resalta mejor que el celeste sobre el fondo claro del mapa.
+  // El celeste queda reservado para muestras GPS todavía sin ajustar.
+  const color = n => n >= 4 ? '#a855f7' : n === 3 ? '#2684ff' : n === 2 ? '#FFA500' : '#8B1E3F';
 
   function branchFor(route) {
     if (!route) {

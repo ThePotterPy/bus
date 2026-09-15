@@ -402,6 +402,10 @@
         display: inline-block; width: 24px; margin-right: 6px;
         border-top: 4px dashed #ff4fd8; vertical-align: middle;
       }
+      .observed-point-swatch {
+        display: inline-block; width: 8px; height: 8px; margin: 0 14px 0 8px;
+        border-radius: 50%; background: #00e5ff; vertical-align: middle;
+      }
 
   /* Leaflet: alejar los controles de zoom de la barra flotante */
   .leaflet-top.leaflet-left { top: 108px; }
@@ -512,10 +516,11 @@
 
   <div id="observedRouteLegend">
     <div style="margin-bottom:4px;font-weight:bold">Trayectos observados · últimos 14 días</div>
-    <div><span class="observed-route-swatch" style="border-top-color:#00e5ff"></span> 1 bus / puntos pendientes de ajuste</div>
+    <div><span class="observed-route-swatch" style="border-top-color:#8B1E3F"></span> 1 bus distinto</div>
     <div><span class="observed-route-swatch" style="border-top-color:#FFA500"></span> 2 buses distintos</div>
     <div><span class="observed-route-swatch" style="border-top-color:#2684ff"></span> 3 buses distintos</div>
     <div><span class="observed-route-swatch" style="border-top-color:#a855f7"></span> 4 o más buses · frecuente</div>
+    <div><span class="observed-point-swatch"></span> GPS en vivo o pendiente de ajuste</div>
     <label style="display:block;margin-top:6px"><input type="checkbox" id="observedHistory"> Mostrar históricas (gris)</label>
     <div id="observedNotice" style="max-width:280px;margin-top:4px"></div>
   </div>
