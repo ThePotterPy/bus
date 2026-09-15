@@ -958,9 +958,9 @@ class Handler(BaseHTTPRequestHandler):
             "script-src 'self' 'unsafe-inline' https://unpkg.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
             "font-src https://fonts.gstatic.com; "
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://unpkg.com; "
-            "connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org; "
-            "worker-src 'self'; manifest-src 'self'",
+            "img-src 'self' data: blob: https://tiles.openfreemap.org https://unpkg.com; "
+            "connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://router.project-osrm.org; "
+            "worker-src 'self' blob:; manifest-src 'self'",
         )
         super().end_headers()
 

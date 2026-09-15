@@ -1,4 +1,4 @@
-self.CACHE_NAME = 'jaha-tracker-v9';
+self.CACHE_NAME = 'jaha-tracker-v10';
 self.APP_SHELL = ['/', '/index.html', '/observed-routes.js', '/manifest.json'];
 
 self.addEventListener('install', (e) => {

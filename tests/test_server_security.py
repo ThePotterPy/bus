@@ -22,6 +22,11 @@ class ServerSecurityTests(unittest.TestCase):
             "application/manifest+json; charset=utf-8",
         )
 
+    def test_basemap_uses_openfreemap_instead_of_osm_volunteer_tiles(self):
+        index = (Path(server.__file__).parent / "static" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("https://tiles.openfreemap.org/styles/positron", index)
+        self.assertNotIn("tile.openstreetmap.org", index)
+
     def test_json_body_rejects_oversized_payload_without_reading_it(self):
         handler = object.__new__(server.Handler)
         handler.headers = {"Content-Length": str(server.MAX_JSON_BODY_BYTES + 1)}
