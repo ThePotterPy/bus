@@ -6,8 +6,8 @@
   let signature = '', nextRefresh = 0, controller = null;
   let busy = false;
   // Granate resalta mejor que el celeste sobre el fondo claro del mapa.
-  // El celeste queda reservado para muestras GPS todavía sin ajustar.
   const color = n => n >= 4 ? '#a855f7' : n === 3 ? '#2684ff' : n === 2 ? '#FFA500' : '#8B1E3F';
+  const liveGpsColor = '#8B1E3F';
 
   function branchFor(route) {
     if (!route) {
@@ -59,7 +59,7 @@
           if (seen.has(key)) continue;
           seen.add(key);
           L.circleMarker([p[0], p[1]], { renderer, radius: active ? 3 : 2,
-            color: '#00e5ff', weight: 1, opacity: 0.65, fillOpacity: 0.45 })
+            color: liveGpsColor, weight: 1, opacity: 0.8, fillOpacity: 0.65 })
             .bindPopup(`${active ? 'Estela GPS en vivo' : 'Trayecto GPS pendiente de ajuste a calles'}<br>` +
               `Unidad ${escapeHtml(item.unit)} · ${escapeHtml(item.route || 'Sin ramal identificado')}`)
             .addTo(getGroup(item.route || ''));
@@ -109,7 +109,7 @@
           }
         }
         observedRouteLegend.classList.add('visible');
-        notice.textContent = pending ? 'Los puntos celestes esperan un ajuste confiable a las calles.' :
+        notice.textContent = pending ? 'Los puntos granate esperan un ajuste confiable a las calles.' :
           visible ? '' : 'El servidor está reuniendo evidencia de los recorridos.';
       } else {
         const res = await fetch('/api/observed-routes?line=' + encodeURIComponent(currentLine) +
@@ -123,7 +123,7 @@
         applyBranchVisibility();
         observedRouteLegend.classList.add('visible');
         notice.textContent = !data.matching_enabled ? 'Ajuste a calles desactivado; se conservan los puntos GPS.' :
-          data.pending?.length ? 'Los puntos celestes esperan un ajuste confiable a las calles.' :
+          data.pending?.length ? 'Los puntos granate esperan un ajuste confiable a las calles.' :
           data.truncated ? 'Hay más historia disponible que la mostrada en esta vista.' :
           !data.alternatives.length && !data.tails.length ? 'El servidor está reuniendo evidencia de este recorrido.' : '';
       }

@@ -27,6 +27,13 @@ class ServerSecurityTests(unittest.TestCase):
         self.assertIn("https://tiles.openfreemap.org/styles/positron", index)
         self.assertNotIn("tile.openstreetmap.org", index)
 
+    def test_live_gps_points_use_burgundy(self):
+        static = Path(server.__file__).parent / "static"
+        renderer = (static / "observed-routes.js").read_text(encoding="utf-8")
+        index = (static / "index.html").read_text(encoding="utf-8")
+        self.assertIn("const liveGpsColor = '#8B1E3F'", renderer)
+        self.assertIn("background: #8B1E3F", index)
+
     def test_json_body_rejects_oversized_payload_without_reading_it(self):
         handler = object.__new__(server.Handler)
         handler.headers = {"Content-Length": str(server.MAX_JSON_BODY_BYTES + 1)}
