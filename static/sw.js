@@ -1,13 +1,11 @@
+self.CACHE_NAME = 'jaha-tracker-v9';
+self.APP_SHELL = ['/', '/index.html', '/observed-routes.js', '/manifest.json'];
+
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open('jaha-tracker-v8').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/observed-routes.js',
-        '/manifest.json'
-      ]);
+    caches.open(self.CACHE_NAME).then((cache) => {
+      return cache.addAll(self.APP_SHELL);
     })
   );
 });
@@ -16,7 +14,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
-        if (key !== 'jaha-tracker-v8') {
+        if (key !== self.CACHE_NAME) {
           return caches.delete(key);
         }
       }));
@@ -26,20 +24,20 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Solo cacheamos GET, y obviamos llamadas a la API
-  if (e.request.method !== 'GET' || e.request.url.includes('/api/')) {
-    return;
-  }
-  
+  const url = new URL(e.request.url);
+  // La API y los mosaicos del mapa siempre van directo a la red. Solo se
+  // conserva la pequeña interfaz propia para poder mostrarla sin conexión.
+  if (e.request.method !== 'GET' || url.origin !== self.location.origin ||
+      url.pathname.startsWith('/api/') || !self.APP_SHELL.includes(url.pathname)) return;
+
+  // Network-first evita dejar a los usuarios atrapados en una interfaz vieja
+  // después de un despliegue; la caché es únicamente el respaldo sin conexión.
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request).then((res) => {
-          return caches.open('jaha-tracker-v8').then((cache) => {
-              cache.put(e.request, res.clone());
-              return res;
-          });
-      });
-    })
+    fetch(e.request).then((response) => {
+      const copy = response.clone();
+      caches.open(self.CACHE_NAME).then((cache) => cache.put(e.request, copy));
+      return response;
+    }).catch(() => caches.match(e.request))
   );
 });
 
