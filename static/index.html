@@ -173,28 +173,22 @@
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-        scrollbar-width: none;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 229, 255, 0.65) rgba(255,255,255,0.06);
         overscroll-behavior-x: contain;
         scroll-behavior: smooth;
       }
       .branch-bar.visible { display: flex; }
-      .branch-bar::-webkit-scrollbar { display: none; }
-      @media (hover: hover) and (pointer: fine) {
-        .branch-bar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(0, 229, 255, 0.65) rgba(255,255,255,0.06);
-        }
-        .branch-bar::-webkit-scrollbar { display: block; height: 7px; }
-        .branch-bar::-webkit-scrollbar-track {
-          background: rgba(255,255,255,0.06);
-          border-radius: 999px;
-        }
-        .branch-bar::-webkit-scrollbar-thumb {
-          background: rgba(0, 229, 255, 0.65);
-          border-radius: 999px;
-        }
-        .branch-bar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+      .branch-bar::-webkit-scrollbar { display: block; height: 7px; }
+      .branch-bar::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.06);
+        border-radius: 999px;
       }
+      .branch-bar::-webkit-scrollbar-thumb {
+        background: rgba(0, 229, 255, 0.65);
+        border-radius: 999px;
+      }
+      .branch-bar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
       .branch-pill {
         flex: 0 0 auto;
         border: 1px solid var(--panel-border);
@@ -415,6 +409,8 @@
   @media (max-width: 480px) {
     #topBar { max-width: none; }
     #lineSearch, .settings-row select { font-size: 16px; } /* evita el zoom automatico en iOS */
+    .branch-bar { scrollbar-width: none; }
+    .branch-bar::-webkit-scrollbar { display: none; }
     .leaflet-top.leaflet-left { top: 132px; }
   }
 </style>
