@@ -414,7 +414,6 @@ def get_mas_positions_cached(line_str: str) -> tuple[int, bytes]:
 _positions_cache: dict[str, tuple[float, int, bytes]] = {}
 _positions_cache_lock = threading.Lock()
 _tracks_lock = threading.Lock()
-_last_track_sample: dict[tuple[str, str], tuple[float, float, float]] = {}
 
 
 def ensure_sqlite_column(conn: sqlite3.Connection, table: str, column: str, definition: str):
@@ -468,11 +467,7 @@ def init_tracks_db():
 
 
 def record_bus_observations(line: str, body: bytes):
-    """Guarda muestras espaciadas de los buses que ya se consultaron.
-
-    Una muestra cada 20 s (o al moverse 35 m) da suficiente detalle para una
-    ruta urbana sin hacer crecer la base innecesariamente.
-    """
+    """Entrega una respuesta normalizada al registro central compartido."""
     try:
         response = json.loads(body)
         if not response.get("success"):
@@ -481,33 +476,7 @@ def record_bus_observations(line: str, body: bytes):
     except (ValueError, TypeError):
         return
 
-    now = time.time()
-    observed_routes.observe(str(line), units, now)
-    rows = []
-    for unit in units:
-        try:
-            unit_id = str(unit["unit"])
-            lat, lon = float(unit["lat"]), float(unit["lon"])
-            route_name = str(unit.get("route") or "").strip()[:160]
-        except (KeyError, TypeError, ValueError):
-            continue
-
-        key = (str(line), unit_id)
-        previous = _last_track_sample.get(key)
-        moved = previous is None or haversine_km(previous[1], previous[2], lat, lon) >= 0.035
-        if previous is None or now - previous[0] >= 20 or moved:
-            _last_track_sample[key] = (now, lat, lon)
-            rows.append((str(line), unit_id, int(now), lat, lon, route_name))
-
-    if not rows:
-        return
-    with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
-        conn.executemany(
-            "INSERT INTO bus_observations(line_id, unit_id, observed_at, lat, lon, route_name) VALUES (?, ?, ?, ?, ?, ?)",
-            rows,
-        )
-        # Conservar una semana permite detectar desvíos, y limpiar los viejos
-        conn.execute("DELETE FROM bus_observations WHERE observed_at < ?", (int(now - 7 * 86400),))
+    observed_routes.observe(str(line), units)
 
 
 def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
@@ -1109,33 +1078,6 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/report-deviation":
             # Legacy browsers cannot create evidence or alter the shared counts.
             self._send_json_obj(410, {"success": False, "error": "Las observaciones se registran en el servidor"})
-            return
-            if not body or not body.get("line") or not body.get("points"):
-                self._send_json_obj(400, {"success": False})
-                return
-            line = str(body["line"])
-            points = body["points"]
-            route_name = str(body.get("route") or "").strip()[:160]
-            if not isinstance(points, list) or len(points) < 2:
-                self._send_json_obj(400, {"success": False})
-                return
-            # Filtrar si la desviacion es gigante o no valida (ya lo hace el frontend, pero por si acaso)
-            if len(points) > 500:
-                points = points[:500]
-            now = int(time.time())
-            points_json = json.dumps(points)
-            with _tracks_lock, sqlite3.connect(TRACKS_DB_FILE) as conn:
-                # Comprobar si ya enviaron este mismo trayecto recien (para no duplicar en OSRM)
-                exists = conn.execute(
-                    "SELECT 1 FROM raw_deviations WHERE line_id = ? AND route_name = ? AND points_json = ?",
-                    (line, route_name, points_json),
-                ).fetchone()
-                if not exists:
-                    conn.execute(
-                        "INSERT INTO raw_deviations (line_id, points_json, created_at, route_name) VALUES (?, ?, ?, ?)",
-                        (line, points_json, now, route_name),
-                    )
-            self._send_json_obj(200, {"success": True})
             return
 
         self._send_json_obj(404, {"success": False, "error": "not found"})

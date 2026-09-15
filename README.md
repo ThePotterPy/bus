@@ -54,14 +54,21 @@ el boton de aviso de proximidad.
   evitar notificaciones repetidas, el servidor solo avisa en la transicion
   de "fuera del radio" a "dentro del radio"; si el bus se queda adentro no
   vuelve a avisar hasta que salga y vuelva a entrar.
-- **Desvíos observados**: el servidor conserva muestras de GPS públicas de
-  los buses por hasta 21 días. Al elegir una línea, el mapa compara ese
-  historial con el trazado oficial y dibuja en fucsia discontinuo únicamente
-  los tramos que quedan fuera de él. Para evitar falsos positivos por ruido
-  GPS o una maniobra aislada, un tramo debe aparecer en al menos dos viajes
-  distintos y superar 140 m antes de mostrarse. El historial es compartido:
-  lo que se aprende mientras una persona consulta una línea queda disponible
-  para las demás. Al principio estará vacío y se completa gradualmente.
+- **Trayectos observados compartidos**: el servidor consulta las líneas aunque
+  no haya una página abierta, compara cada bus con su recorrido oficial y
+  conserva solamente la evidencia que queda fuera. La ruta oficial nunca se
+  modifica. La estela GPS reciente se muestra en celeste; los tramos ajustados
+  a calles usan naranja para 2 buses distintos, azul para 3 y morado para 4 o
+  más. Una pasada se identifica por línea, unidad y viaje, de modo que varios
+  visitantes mirando el mismo bus no aumentan el conteo.
+- **Líneas sin recorrido oficial**: sus movimientos se guardan como “recorrido
+  observado”, claramente separado de un desvío. Una descarga fallida no se
+  interpreta como ausencia de ruta y se conserva el último trazado conocido.
+- **Ajuste a calles**: las posiciones originales siempre se conservan. El
+  servidor procesa cada nueva estela en una cola con reintentos y solo publica
+  la línea resultante cuando el ajuste de OSRM tiene confianza suficiente. Una
+  respuesta dudosa queda como puntos celestes, sin unir edificios con una
+  recta inventada.
 
 ## Estructura
 
@@ -69,13 +76,40 @@ el boton de aviso de proximidad.
   una cache corta compartida por linea) y maneja las suscripciones de
   notificacion (VAPID, guardado en `data/`, hilo de fondo que chequea
   proximidad cada 20s y manda los push con `pywebpush`).
+- `observed_routes.py` - recolector central, detección de salida y regreso,
+  almacenamiento de pasadas, ajuste a calles y estadísticas compartidas.
 - `static/index.html` - mapa (Leaflet + OpenStreetMap), buscador de lineas,
   calculo de rumbo/sentido, y el panel de avisos de proximidad.
+- `static/observed-routes.js` - representa las estelas y alternativas enviadas
+  por el servidor; el navegador no puede crear ni inflar evidencia compartida.
 - `static/sw.js` - service worker minimo, solo recibe el push y muestra la
   notificacion.
 - `data/` - generado en el primer uso (clave VAPID + suscripciones activas).
   También incluye `observed_bus_tracks.sqlite3`, el historial compartido de
   posiciones de buses. No se sube al repositorio.
+
+## Railway y almacenamiento persistente
+
+La aplicación usa automáticamente el directorio indicado por
+`RAILWAY_VOLUME_MOUNT_PATH`. En Railway hay que agregar un volumen al servicio
+con punto de montaje `/data`; Railway crea esa variable automáticamente. El
+archivo SQLite, las estelas y las suscripciones quedan entonces dentro del
+volumen y sobreviven a reinicios y despliegues.
+
+El servicio debe ejecutarse con una sola réplica mientras use SQLite. La ruta
+`/api/observed-health` sirve como healthcheck. La configuración incluida en
+`railway.json` inicia el servidor, configura ese healthcheck y reinicia el
+proceso si falla.
+
+Variables opcionales:
+
+- `DATA_DIR`: reemplaza la ubicación de datos fuera de Railway.
+- `OBSERVED_COLLECTOR=0`: desactiva el recolector central.
+- `OBSERVED_POLL_SECONDS`: intervalo objetivo del recolector (mínimo 15 s;
+  predeterminado 30 s). El ciclo real también depende del número de líneas.
+- `OSRM_MATCH_URL`: servidor compatible con la API Match de OSRM. El valor
+  predeterminado es `https://router.project-osrm.org`; para más volumen se
+  recomienda una instancia propia.
 
 ## Notas y limitaciones
 
@@ -88,10 +122,8 @@ el boton de aviso de proximidad.
 - Web Push solo funciona en `https://` o en `localhost`. Para probarlo en
   tu PC anda perfecto; si esto se va a usar desde varios telefonos/PCs
   distintos de verdad, el servidor tiene que estar en un hosting con HTTPS.
-- Para que el historial y las estelas compartidas sobrevivan a un reinicio en
-  ese hosting, `data/observed_bus_tracks.sqlite3` debe estar en un volumen
-  persistente. Si el proveedor descarta el disco en cada despliegue, también
-  descartará ese aprendizaje compartido.
+- Sin un volumen de Railway, la aplicación funciona pero el historial se
+  pierde al reemplazar el contenedor durante un despliegue.
 - El estado de las suscripciones vive en memoria + un JSON en `data/`; si
   el servidor se reinicia no se pierden (se recargan del archivo), pero no
   es una base de datos pensada para volumenes grandes.

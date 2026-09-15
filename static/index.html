@@ -828,6 +828,7 @@ function normalizeBranchText(value) {
     .replace(/\((?:i|v|ida|vuelta)\)/g, ' ')
     .replace(/(?:^|[\s_-])(?:ida|vuelta)(?=$|[\s_-])/g, ' ')
     .replace(/\(\d+\)/g, ' ')
+    .replace(/\b\d+\b/g, ' ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim().replace(/\s+/g, ' ');
 }
@@ -837,6 +838,7 @@ function cleanBranchLabel(value) {
     .replace(/\((?:I|V|IDA|VUELTA)\)/gi, ' ')
     .replace(/(?:^|[\s_-])(?:IDA|VUELTA)(?=$|[\s_-])/gi, ' ')
     .replace(/\(\d+\)/g, ' ')
+    .replace(/\b\d+\b/g, ' ')
     .replace(/[\s_-]+/g, ' ').trim();
   if (!cleaned) return 'Principal';
   return cleaned.toLowerCase().replace(/(^|\s)\p{L}/gu, letter => letter.toUpperCase());

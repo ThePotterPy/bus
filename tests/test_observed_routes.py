@@ -1,5 +1,4 @@
 import json
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -19,13 +18,18 @@ def official(lat=-25.0):
 
 class ObservedTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.store = ObservedRoutes(Path(self.tmp.name)/'test.sqlite3')
+        self.db = Path(__file__).with_name('_observed_routes_test.sqlite3')
+        self._clean_db()
+        self.store = ObservedRoutes(self.db)
         self.store.init()
         self.store.save_official('30', official())
 
     def tearDown(self):
-        self.tmp.cleanup()
+        self._clean_db()
+
+    def _clean_db(self):
+        for suffix in ('', '-wal', '-shm'):
+            Path(str(self.db) + suffix).unlink(missing_ok=True)
 
     def travel(self, unit='1', line='30', route='Azul (I)', start=NOW, lat=-25.002, count=8):
         for i in range(count):
@@ -61,12 +65,12 @@ class ObservedTests(unittest.TestCase):
         self.assertEqual({e['buses'] for e in self.snap()['alternatives']}, {4})
         self.assertEqual({e['buses'] for e in self.snap('12')['alternatives']}, {1})
 
-    def test_ramales_and_numbered_branches_never_mix(self):
-        for i, route in enumerate(('Azul 1 (I)', 'Azul 2 (I)')):
+    def test_distinct_named_ramales_never_mix(self):
+        for i, route in enumerate(('Azul Norte (I)', 'Azul Sur (I)')):
             self.travel(unit=str(i+1), route=route, start=NOW+i*1000)
         self.process(NOW+2500)
         edges = self.snap(now=NOW+2501)['alternatives']
-        self.assertEqual({e['route'] for e in edges}, {'Azul 1 (I)', 'Azul 2 (I)'})
+        self.assertEqual({e['route'] for e in edges}, {'Azul Norte (I)', 'Azul Sur (I)'})
         self.assertEqual({e['buses'] for e in edges}, {1})
 
     def test_restart_retains_active_state_and_idempotent_observation(self):

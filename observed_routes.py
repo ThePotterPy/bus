@@ -26,7 +26,9 @@ def branch_key(name):
     text = ''.join(c for c in text if not unicodedata.combining(c))
     text = re.sub(r'\((?:i|v|ida|vuelta)\)', ' ', text)
     text = re.sub(r'(?:^|[\s_-])(?:ida|vuelta)(?=$|[\s_-])', ' ', text)
-    # Keep route numbers: distinct numbered branches must not be merged.
+    # Provider route IDs often appear as standalone suffixes ("Rojo 3").
+    # They are metadata, not separate public branch names.
+    text = re.sub(r'\b\d+\b', ' ', text)
     return re.sub(r'[^a-z0-9]+', ' ', text).strip()
 
 
