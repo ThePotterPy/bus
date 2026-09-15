@@ -121,8 +121,29 @@ class ObservedTests(unittest.TestCase):
         self.assertTrue(archived)
         self.assertTrue(all(e['archived'] and e['buses']==0 and e['historical_buses']==1 for e in archived))
 
-    def test_stale_offline_and_teleport_do_not_form_trace(self):
-        self.assertIsNone(sample_time({'online':0}, NOW))
+    def test_unreliable_offline_flag_accepts_real_movement_only(self):
+        self.assertEqual(sample_time({'online':0}, NOW), NOW)
+        # A frozen coordinate marked offline establishes a baseline but never
+        # accumulates the three moving samples required for a trail.
+        for i in range(8):
+            self.store.observe('30', [{
+                'unit':'frozen', 'lat':-25.002, 'lon':-57,
+                'route':'Azul (I)', 'online':0,
+            }], NOW+i*10)
+        self.store.flush_idle(NOW+200)
+        self.assertFalse(self.snap()['pending'])
+
+        # Regression for lines such as JAHA 187: online=0 is wrong, but
+        # consistent GPS movement must still become shared evidence.
+        for i in range(8):
+            self.store.observe('30', [{
+                'unit':'moving', 'lat':-25.002, 'lon':-57+i*.0003,
+                'route':'Azul (I)', 'online':0,
+            }], NOW+i*10)
+        self.store.flush_idle(NOW+200)
+        self.assertTrue(self.snap()['pending'])
+
+    def test_stale_timestamp_and_teleport_do_not_form_trace(self):
         self.assertIsNone(sample_time({'modified':'2020-01-01T00:00:00Z'}, NOW))
         for i in range(8):
             self.store.observe('30', [{'unit':'1','lat':-25.002-i*.1,'lon':-57}], NOW+i*10)

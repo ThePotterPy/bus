@@ -53,9 +53,13 @@ def length(points):
 
 
 def sample_time(unit, now):
-    """Reject stale provider data; never reinterpret an offline bus as moving."""
-    if str(unit.get('online', '1')).lower() in ('0', 'false'):
-        return None
+    """Return a trustworthy sample time when possible.
+
+    JAHA reports ``online: 0`` for some entire lines even while their GPS
+    coordinates keep changing.  Treat that field as advisory: actual movement
+    is validated later using displacement, ordering, gap, teleport and speed
+    checks.  A stationary/offline unit therefore cannot build a trail.
+    """
     raw = str(unit.get('observed_at') or unit.get('modified') or unit.get('time') or '')
     try:
         if re.fullmatch(r'\d{2}:\d{2}:\d{2}', raw):
