@@ -1425,9 +1425,17 @@ async function addDeviationSegment(points, supportLevel) {
   else if (supportLevel > 2) color = '#FF0000'; // >2 trips: Red
 
   // Dibuja en baja opacidad el crudo
-  L.polyline(points, {
+  const poly = L.polyline(points, {
     color: color, weight: 3, opacity: 0.5, dashArray: '4 8', lineCap: 'round',
-  }).addTo(observedDeviationLayer);
+  });
+  
+  poly.bindPopup(`
+    <div style="font-size:13px; font-family:'Inter',sans-serif; color: #333;">
+      <b style="color: #ff3366;">Trayecto Alternativo</b><br>
+      Se detectó que buses pasaron por aquí <b>${supportLevel}</b> ve${supportLevel > 1 ? 'ces' : 'z'} en los últimos días.
+    </div>
+  `);
+  poly.addTo(observedDeviationLayer);
 
   // Reportar al backend
   fetch('/api/report-deviation', {
@@ -1448,9 +1456,16 @@ async function loadSnappedDeviations(lineId) {
     let drawn = false;
     for (const points of json.deviations) {
       if (points && points.length > 0) {
-        L.polyline(points, {
+        const poly = L.polyline(points, {
           color: '#FF0000', weight: 5, opacity: 0.9, dashArray: '8 10', lineCap: 'round',
-        }).addTo(observedDeviationLayer);
+        });
+        poly.bindPopup(`
+          <div style="font-size:13px; font-family:'Inter',sans-serif; color: #333;">
+            <b style="color: #ff3366;">Desvío Frecuente Confirmado</b><br>
+            Varios colectivos de esta línea usan esta calle en lugar de la ruta oficial.
+          </div>
+        `);
+        poly.addTo(observedDeviationLayer);
         drawn = true;
       }
     }
