@@ -455,6 +455,7 @@
         font-size: 11px; line-height: 1.35; color: var(--muted);
       }
       #observedRouteLegend.visible { display: block; }
+      .observed-legend-toggle { display: none; }
       .observed-route-swatch {
         display: inline-block; width: 24px; margin-right: 6px;
         border-top: 4px dashed #ff4fd8; vertical-align: middle;
@@ -473,6 +474,23 @@
     .branch-bar { scrollbar-width: none; }
     .branch-bar::-webkit-scrollbar { display: none; }
     .leaflet-top.leaflet-left { top: 132px; }
+    #observedRouteLegend {
+      width: auto;
+      max-width: min(280px, calc(100vw - 86px));
+      max-height: min(55dvh, 370px);
+      overflow-y: auto;
+    }
+    #observedRouteLegend:not(.expanded) { padding: 0; }
+    .observed-legend-toggle {
+      display: flex; align-items: center; gap: 7px;
+      width: 100%; padding: 8px 10px;
+      border: 0; background: transparent; color: var(--text);
+      font: inherit; font-weight: 700; text-align: left; cursor: pointer;
+    }
+    .observed-legend-toggle::after { content: '▴'; margin-left: auto; }
+    #observedRouteLegend.expanded .observed-legend-toggle::after { content: '▾'; }
+    #observedRouteLegend:not(.expanded) .observed-legend-content { display: none; }
+    #observedRouteLegend.expanded .observed-legend-toggle { padding: 2px 0 7px; }
   }
 </style>
 </head>
@@ -589,6 +607,8 @@
   </button>
 
   <div id="observedRouteLegend">
+    <button type="button" id="observedLegendToggle" class="observed-legend-toggle" aria-expanded="false" aria-controls="observedLegendContent">Trayectos observados</button>
+    <div id="observedLegendContent" class="observed-legend-content">
     <div style="margin-bottom:4px;font-weight:bold">Trayectos observados · últimos 14 días</div>
     <div><span class="observed-route-swatch" style="border-top-color:#8B1E3F"></span> 1 bus distinto</div>
     <div><span class="observed-route-swatch" style="border-top-color:#FFA500"></span> 2 buses distintos</div>
@@ -597,6 +617,7 @@
     <div><span class="observed-point-swatch"></span> GPS en vivo o pendiente de ajuste</div>
     <label style="display:block;margin-top:6px"><input type="checkbox" id="observedHistory"> Mostrar históricas (gris)</label>
     <div id="observedNotice" style="max-width:280px;margin-top:4px"></div>
+    </div>
   </div>
 
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
@@ -657,6 +678,11 @@ const statusText = document.getElementById('statusText');
 const emptyMsg = document.getElementById('empty');
 const locateBtn = document.getElementById('locateBtn');
 const observedRouteLegend = document.getElementById('observedRouteLegend');
+const observedLegendToggle = document.getElementById('observedLegendToggle');
+observedLegendToggle.addEventListener('click', () => {
+  const expanded = observedRouteLegend.classList.toggle('expanded');
+  observedLegendToggle.setAttribute('aria-expanded', String(expanded));
+});
 const branchBar = document.getElementById('branchBar');
 
 let currentLine = null;
