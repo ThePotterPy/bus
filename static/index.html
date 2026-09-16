@@ -311,6 +311,62 @@
       .btn-primary:active { transform: scale(0.98); }
       .btn-primary:disabled { opacity: .6; cursor: default; transform: none; }
       .btn-primary.danger { background: var(--red); color: white; }
+      .plan-location-btn {
+        width: 100%; margin-top: 7px; padding: 8px 10px; border-radius: 8px;
+        border: 1px solid rgba(58,160,255,.45); background: rgba(58,160,255,.12);
+        color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600;
+      }
+      .plan-location-btn:disabled { opacity: .6; cursor: wait; }
+      #originAccuracy { display: block; min-height: 15px; margin-top: 4px; color: var(--muted); font-size: 11px; }
+      .plan-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+      .plan-title { color:var(--text); font-size:17px; font-weight:750; }
+      #planHint { margin-top:3px; color:var(--muted); font-size:12px; line-height:1.35; }
+      .plan-clear-btn, .plan-swap-btn {
+        border:1px solid var(--panel-border); background:rgba(255,255,255,.06);
+        color:var(--text); cursor:pointer;
+      }
+      .plan-clear-btn { border-radius:8px; padding:6px 9px; font-size:11px; }
+      .plan-field {
+        display:flex; align-items:flex-start; gap:10px; margin-top:11px; padding:10px;
+        border:1px solid var(--panel-border); border-radius:12px;
+        background:rgba(255,255,255,.035); transition:border-color .2s, background .2s;
+      }
+      .plan-field.active { border-color:var(--accent); background:rgba(58,160,255,.08); }
+      .plan-field.complete .plan-step-marker { color:#06131f; background:var(--green); border-color:var(--green); }
+      .plan-field.destination.complete .plan-step-marker { background:var(--red); border-color:var(--red); color:white; }
+      .plan-step-marker {
+        flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+        width:25px; height:25px; margin-top:18px; border-radius:50%;
+        border:2px solid var(--muted); color:var(--muted); font-size:12px; font-weight:800;
+      }
+      .plan-field-content { min-width:0; flex:1; }
+      .plan-field-label { display:block; margin-bottom:5px; color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+      .plan-field .autocomplete-wrap { margin-left:0; }
+      .plan-field .autocomplete-input { padding:9px 10px; border-radius:8px; }
+      .plan-swap-row { display:flex; align-items:center; justify-content:center; height:15px; }
+      .plan-swap-btn { z-index:1; width:32px; height:32px; border-radius:50%; font-size:17px; line-height:1; }
+      .plan-map-marker {
+        display:flex; align-items:center; justify-content:center; width:25px; height:25px;
+        border-radius:50%; border:2px solid white; color:white; font-size:12px; font-weight:800;
+        box-shadow:0 2px 7px rgba(0,0,0,.45);
+      }
+      .plan-map-marker.origin { background:var(--green); color:#06131f; }
+      .plan-map-marker.destination { background:var(--red); }
+      .plan-stop-marker {
+        display:flex; align-items:center; justify-content:center; width:24px; height:24px;
+        border-radius:7px; border:2px solid white; background:#06131f; color:#00e676;
+        font-size:14px; font-weight:900; box-shadow:0 2px 8px rgba(0,0,0,.5);
+      }
+      .plan-stop-marker.alight { color:#ff6b7a; }
+      .plan-option {
+        width: 100%; margin-top: 8px; padding: 10px 12px; text-align: left;
+        border-radius: 10px; border: 1px solid var(--panel-border);
+        background: rgba(255,255,255,.06); color: var(--text); cursor: pointer;
+      }
+      .plan-option.best { border-color: var(--accent); background: rgba(58,160,255,.13); }
+      .plan-option-title { font-size: 14px; font-weight: 700; }
+      .plan-option-detail { margin-top: 4px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+      #planPanel { max-height: calc(100dvh - 105px); overflow-y: auto; }
   #notifyStatus { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
 
   /* --- pastilla de estado, flotante abajo --- */
@@ -413,7 +469,7 @@
 
   @media (max-width: 480px) {
     #topBar { max-width: none; }
-    #lineSearch, .settings-row select { font-size: 16px; } /* evita el zoom automatico en iOS */
+    #lineSearch, .settings-row select, .autocomplete-input { font-size: 16px; } /* evita el zoom automatico en iOS */
     .branch-bar { scrollbar-width: none; }
     .branch-bar::-webkit-scrollbar { display: none; }
     .leaflet-top.leaflet-left { top: 132px; }
@@ -482,28 +538,45 @@
       </div>
     </div>
     <div class="float-card" id="planPanel" style="padding: 16px;">
-      <div class="notify-intro">Escribe una dirección o toca en el mapa para fijar Origen y Destino.</div>
-      <div class="settings-row" style="margin-top: 12px; align-items: flex-start;">
-        <span style="display:flex; align-items:center; gap:8px; margin-top: 6px;">
-          <div class="dot ok"></div> Origen
-        </span>
-        <div class="autocomplete-wrap">
-          <input type="text" id="originInput" class="autocomplete-input" placeholder="Ej. Terminal, Asuncion..." autocomplete="off">
-          <div class="autocomplete-list" id="originList"></div>
+      <div class="plan-header">
+        <div>
+          <div class="plan-title">¿A dónde querés ir?</div>
+          <div id="planHint">Elegí desde dónde salís.</div>
+        </div>
+        <button type="button" id="clearPlanBtn" class="plan-clear-btn">Limpiar</button>
+      </div>
+
+      <div class="plan-field" id="originField">
+        <span class="plan-step-marker">A</span>
+        <div class="plan-field-content">
+          <label class="plan-field-label" for="originInput">Salís desde</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="originInput" class="autocomplete-input" placeholder="Tocá el mapa o escribí una dirección" autocomplete="off" enterkeyhint="search">
+            <button type="button" id="searchOriginBtn" class="plan-location-btn">Buscar dirección de salida</button>
+            <div class="autocomplete-list" id="originList"></div>
+            <button type="button" id="useMyLocationBtn" class="plan-location-btn">◎ Usar mi ubicación actual</button>
+            <span id="originAccuracy"></span>
+          </div>
         </div>
       </div>
-      <div class="settings-row" style="margin-top: 12px; align-items: flex-start;">
-        <span style="display:flex; align-items:center; gap:8px; margin-top: 6px;">
-          <div class="dot bad"></div> Destino
-        </span>
-        <div class="autocomplete-wrap">
-          <input type="text" id="destInput" class="autocomplete-input" placeholder="Ej. Shopping del Sol..." autocomplete="off">
-          <div class="autocomplete-list" id="destList"></div>
+
+      <div class="plan-swap-row">
+        <button type="button" id="swapPlanBtn" class="plan-swap-btn" aria-label="Intercambiar origen y destino" title="Intercambiar origen y destino">⇅</button>
+      </div>
+
+      <div class="plan-field destination" id="destField">
+        <span class="plan-step-marker">B</span>
+        <div class="plan-field-content">
+          <label class="plan-field-label" for="destInput">Querés llegar a</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="destInput" class="autocomplete-input" placeholder="Tocá el mapa o escribí tu destino" autocomplete="off" enterkeyhint="search">
+            <button type="button" id="searchDestBtn" class="plan-location-btn">Buscar dirección de destino</button>
+            <div class="autocomplete-list" id="destList"></div>
+          </div>
         </div>
       </div>
-      <div class="settings-row" style="margin-top: 16px; border-top: none;">
-        <button class="btn-primary" id="calculatePlanBtn" disabled>Calcular Ruta</button>
-      </div>
+
+      <button class="btn-primary" id="calculatePlanBtn" style="margin-top:14px" disabled>Elegí origen y destino</button>
       <div id="planResult" style="margin-top: 12px; font-size: 14px; font-weight: 500; text-align: center;"></div>
     </div>
   </div>
@@ -569,6 +642,13 @@ const originList = document.getElementById('originList');
 const destList = document.getElementById('destList');
 const calculatePlanBtn = document.getElementById('calculatePlanBtn');
 const planResult = document.getElementById('planResult');
+const useMyLocationBtn = document.getElementById('useMyLocationBtn');
+const originAccuracy = document.getElementById('originAccuracy');
+const planHint = document.getElementById('planHint');
+const originField = document.getElementById('originField');
+const destField = document.getElementById('destField');
+const clearPlanBtn = document.getElementById('clearPlanBtn');
+const swapPlanBtn = document.getElementById('swapPlanBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
 const intervalSelect = document.getElementById('intervalSelect');
@@ -586,6 +666,7 @@ let followedUnitId = null;
 // Evita que una respuesta lenta de una línea anterior pise el recorrido de
 // la línea que el usuario acaba de seleccionar.
 let routeLoadGeneration = 0;
+let positionRequestSequence = 0;
 const ALL_LINES_ID = '__all__';
 const ALL_LINES_REFRESH_SECONDS = 60;
 let allLinesMode = false;
@@ -609,7 +690,9 @@ const unitState = new Map();      // unitId -> { lat, lon, bearing, routeLabel, 
 const markersById = new Map();    // unitId -> L.Marker (para actualizar in-place, no recrear)
 const tailsById = new Map();      // unitId -> L.Polyline (cola del bus individual)
 const etaRouteLayer = L.layerGroup().addTo(map); // para dibujar la ruta de llegada (ETA)
+const plannedTripLayer = L.layerGroup().addTo(map); // caminatas + tramo elegido del viaje
 let currentRoutePolylines = [];   // [{ name, points, cum, dirLabel }] del recorrido de la linea actual
+let activePlanOption = null;      // recorrido exacto elegido por el planificador
 
 const DIR_DEGREES = {
   N: 0, NE: 45, E: 90, SE: 135, S: 180, SO: 225, SW: 225, O: 270, W: 270, NO: 315, NW: 315,
@@ -746,10 +829,124 @@ function projectToPolyline(lat, lon, poly) {
     t = Math.max(0, Math.min(1, t));
     const cx = ax + t * dx, cy = ay + t * dy;
     const dist = Math.hypot(px - cx, py - cy);
-    const arc = poly.cum[i] + t * Math.hypot(dx, dy);
-    if (!best || dist < best.dist) best = { dist, arc };
+    if (poly.gaps && poly.gaps.has(i)) continue;
+    const arc = poly.cum[i] + t * (poly.cum[i + 1] - poly.cum[i]);
+    if (!best || dist < best.dist) {
+      best = {
+        dist, arc, segment: i, fraction: t,
+        point: [aLat + t * (bLat - aLat), aLon + t * (bLon - aLon)],
+      };
+    }
   }
   return best;
+}
+
+function forwardDistanceOnPolyline(poly, fromPoint, toPoint) {
+  const from = projectToPolyline(fromPoint[0], fromPoint[1], poly);
+  const to = projectToPolyline(toPoint[0], toPoint[1], poly);
+  if (!from || !to) return -1;
+  if (from.dist > 150 || to.dist > 1500) return -1;
+  if ([...(poly.gaps || [])].some(gap => from.segment <= gap && gap <= to.segment)) return -1;
+  let distance = to.arc - from.arc;
+  if (distance < -20 && poly.closed) distance = poly.cum[poly.cum.length - 1] - from.arc + to.arc;
+  return distance < -20 ? -1 : Math.max(0, distance);
+}
+
+function pointsBetweenProjections(poly, from, to) {
+  if (!from || !to) return [];
+  if ([...(poly.gaps || [])].some(gap => from.segment <= gap && gap <= to.segment)) return [];
+  const points = [from.point];
+  if (to.arc >= from.arc) {
+    points.push(...poly.points.slice(from.segment + 1, to.segment + 1));
+  } else if (poly.closed) {
+    points.push(...poly.points.slice(from.segment + 1));
+    points.push(...poly.points.slice(0, to.segment + 1));
+  } else {
+    return [];
+  }
+  points.push(to.point);
+  return points;
+}
+
+function renderPlannedTrip(poly) {
+  plannedTripLayer.clearLayers();
+  if (!activePlanOption || !planOrigin || !planDest || !poly) return;
+  const board = activePlanOption.board;
+  const alight = activePlanOption.alight;
+  if (!board || !alight) return;
+
+  const boardProjection = projectToPolyline(board.lat, board.lon, poly);
+  const alightProjection = projectToPolyline(alight.lat, alight.lon, poly);
+  const busPoints = pointsBetweenProjections(poly, boardProjection, alightProjection);
+  if (busPoints.length < 2) return;
+
+  const originPoint = [planOrigin.lat, planOrigin.lon];
+  const destinationPoint = [planDest.lat, planDest.lon];
+  L.polyline([originPoint, boardProjection.point], {
+    color: '#3aa0ff', weight: 5, opacity: .9, dashArray: '8 7',
+  }).bindTooltip(`Caminata aproximada: ${activePlanOption.originWalkMeters} m`).addTo(plannedTripLayer);
+  L.polyline(busPoints, {
+    color: '#00e676', weight: 8, opacity: .92,
+  }).bindTooltip(`${escapeHtml(activePlanOption.name)} · ${escapeHtml(activePlanOption.routeName || 'Principal')}`).addTo(plannedTripLayer);
+  L.polyline([alightProjection.point, destinationPoint], {
+    color: '#3aa0ff', weight: 5, opacity: .9, dashArray: '8 7',
+  }).bindTooltip(`Caminata aproximada: ${activePlanOption.destinationWalkMeters} m`).addTo(plannedTripLayer);
+
+  L.marker(boardProjection.point, {
+    icon: L.divIcon({ className: '', html: '<div class="plan-stop-marker">↑</div>', iconSize: [24, 24], iconAnchor: [12, 12] }),
+  }).bindPopup(`<b>Punto cercano para subir</b><br>${escapeHtml(activePlanOption.name)}<br>${escapeHtml(activePlanOption.routeName || 'Principal')}<br>Verificá una parada habilitada. Caminata estimada en línea recta.`).addTo(plannedTripLayer);
+  L.marker(alightProjection.point, {
+    icon: L.divIcon({ className: '', html: '<div class="plan-stop-marker alight">↓</div>', iconSize: [24, 24], iconAnchor: [12, 12] }),
+  }).bindPopup('<b>Punto cercano para bajar</b><br>Verificá una parada habilitada. Caminata estimada en línea recta.').addTo(plannedTripLayer);
+
+  const bounds = L.latLngBounds([originPoint, destinationPoint, ...busPoints]);
+  if (bounds.isValid()) map.fitBounds(bounds, { padding: [45, 45], maxZoom: 16, animate: true });
+}
+
+function unitMatchesActivePlan(routeName) {
+  if (!activePlanOption || String(activePlanOption.id) !== String(currentLine)) return true;
+  const reportedDirection = routeDirection(routeName);
+  return !reportedDirection || !activePlanOption.direction || reportedDirection === activePlanOption.direction;
+}
+
+function matchesPlannedPolyline(poly, option = activePlanOption) {
+  if (!option) return false;
+  if (option.direction && poly.dirLabel !== option.direction) return false;
+  if (option.serviceId != null && String(poly.serviceId) !== String(option.serviceId)) return false;
+  if (option.routeId != null) return String(poly.routeId) === String(option.routeId);
+  return poly.name === option.routeName;
+}
+
+function bestPolylineForUnit(unit, branchKey, lat, lon) {
+  let candidates = branchKey
+    ? currentRoutePolylines.filter(poly => poly.branchKey === branchKey)
+    : currentRoutePolylines.slice();
+  const reportedDirection = routeDirection(unit.route);
+  const reportedBranch = normalizeBranchText(unit.route);
+
+  if (activePlanOption && String(activePlanOption.id) === String(currentLine)) {
+    if (reportedDirection && activePlanOption.direction && reportedDirection !== activePlanOption.direction) return null;
+    const planned = candidates.filter(poly => matchesPlannedPolyline(poly));
+    if (!planned.length) return null;
+    candidates = planned;
+  }
+
+  const exact = candidates.filter(poly => {
+    const directionMatches = !reportedDirection || !poly.dirLabel || poly.dirLabel === reportedDirection;
+    return directionMatches && normalizeBranchText(poly.name) === reportedBranch;
+  });
+  if (exact.length) candidates = exact;
+  else if (reportedDirection) {
+    const sameDirection = candidates.filter(poly => !poly.dirLabel || poly.dirLabel === reportedDirection);
+    if (sameDirection.length) candidates = sameDirection;
+  }
+
+  let best = null;
+  candidates.forEach(poly => {
+    const projection = projectToPolyline(lat, lon, poly);
+    if (projection && (!best || projection.dist < best.distance)) best = { poly, distance: projection.dist };
+  });
+  return best && best.distance <= 150 ? best.poly : null;
 }
 
 // Actualiza (o crea) el estado de una unidad con su nueva posicion: calcula
@@ -876,9 +1073,9 @@ function cleanReportedBranchLabel(value) {
 
 function routeDirection(value) {
   const text = String(value || '').toLowerCase();
-  if (/\((?:v|vuelta)\)|(?:^|[\s_-])vuelta(?:$|[\s_-])/.test(text)) return 'Vuelta';
-  if (/\((?:i|ida)\)|(?:^|[\s_-])ida(?:$|[\s_-])/.test(text)) return 'Ida';
-  return null;
+  const vuelta = /\((?:v|vuelta)\)|(?:^|[\s_-])vuelta(?:$|[\s_-])/.test(text);
+  const ida = /\((?:i|ida)\)|(?:^|[\s_-])ida(?:$|[\s_-])/.test(text);
+  return ida === vuelta ? null : (ida ? 'Ida' : 'Vuelta');
 }
 
 function branchByKey(key) {
@@ -961,9 +1158,11 @@ function renderBranchSelector() {
   const previousScroll = branchBar.scrollLeft;
   const counts = new Map();
   latestLineUnits.forEach(unit => {
-    if (unit._branchKey) counts.set(unit._branchKey, (counts.get(unit._branchKey) || 0) + 1);
+    if (unit._branchKey && unitMatchesActivePlan(unit.route)) {
+      counts.set(unit._branchKey, (counts.get(unit._branchKey) || 0) + 1);
+    }
   });
-  const total = latestLineUnits.length;
+  const total = latestLineUnits.filter(unit => unitMatchesActivePlan(unit.route)).length;
   const pills = [{ key: BRANCH_ALL, label: 'Todos', count: total }, ...lineBranches.map(branch => ({
     key: branch.key, label: branch.label, count: counts.get(branch.key) || 0,
   }))];
@@ -984,7 +1183,7 @@ function applyBranchVisibility() {
   });
   for (const [unitId, marker] of markersById) {
     const st = unitState.get(unitId);
-    if (branchIsVisible(st && st.branchKey)) {
+    if (branchIsVisible(st && st.branchKey) && unitMatchesActivePlan(st && st.reportedRoute)) {
       if (!markersLayer.hasLayer(marker)) markersLayer.addLayer(marker);
     } else if (markersLayer.hasLayer(marker)) markersLayer.removeLayer(marker);
   }
@@ -1010,6 +1209,7 @@ function applyBranchVisibility() {
 branchBar.addEventListener('click', event => {
   const button = event.target.closest('.branch-pill');
   if (!button) return;
+  invalidatePlan();
   currentBranch = button.dataset.branch;
   if (followedUnitId) {
     const followed = unitState.get(followedUnitId);
@@ -1018,11 +1218,13 @@ branchBar.addEventListener('click', event => {
   renderBranchSelector();
   applyBranchVisibility();
   const branch = branchByKey(currentBranch);
-  const visibleCount = currentBranch === BRANCH_ALL
-    ? latestLineUnits.length
-    : latestLineUnits.filter(unit => unit._branchKey === currentBranch).length;
+  const visibleCount = latestLineUnits.filter(unit =>
+    (currentBranch === BRANCH_ALL || unit._branchKey === currentBranch) && unitMatchesActivePlan(unit.route)
+  ).length;
   emptyMsg.style.display = visibleCount ? 'none' : 'block';
-  if (!visibleCount) emptyMsg.textContent = 'No hay unidades reportando en este ramal ahora mismo';
+  if (!visibleCount) emptyMsg.textContent = activePlanOption
+    ? 'No hay unidades reportando ahora en el sentido de este viaje'
+    : 'No hay unidades reportando en este ramal ahora mismo';
   setStatus(`${visibleCount} unidad(es)${branch ? ` · ${branch.label}` : ''}`, true);
 });
 
@@ -1110,6 +1312,9 @@ function closeAllPanels() {
 }
 
 function openLineList() {
+  planPanel.classList.remove('open');
+  planBtn.classList.remove('active');
+  exitPlanningMode();
   settingsPanel.classList.remove('open');
   settingsBtn.classList.remove('active');
   notifyPanel.classList.remove('open');
@@ -1141,6 +1346,9 @@ function closeLineList() {
 }
 
 function toggleSettings() {
+  planPanel.classList.remove('open');
+  planBtn.classList.remove('active');
+  exitPlanningMode();
   lineList.classList.remove('open');
   notifyPanel.classList.remove('open');
   notifyBtn.classList.remove('active');
@@ -1180,11 +1388,14 @@ function togglePlanPanel() {
   }
 }
 
-function selectLine(id) {
+function selectLine(id, preservePlan = false) {
+  if (!preservePlan) invalidatePlan();
   if (id === ALL_LINES_ID) {
+    activePlanOption = null;
     selectAllLines();
     return;
   }
+  if (!activePlanOption || String(activePlanOption.id) !== String(id)) activePlanOption = null;
   stopAllLinesMode();
   const loadGeneration = ++routeLoadGeneration;
   currentLine = id;
@@ -1205,6 +1416,7 @@ function selectLine(id) {
   pathLayer.clearLayers();
   observedDeviationLayer.clearLayers();
   liveTailLayer.clearLayers();
+  plannedTripLayer.clearLayers();
   observedRouteLegend.classList.remove('visible');
   markersById.clear();
   tailsById.clear();
@@ -1262,6 +1474,7 @@ function selectAllLines() {
   observedDeviationLayer.clearLayers();
   liveTailLayer.clearLayers();
   observedRouteLegend.classList.remove('visible');
+  plannedTripLayer.clearLayers();
   markersById.clear(); tailsById.clear(); unitState.clear();
   currentRoutePolylines = [];
   followedUnitId = null;
@@ -1454,6 +1667,7 @@ centerRouteBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('click', (e) => {
+  if (isPlanningMode && document.getElementById('map').contains(e.target)) return;
   if (!topBar.contains(e.target)) closeAllPanels();
 });
 
@@ -1494,6 +1708,7 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
   pathLayer.clearLayers();
   observedDeviationLayer.clearLayers();
   observedRouteLegend.classList.remove('visible');
+  plannedTripLayer.clearLayers();
   currentRoutePolylines = [];
   lineBranches = [];
   observedDeviationItems.length = 0;
@@ -1511,18 +1726,33 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
         const sortedSections = [...(route.sections || [])].sort((a, b) => a.order - b.order);
         const routePoints = [];
         const routeLayers = [];
+        const gaps = new Set();
 
         sortedSections.forEach(section => {
-          const pts = (section.traces || [])
-            .sort((a, b) => a.order - b.order)
-            .map(t => [parseFloat(t.latitud), parseFloat(t.longitud)]);
+          const pts = [];
+          let sectionStart = true, invalidPrevious = false;
+          [...(section.traces || [])].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)).forEach(t => {
+            const p = [Number.parseFloat(t.latitud), Number.parseFloat(t.longitud)];
+            if (!p.every(Number.isFinite) || Math.abs(p[0]) > 90 || Math.abs(p[1]) > 180) {
+              invalidPrevious = true;
+              return;
+            }
+            const previous = routePoints[routePoints.length - 1];
+            if (!previous || previous[0] !== p[0] || previous[1] !== p[1]) {
+              const step = previous ? haversineMeters(...previous, ...p) : 0;
+              if (previous && (invalidPrevious || step > 2000 || (sectionStart && step > 75))) gaps.add(routePoints.length - 1);
+              routePoints.push(p);
+            }
+            pts.push(p);
+            sectionStart = false;
+            invalidPrevious = false;
+          });
           if (pts.length > 1) {
             const routeLayer = L.polyline(pts, { color: colors[ci % colors.length], weight: 5, opacity: 1.0 }).addTo(pathLayer);
             routeLayers.push(routeLayer);
             branch.layers.push(routeLayer);
             ci++;
           }
-          routePoints.push(...pts);
         });
 
         // ademas de dibujarlo, guardamos la polilinea completa de esta ruta
@@ -1536,18 +1766,31 @@ async function loadPath(lineId, loadGeneration = routeLoadGeneration) {
               routePoints[i][0], routePoints[i][1]
             ));
           }
-          const nameLower = routeName.toLowerCase();
-          let dirLabel = null;
-          if (nameLower.includes('vuelta')) dirLabel = 'Vuelta';
-          else if (nameLower.includes('ida')) dirLabel = 'Ida';
-          const poly = { name: routeName, points: routePoints, cum, dirLabel, branchKey: branch.key, layers: routeLayers, layer: routeLayers[0] || null };
+          const dirLabel = routeDirection(routeName);
+          const closed = false;
+          const poly = {
+            name: routeName, routeId: route.route_id, serviceId: service.service_id,
+            points: routePoints, cum, dirLabel, closed, gaps, branchKey: branch.key,
+            layers: routeLayers, layer: routeLayers[0] || null,
+          };
           currentRoutePolylines.push(poly);
           branch.polylines.push(poly);
         }
       });
     });
+    let selectedPlanPolyline = null;
+    if (activePlanOption && String(activePlanOption.id) === String(lineId)) {
+      selectedPlanPolyline = currentRoutePolylines.find(poly => matchesPlannedPolyline(poly));
+      if (selectedPlanPolyline) currentBranch = selectedPlanPolyline.branchKey;
+    }
+    latestLineUnits.forEach(unit => {
+      unit._branchKey = matchRouteToBranch(unit.route, Number(unit.lat), Number(unit.lon));
+      const state = unitState.get(String(unit.unit));
+      if (state) state.branchKey = unit._branchKey;
+    });
     renderBranchSelector();
     applyBranchVisibility();
+    renderPlannedTrip(selectedPlanPolyline);
   } catch (err) {
     // el trazado es un extra, no es critico si falla
     console.warn('no se pudo cargar el trazado de la linea', err);
@@ -1570,10 +1813,13 @@ function deviationGridKey(lat, lon) {
 }
 
 async function refreshPositions() {
-  if (!currentLine) return;
+  if (!currentLine || allLinesMode) return;
+  const requestedLine = currentLine, generation = routeLoadGeneration;
+  const sequence = ++positionRequestSequence;
   try {
-    const res = await fetch('/api/positions?line=' + encodeURIComponent(currentLine));
+    const res = await fetch('/api/positions?line=' + encodeURIComponent(requestedLine));
     const json = await res.json();
+    if (requestedLine !== currentLine || generation !== routeLoadGeneration || sequence !== positionRequestSequence) return;
     if (!json.success) throw new Error('la API devolvio success:false');
     const units = json.data || [];
     emptyMsg.style.display = units.length ? 'none' : 'block';
@@ -1584,7 +1830,7 @@ async function refreshPositions() {
 
     units.forEach(u => {
       const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
-      if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
       const unitId = String(u.unit);
       seenIds.add(unitId);
 
@@ -1594,6 +1840,7 @@ async function refreshPositions() {
       learnBranchLabel(branchKey, u.route);
       const st = updateUnitState(unitId, lat, lon, isMoving, branchKey);
       st.speed = u.speed; // Guardar velocidad para usar en toggleFollow
+      st.reportedRoute = u.route || '';
       const angle = (u.bearing != null && !isNaN(u.bearing)) ? u.bearing : (st.bearing != null ? st.bearing : (DIR_DEGREES[(u.sen || '').trim().toUpperCase()] ?? 0));
 
       const isFollowed = followedUnitId === unitId;
@@ -1606,40 +1853,44 @@ async function refreshPositions() {
       // Cálculo de ETA
       let etaHtml = '';
       if (planOrigin && planDest && currentRoutePolylines && currentRoutePolylines.length > 0) {
-        const poly = currentRoutePolylines[0].points;
-        const speedKmh = (u.speed != null && u.speed > 0) ? u.speed : 20; // 20km/h por defecto si no hay velocidad
-        
-        const distOriginMeters = getDistanceAlongPolyline(poly, [lat, lon], [planOrigin.lat, planOrigin.lon]);
-        const distDestMeters = getDistanceAlongPolyline(poly, [lat, lon], [planDest.lat, planDest.lon]);
-        
-        const etaOriginMins = distOriginMeters >= 0 ? Math.round((distOriginMeters / 1000) / (speedKmh / 60)) : -1;
-        const etaDestMins = distDestMeters >= 0 ? Math.round((distDestMeters / 1000) / (speedKmh / 60)) : -1;
-        
-        etaHtml += '<div style="margin-top:8px; padding-top:8px; border-top:1px solid #eee;">';
-        if (etaOriginMins >= 0) {
-           etaHtml += `<div class="popup-row">📍 Llega a tu ubicación: <b>~${etaOriginMins} min</b></div>`;
-        } else {
-           etaHtml += `<div class="popup-row" style="color:var(--muted)">📍 Bus ya pasó tu ubicación</div>`;
-        }
-        if (etaDestMins >= 0) {
-           etaHtml += `<div class="popup-row">🏁 Llega a tu destino: <b>~${etaDestMins} min</b></div>`;
-        }
-        etaHtml += '</div>';
-        
-        // Dibujar el trayecto si estamos siguiendo este bus
-        if (isFollowed && userLocationMarker && distOriginMeters >= 0) {
-          const busIdx = findClosestVertexIdx(poly, [lat, lon]);
-          const targetIdx = findClosestVertexIdx(poly, [userLocationMarker.getLatLng().lat, userLocationMarker.getLatLng().lng]);
-          
-          if (busIdx <= targetIdx + 2) {
-            const etaPoints = poly.slice(busIdx, targetIdx + 1);
-            // Agregar posicion exacta del bus y usuario para que quede conectado perfecto
-            etaPoints.unshift([lat, lon]);
-            etaPoints.push([userLocationMarker.getLatLng().lat, userLocationMarker.getLatLng().lng]);
-            
-            L.polyline(etaPoints, {
-              color: '#00e676', weight: 6, opacity: 0.8
-            }).addTo(etaRouteLayer);
+        const routePoly = bestPolylineForUnit(u, branchKey, lat, lon);
+        if (routePoly) {
+          const speedKmh = (u.speed != null && u.speed >= 5) ? u.speed : 20;
+          const distOriginMeters = forwardDistanceOnPolyline(routePoly, [lat, lon], [planOrigin.lat, planOrigin.lon]);
+          const distDestMeters = forwardDistanceOnPolyline(routePoly, [lat, lon], [planDest.lat, planDest.lon]);
+          const etaOriginMins = distOriginMeters >= 0 ? Math.max(1, Math.round((distOriginMeters / 1000) / (speedKmh / 60))) : -1;
+          const etaDestMins = distDestMeters >= 0 ? Math.max(1, Math.round((distDestMeters / 1000) / (speedKmh / 60))) : -1;
+
+          etaHtml += '<div style="margin-top:8px; padding-top:8px; border-top:1px solid #eee;">';
+          if (etaOriginMins >= 0) {
+             etaHtml += `<div class="popup-row">📍 Llega al punto de subida: <b>~${etaOriginMins} min</b></div>`;
+          } else {
+             etaHtml += `<div class="popup-row" style="color:var(--muted)">📍 Esta unidad ya pasó el punto de subida</div>`;
+          }
+          if (etaDestMins >= 0 && etaOriginMins >= 0) {
+             etaHtml += `<div class="popup-row">🏁 Llega a tu destino: <b>~${etaDestMins} min</b></div>`;
+          }
+          etaHtml += '</div>';
+
+          // Dibujar sobre el recorrido correcto del ramal, terminando en la
+          // proyección de subida. La conexión a pie se distingue con guiones.
+          if (isFollowed && distOriginMeters >= 0) {
+            const busProjection = projectToPolyline(lat, lon, routePoly);
+            const boardProjection = projectToPolyline(planOrigin.lat, planOrigin.lon, routePoly);
+            if (busProjection && boardProjection) {
+              const etaPoints = [[lat, lon], busProjection.point];
+              if (boardProjection.arc >= busProjection.arc) {
+                etaPoints.push(...routePoly.points.slice(busProjection.segment + 1, boardProjection.segment + 1));
+              } else if (routePoly.closed) {
+                etaPoints.push(...routePoly.points.slice(busProjection.segment + 1));
+                etaPoints.push(...routePoly.points.slice(0, boardProjection.segment + 1));
+              }
+              etaPoints.push(boardProjection.point);
+              L.polyline(etaPoints, { color: '#00e676', weight: 6, opacity: 0.8 }).addTo(etaRouteLayer);
+              L.polyline([boardProjection.point, [planOrigin.lat, planOrigin.lon]], {
+                color: '#3aa0ff', weight: 4, opacity: 0.85, dashArray: '7 7',
+              }).addTo(etaRouteLayer);
+            }
           }
         }
       }
@@ -1657,7 +1908,7 @@ async function refreshPositions() {
         <div class="popup-row">Hora: ${escapeHtml(u.time) || '-'}</div>
         <div class="popup-row">Aire acondicionado: ${u.air ? 'si' : 'no'}</div>
         ${etaHtml}
-        <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow('${unitId}')">
+        <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
           ${isFollowed ? 'Dejar de seguir' : 'Seguir unidad'}
         </button>
       `;
@@ -1710,11 +1961,15 @@ async function refreshPositions() {
     const visibleUnits = currentBranch === BRANCH_ALL
       ? units
       : units.filter(unit => unit._branchKey === currentBranch);
-    emptyMsg.style.display = visibleUnits.length ? 'none' : 'block';
-    if (!visibleUnits.length) emptyMsg.textContent = 'No hay unidades reportando en este ramal ahora mismo';
+    const usefulUnits = visibleUnits.filter(unit => unitMatchesActivePlan(unit.route));
+    emptyMsg.style.display = usefulUnits.length ? 'none' : 'block';
+    if (!usefulUnits.length) emptyMsg.textContent = activePlanOption
+      ? 'No hay unidades reportando ahora en el sentido de este viaje'
+      : 'No hay unidades reportando en este ramal ahora mismo';
     const selectedBranch = branchByKey(currentBranch);
-    setStatus(`${visibleUnits.length} unidad(es)${selectedBranch ? ` · ${selectedBranch.label}` : ''} - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
+    setStatus(`${usefulUnits.length} unidad(es)${selectedBranch ? ` · ${selectedBranch.label}` : ''} - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
   } catch (err) {
+    if (requestedLine !== currentLine || generation !== routeLoadGeneration || sequence !== positionRequestSequence) return;
     setStatus('Error obteniendo posiciones: ' + err.message, false);
   }
 }
@@ -1737,20 +1992,20 @@ window.toggleFollow = function(unitId) {
     if (st) map.panTo([st.lat, st.lon], { animate: true });
     
     let etaMsg = '';
-    if (userLocationMarker && currentRoutePolylines && currentRoutePolylines.length > 0 && st) {
-      const poly = currentRoutePolylines[0].points;
-      const userLatLon = userLocationMarker.getLatLng();
-      const dist = getDistanceAlongPolyline(poly, [st.lat, st.lon], [userLatLon.lat, userLatLon.lng]);
-      
+    if (planOrigin && currentRoutePolylines && currentRoutePolylines.length > 0 && st) {
+      const routePoly = bestPolylineForUnit({ route: st.reportedRoute || '' }, st.branchKey, st.lat, st.lon);
+      const dist = routePoly
+        ? forwardDistanceOnPolyline(routePoly, [st.lat, st.lon], [planOrigin.lat, planOrigin.lon])
+        : -1;
       if (dist >= 0) {
         const speedKmh = (st.speed != null && st.speed > 0) ? st.speed : 20; 
         const etaMins = Math.round((dist / 1000) / (speedKmh / 60));
-        etaMsg = ` Estará en tu zona en ~${etaMins} min.`;
+        etaMsg = ` Llegará al punto de subida en ~${Math.max(1, etaMins)} min.`;
       } else {
-        etaMsg = ` (El bus ya pasó tu zona o está en otra ruta).`;
+        etaMsg = ` (La unidad ya pasó el punto de subida o está en otro recorrido).`;
       }
-    } else if (!userLocationMarker) {
-      etaMsg = ` (Activa "Mi ubicación" para ver el tiempo estimado).`;
+    } else if (!planOrigin) {
+      etaMsg = ` (Elegí un origen para ver el tiempo estimado).`;
     }
     
     setStatus(`Siguiendo unidad ${unitId}.${etaMsg}`, true);
@@ -1767,48 +2022,78 @@ window.toggleFollow = function(unitId) {
 // ---------------------------------------------------------------------------
 let userLocationMarker = null;
 let userAccuracyCircle = null;
+let lastUserAccuracy = null;
 
-function locateMe() {
-  if (!('geolocation' in navigator)) {
-    setStatus('Tu navegador no soporta geolocalizacion', false);
-    return;
+function requestBrowserPosition() {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) return reject(new Error('Tu navegador no soporta geolocalización'));
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true, timeout: 15000, maximumAge: 10000,
+    });
+  });
+}
+
+function showUserLocation(position, center = true) {
+  const { latitude, longitude, accuracy } = position.coords;
+  lastUserAccuracy = Number.isFinite(accuracy) ? accuracy : null;
+  if (userAccuracyCircle) {
+    userAccuracyCircle.setLatLng([latitude, longitude]).setRadius(accuracy);
+  } else {
+    userAccuracyCircle = L.circle([latitude, longitude], {
+      radius: accuracy, color: '#3aa0ff', weight: 1, fillColor: '#3aa0ff', fillOpacity: 0.12,
+    }).addTo(map);
   }
+  if (!userLocationMarker) {
+    userLocationMarker = L.marker([latitude, longitude], {
+      icon: L.divIcon({ className: '', html: '<div class="user-location-icon"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
+    }).addTo(map);
+  } else {
+    userLocationMarker.setLatLng([latitude, longitude]);
+  }
+  if (center) map.flyTo([latitude, longitude], 15, { animate: true, duration: 1.5 });
+}
+
+async function locateMe() {
   locateBtn.classList.add('loading');
   locateBtn.disabled = true;
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      locateBtn.classList.remove('loading');
-      locateBtn.disabled = false;
-      const { latitude, longitude, accuracy } = pos.coords;
-
-      if (userAccuracyCircle) {
-        userAccuracyCircle.setLatLng([latitude, longitude]).setRadius(accuracy);
-      } else {
-        userAccuracyCircle = L.circle([latitude, longitude], {
-          radius: accuracy, color: '#3aa0ff', weight: 1, fillColor: '#3aa0ff', fillOpacity: 0.12,
-        }).addTo(map);
-      }
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      const acc = pos.coords.accuracy;
-
-      if (!userLocationMarker) {
-        userLocationMarker = L.marker([lat, lon], {
-          icon: L.divIcon({ className: '', html: '<div class="user-location-icon"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
-        }).addTo(map);
-      } else {
-        userLocationMarker.setLatLng([lat, lon]);
-      }
-      map.flyTo([lat, lon], 15, { animate: true, duration: 1.5 });
-    },
-    (err) => {
-      locateBtn.classList.remove('loading');
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-  );
+  try {
+    const position = await requestBrowserPosition();
+    showUserLocation(position);
+    setStatus(`Ubicación encontrada${lastUserAccuracy ? ` (±${Math.round(lastUserAccuracy)} m)` : ''}`, true);
+  } catch (error) {
+    setStatus('No se pudo obtener tu ubicación. Revisá el permiso del navegador.', false);
+  } finally {
+    locateBtn.classList.remove('loading');
+    locateBtn.disabled = false;
+  }
 }
 
 locateBtn.addEventListener('click', locateMe);
+
+useMyLocationBtn.addEventListener('click', async () => {
+  const revision = planRevision;
+  useMyLocationBtn.disabled = true;
+  useMyLocationBtn.textContent = 'Buscando ubicación…';
+  originAccuracy.textContent = '';
+  try {
+    const position = await requestBrowserPosition();
+    if (revision !== planRevision) return;
+    showUserLocation(position);
+    setPlanPoint('origin', position.coords.latitude, position.coords.longitude, 'Mi ubicación actual');
+    const accuracy = Math.round(position.coords.accuracy || 0);
+    originAccuracy.textContent = accuracy > 100
+      ? `Precisión baja (±${accuracy} m). Podés volver a intentar o ajustar el punto en el mapa.`
+      : `Precisión aproximada: ±${accuracy} m`;
+    setStatus('Tu ubicación se usará como origen', true);
+  } catch (error) {
+    if (revision !== planRevision) return;
+    originAccuracy.textContent = 'No pudimos acceder al GPS. Revisá el permiso de ubicación.';
+    setStatus('No se pudo obtener tu ubicación', false);
+  } finally {
+    useMyLocationBtn.disabled = false;
+    useMyLocationBtn.textContent = 'Usar mi ubicación actual';
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Avisos de proximidad (Web Push). Cada navegador se identifica con un
@@ -2036,85 +2321,216 @@ let planDest = null;
 let planOriginMarker = null;
 let planDestMarker = null;
 let isPlanningMode = false;
+let planTarget = 'origin';
+let planLoading = false;
+let planRevision = 0;
+let planRequest = null;
+
+function invalidatePlan() {
+  planRevision++;
+  if (planRequest) planRequest.abort();
+  planRequest = null;
+  planLoading = false;
+  activePlanOption = null;
+  plannedTripLayer.clearLayers();
+  etaRouteLayer.clearLayers();
+  planResult.textContent = '';
+  applyBranchVisibility();
+}
+
+function setPlannerTarget(type, focusInput = false) {
+  planTarget = type;
+  originField.classList.toggle('active', type === 'origin');
+  destField.classList.toggle('active', type === 'dest');
+  if (focusInput && type === 'origin') originInput.focus();
+  if (focusInput && type === 'dest') destInput.focus();
+}
 
 function enterPlanningMode() {
   isPlanningMode = true;
   document.getElementById('map').style.cursor = 'crosshair';
-  setStatus('Haz clic en el mapa para seleccionar el ORIGEN', true);
+  if (!planOrigin && userLocationMarker) {
+    const current = userLocationMarker.getLatLng();
+    setPlanPoint('origin', current.lat, current.lng, 'Mi ubicación actual');
+    originAccuracy.textContent = lastUserAccuracy ? `Precisión aproximada: ±${Math.round(lastUserAccuracy)} m` : '';
+    setStatus('Tu ubicación se usará como origen. Elegí el destino.', true);
+  } else if (!planOrigin) {
+    setPlannerTarget('origin');
+    setStatus('Usá tu ubicación o tocá el mapa para elegir el ORIGEN', true);
+  } else if (!planDest) {
+    setPlannerTarget('dest');
+    setStatus('Elegí el DESTINO', true);
+  } else {
+    setPlannerTarget(null);
+  }
+  updatePlannerUI();
 }
 
 function exitPlanningMode() {
   isPlanningMode = false;
   document.getElementById('map').style.cursor = '';
-  // Retenemos planOrigin y planDest para el calculo de ETA en los buses.
-  originInput.value = '';
-  destInput.value = '';
   originList.style.display = 'none';
   destList.style.display = 'none';
-  planResult.textContent = '';
-  calculatePlanBtn.disabled = true;
+  updatePlannerUI();
   if (!currentLine) setStatus('Elegi una linea para ver las unidades', true);
 }
 
 function updatePlannerUI() {
-  if (planOrigin && planDest) {
-    calculatePlanBtn.disabled = false;
+  const ready = !!(planOrigin && planDest);
+  originField.classList.toggle('complete', !!planOrigin);
+  destField.classList.toggle('complete', !!planDest);
+  swapPlanBtn.disabled = !ready;
+  calculatePlanBtn.disabled = planLoading || !ready;
+  if (planLoading) {
+    calculatePlanBtn.textContent = 'Buscando colectivos…';
+    planHint.textContent = 'Estamos comparando los recorridos cercanos.';
+  } else if (!planOrigin) {
+    calculatePlanBtn.textContent = 'Elegí el punto de salida';
+    planHint.textContent = 'Usá tu GPS, escribí una dirección o tocá el mapa.';
+  } else if (!planDest) {
+    calculatePlanBtn.textContent = 'Elegí tu destino';
+    planHint.textContent = 'Ahora escribí adónde querés ir o marcalo en el mapa.';
   } else {
-    calculatePlanBtn.disabled = true;
+    calculatePlanBtn.textContent = 'Buscar colectivos';
+    planHint.textContent = 'Todo listo. Buscaremos los recorridos directos más convenientes.';
   }
 }
 
+function showPlannerProgressStatus() {
+  if (planOrigin && planDest) setStatus('Origen y destino listos. Tocá “Buscar colectivos”.', true);
+  else if (planOrigin) setStatus('Punto de salida listo. Ahora elegí el destino.', true);
+  else if (planDest) setStatus('Destino listo. Ahora elegí desde dónde salís.', true);
+  else setStatus('Elegí desde dónde salís.', true);
+}
+
 function setPlanPoint(type, lat, lon, label) {
+  invalidatePlan();
+  cancelGeocode(type);
   if (type === 'origin') {
     if (planOriginMarker) map.removeLayer(planOriginMarker);
     planOrigin = { lat, lon };
     planOriginMarker = L.marker([lat, lon], {
-      icon: L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:var(--green);border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+      icon: L.divIcon({ className: '', html: '<div class="plan-map-marker origin">A</div>', iconSize: [25, 25], iconAnchor: [12, 12] })
     }).addTo(map);
     if (label) originInput.value = label;
+    if (label !== 'Mi ubicación actual') originAccuracy.textContent = '';
+    setPlannerTarget(planDest ? null : 'dest');
   } else {
     if (planDestMarker) map.removeLayer(planDestMarker);
     planDest = { lat, lon };
     planDestMarker = L.marker([lat, lon], {
-      icon: L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+      icon: L.divIcon({ className: '', html: '<div class="plan-map-marker destination">B</div>', iconSize: [25, 25], iconAnchor: [12, 12] })
     }).addTo(map);
     if (label) destInput.value = label;
+    setPlannerTarget(planOrigin ? null : 'origin');
   }
   map.setView([lat, lon], 14);
   updatePlannerUI();
 }
 
+function clearPlan() {
+  invalidatePlan();
+  cancelGeocode('origin');
+  cancelGeocode('dest');
+  if (planOriginMarker) map.removeLayer(planOriginMarker);
+  if (planDestMarker) map.removeLayer(planDestMarker);
+  planOrigin = null;
+  planDest = null;
+  planOriginMarker = null;
+  planDestMarker = null;
+  activePlanOption = null;
+  originInput.value = '';
+  destInput.value = '';
+  originAccuracy.textContent = '';
+  originList.style.display = 'none';
+  destList.style.display = 'none';
+  planResult.textContent = '';
+  etaRouteLayer.clearLayers();
+  plannedTripLayer.clearLayers();
+  setPlannerTarget('origin');
+  updatePlannerUI();
+  setStatus('Elegí desde dónde salís', true);
+}
+
+clearPlanBtn.addEventListener('click', clearPlan);
+
+swapPlanBtn.addEventListener('click', () => {
+  if (!planOrigin || !planDest) return;
+  invalidatePlan();
+  cancelGeocode('origin');
+  cancelGeocode('dest');
+  [planOrigin, planDest] = [planDest, planOrigin];
+  [originInput.value, destInput.value] = [destInput.value, originInput.value];
+  planOriginMarker.setLatLng([planOrigin.lat, planOrigin.lon]);
+  planDestMarker.setLatLng([planDest.lat, planDest.lon]);
+  originAccuracy.textContent = '';
+  activePlanOption = null;
+  planResult.textContent = '';
+  plannedTripLayer.clearLayers();
+  setPlannerTarget(null);
+  updatePlannerUI();
+  map.fitBounds([[planOrigin.lat, planOrigin.lon], [planDest.lat, planDest.lon]], { padding: [35, 35] });
+  setStatus('Origen y destino intercambiados', true);
+});
+
+originField.addEventListener('click', event => {
+  if (event.target.closest('button, .autocomplete-item')) return;
+  setPlannerTarget('origin');
+});
+destField.addEventListener('click', event => {
+  if (!event.target.closest('button, .autocomplete-item')) setPlannerTarget('dest');
+});
+
 map.on('click', (e) => {
   if (!isPlanningMode) return;
+  if (!planTarget) {
+    setStatus('Para cambiar un punto, tocá primero el campo de salida o destino.', true);
+    return;
+  }
   const lat = e.latlng.lat;
   const lon = e.latlng.lng;
   const coordStr = lat.toFixed(4) + ', ' + lon.toFixed(4);
-  
-  if (!planOrigin) {
+
+  if (planTarget === 'origin') {
     setPlanPoint('origin', lat, lon, coordStr);
-    setStatus('Ahora haz clic en el mapa para seleccionar el DESTINO', true);
-  } else if (!planDest) {
-    setPlanPoint('dest', lat, lon, coordStr);
-    setStatus('Origen y destino seleccionados', true);
   } else {
-    setPlanPoint('origin', lat, lon, coordStr);
-    map.removeLayer(planDestMarker);
-    planDestMarker = null;
-    planDest = null;
-    destInput.value = '';
-    planResult.textContent = '';
-    updatePlannerUI();
-    setStatus('Ahora haz clic en el mapa para seleccionar el DESTINO', true);
+    setPlanPoint('dest', lat, lon, coordStr);
   }
+  showPlannerProgressStatus();
 });
 
-let geocodeTimer = null;
+const geocodeState = {
+  origin: { timer: null, controller: null, revision: 0 },
+  dest: { timer: null, controller: null, revision: 0 },
+};
+function cancelGeocode(type) {
+  const state = geocodeState[type];
+  clearTimeout(state.timer);
+  state.controller?.abort();
+  state.revision++;
+  state.controller = null;
+  const list = type === 'origin' ? originList : destList;
+  list.replaceChildren();
+  list.style.display = 'none';
+}
 async function fetchGeocode(query, listEl, type) {
+  const state = geocodeState[type];
+  const revision = state.revision;
+  const controller = new AbortController();
+  state.controller = controller;
+  const timeout = setTimeout(() => controller.abort(), 15000);
   listEl.innerHTML = '<div class="autocomplete-item">Buscando...</div>';
   listEl.style.display = 'block';
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=py&q=${encodeURIComponent(query)}`);
-    const json = await res.json();
+    const res = await fetch('/api/geocode', {
+      method: 'POST', signal: controller.signal,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query}),
+    });
+    const payload = await res.json();
+    if (revision !== state.revision) return;
+    if (!res.ok || !payload.success) throw new Error(payload.error || 'Error buscando dirección');
+    const json = payload.data;
     if (!json || json.length === 0) {
       listEl.innerHTML = '<div class="autocomplete-item">Sin resultados</div>';
       return;
@@ -2126,29 +2542,60 @@ async function fetchGeocode(query, listEl, type) {
       div.textContent = item.display_name;
       div.title = item.display_name;
       div.addEventListener('click', () => {
+        if (revision !== state.revision) return;
         setPlanPoint(type, parseFloat(item.lat), parseFloat(item.lon), item.display_name.split(',')[0]);
         listEl.style.display = 'none';
+        showPlannerProgressStatus();
       });
       listEl.appendChild(div);
     });
   } catch (e) {
-    listEl.innerHTML = '<div class="autocomplete-item">Error de red</div>';
+    if (revision !== state.revision) return;
+    listEl.textContent = e.name === 'AbortError' ? 'La búsqueda tardó demasiado. Elegí el punto en el mapa.' : e.message;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 function setupAutocomplete(inputEl, listEl, type) {
   inputEl.addEventListener('input', () => {
+    cancelGeocode(type);
+    invalidatePlan();
+    if (type === 'origin' && planOrigin) {
+      if (planOriginMarker) map.removeLayer(planOriginMarker);
+      planOrigin = null;
+      planOriginMarker = null;
+      originAccuracy.textContent = '';
+    } else if (type === 'dest' && planDest) {
+      if (planDestMarker) map.removeLayer(planDestMarker);
+      planDest = null;
+      planDestMarker = null;
+    }
+    activePlanOption = null;
+    planResult.textContent = '';
+    setPlannerTarget(type);
+    updatePlannerUI();
     const val = inputEl.value.trim();
     if (val.length < 3) {
       listEl.style.display = 'none';
       return;
     }
-    clearTimeout(geocodeTimer);
-    geocodeTimer = setTimeout(() => {
-      fetchGeocode(val, listEl, type);
-    }, 500);
   });
+  const submitSearch = () => {
+    cancelGeocode(type);
+    const query = inputEl.value.trim();
+    if (query.length < 3) {
+      setStatus('Escribí al menos 3 caracteres o elegí el punto en el mapa.', false);
+      return;
+    }
+    fetchGeocode(query, listEl, type);
+  };
+  inputEl.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); submitSearch(); }
+  });
+  document.getElementById(type === 'origin' ? 'searchOriginBtn' : 'searchDestBtn').addEventListener('click', submitSearch);
   inputEl.addEventListener('focus', () => {
+    setPlannerTarget(type);
     if (listEl.children.length > 0 && inputEl.value.trim().length >= 3) {
       listEl.style.display = 'block';
     }
@@ -2159,76 +2606,78 @@ setupAutocomplete(originInput, originList, 'origin');
 setupAutocomplete(destInput, destList, 'dest');
 
 document.addEventListener('click', (e) => {
-  if (!originInput.contains(e.target) && !originList.contains(e.target)) originList.style.display = 'none';
-  if (!destInput.contains(e.target) && !destList.contains(e.target)) destList.style.display = 'none';
+  if (!originField.contains(e.target)) originList.style.display = 'none';
+  if (!destField.contains(e.target)) destList.style.display = 'none';
 });
 
-// ETA Utilities
-function findClosestVertexIdx(poly, latLng) {
-  let minD = Infinity;
-  let idx = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const d = haversineMeters(poly[i][0], poly[i][1], latLng[0], latLng[1]);
-    if (d < minD) { minD = d; idx = i; }
-  }
-  return idx;
-}
-
-function getDistanceAlongPolyline(poly, ptBus, ptTarget) {
-  if (poly.length < 2) return -1;
-  const busIdx = findClosestVertexIdx(poly, ptBus);
-  const targetIdx = findClosestVertexIdx(poly, ptTarget);
-  
-  // Si el busIdx es MAYOR que el targetIdx, significa que el bus ya pasó la parada
-  // asumiendo que el polyline sigue el orden de Ida o Vuelta.
-  // En nuestro caso, el colectivo está avanzando a lo largo del polyline de índice menor a mayor.
-  if (busIdx > targetIdx + 2) return -1; // +2 tolerancia
-  
-  let dist = 0;
-  for (let i = busIdx; i < targetIdx; i++) {
-    dist += haversineMeters(poly[i][0], poly[i][1], poly[i+1][0], poly[i+1][1]);
-  }
-  return dist;
-}
-
 calculatePlanBtn.addEventListener('click', async () => {
-  if (!planOrigin || !planDest) return;
-  calculatePlanBtn.disabled = true;
-  planResult.innerHTML = '<div class="autocomplete-item">Calculando ruta optima...</div>';
+  if (!planOrigin || !planDest || planLoading) return;
+  const revision = planRevision;
+  const controller = new AbortController();
+  planRequest = controller;
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  planLoading = true;
+  updatePlannerUI();
+  planResult.innerHTML = '<div class="autocomplete-item">Buscando recorridos cercanos…</div>';
   
   try {
-    const res = await fetch(`/api/planificar?olat=${planOrigin.lat}&olon=${planOrigin.lon}&dlat=${planDest.lat}&dlon=${planDest.lon}`);
+    const res = await fetch('/api/planificar', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        olat: planOrigin.lat, olon: planOrigin.lon,
+        dlat: planDest.lat, dlon: planDest.lon,
+      }),
+    });
     const json = await res.json();
+    if (revision !== planRevision) return;
+    if (!res.ok || !json.success) throw new Error(json.error || 'No se pudo calcular');
     if (json.success && json.data && json.data.length > 0) {
-      planResult.innerHTML = '<div style="margin-bottom: 8px;">Mejores opciones:</div>';
+      planResult.innerHTML = '<div style="margin-bottom: 8px;">Elegí una opción:</div>';
       
       json.data.forEach((option, index) => {
         const btn = document.createElement('button');
-        btn.className = 'btn-primary';
-        btn.style.width = '100%';
-        btn.style.marginTop = '6px';
-        btn.style.background = index === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.1)';
-        btn.style.color = index === 0 ? '#000' : 'var(--text)';
-        
-        btn.innerHTML = `🚌 <b>${option.name}</b> (caminar ~${option.walkingDist}m)`;
+        btn.className = `plan-option${index === 0 ? ' best' : ''}`;
+        const title = document.createElement('div');
+        title.className = 'plan-option-title';
+        const direction = option.direction ? ` · ${option.direction}` : '';
+        title.textContent = `${index === 0 ? '★ ' : ''}🚌 ${option.name} · ${option.routeName || 'Principal'}${direction}`;
+        const detail = document.createElement('div');
+        detail.className = 'plan-option-detail';
+        const rideKm = (option.rideDistanceMeters / 1000).toFixed(1);
+        detail.textContent = `${index === 0 ? 'Recomendado · ' : ''}~${option.estimatedMinutes} min sin espera · caminá ${option.originWalkMeters} m para subir y ${option.destinationWalkMeters} m al bajar · ${rideKm} km en bus`;
+        btn.append(title, detail);
         
         btn.addEventListener('click', () => {
-          lineSearch.value = option.name;
-          renderLines();
-          selectLine(option.id, option.name);
+          if (revision !== planRevision) return;
+          activePlanOption = option;
+          selectLine(option.id, true);
+          planPanel.classList.remove('open');
+          planBtn.classList.remove('active');
           exitPlanningMode();
+          setStatus(`Mostrando ${option.name} · ${option.routeName || 'Principal'}. Tocá un bus para ver cuándo llega.`, true);
         });
         
         planResult.appendChild(btn);
       });
       
+    } else if (json.success && json.ready === false) {
+      planResult.textContent = 'El servidor todavía está preparando los recorridos. Probá nuevamente en unos segundos.';
     } else {
-      planResult.textContent = 'No hay lineas directas cerca (max 1.5km)';
+      planResult.textContent = 'No encontramos un recorrido directo con subida y bajada a menos de 1,5 km.';
     }
   } catch(e) {
-    planResult.textContent = 'Error al calcular ruta';
+    if (revision !== planRevision) return;
+    planResult.textContent = 'No se pudo calcular la ruta. Revisá la conexión e intentá otra vez.';
+  } finally {
+    clearTimeout(timeout);
+    if (planRequest === controller) {
+      planRequest = null;
+      planLoading = false;
+      updatePlannerUI();
+    }
   }
-  calculatePlanBtn.disabled = false;
 });
 
 </script>

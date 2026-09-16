@@ -37,7 +37,7 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlencode
 from observed_routes import ObservedRoutes
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
@@ -667,49 +667,347 @@ def get_positions_batch(lines: list[str]) -> dict[str, list[dict]]:
 
 
 # ---------------------------------------------------------------------------
-# Caché completa de trazados de líneas para el Planificador de Viajes.
-# Se llena asíncronamente para no bloquear el inicio.
+# Catálogo geográfico del planificador.
+#
+# Se prepara en segundo plano y se comparte entre todos los visitantes. Cada
+# entrada representa un recorrido completo (no una sección suelta), con su
+# ramal, sentido y longitud acumulada. De esa manera una consulta del usuario
+# solo hace cálculos locales y no provoca una ráfaga contra JAHA o Más.
 # ---------------------------------------------------------------------------
-_all_paths_cache = {}
+PLANNER_REFRESH_SECONDS = max(300, int(os.environ.get("PLANNER_REFRESH_SECONDS", "1800")))
+PLANNER_MAX_WALK_KM = 1.5
+PLANNER_RESULT_LIMIT = 5
+PLANNER_WALKING_SPEED_M_PER_MIN = 75.0
+PLANNER_BUS_SPEED_M_PER_MIN = 330.0
+
+# Optional self-hosted or contracted Nominatim-compatible search endpoint.
+# Do not silently rely on the restricted public OSM geocoder.
+GEOCODER_SEARCH_URL = os.environ.get("GEOCODER_SEARCH_URL", "").strip()
+_geocode_lock = threading.Lock()
+_geocode_cache = {}
+_geocode_last_request = 0.0
+
+
+def search_address(query):
+    global _geocode_last_request
+    if not isinstance(query, str) or not 3 <= len(query.strip()) <= 200:
+        return 400, {"success": False, "error": "Escribí entre 3 y 200 caracteres."}
+    endpoint = urlparse(GEOCODER_SEARCH_URL)
+    if endpoint.scheme != "https" or not endpoint.hostname:
+        return 503, {"success": False, "error": "La búsqueda de direcciones no está configurada. Usá tu ubicación o elegí el punto en el mapa."}
+    query = query.strip()
+    with _geocode_lock:
+        cached = _geocode_cache.get(query.casefold())
+        if cached and time.monotonic() - cached[0] < 86400:
+            return 200, {"success": True, "data": cached[1]}
+        now = time.monotonic()
+        if now - _geocode_last_request < 1.1:
+            return 429, {"success": False, "error": "Esperá un momento antes de buscar de nuevo."}
+        _geocode_last_request = now
+        separator = "&" if endpoint.query else "?"
+        url = GEOCODER_SEARCH_URL + separator + urlencode({"format": "json", "countrycodes": "py", "limit": 5, "q": query})
+        request = urllib.request.Request(url, headers={"User-Agent": "ColectivosRoutePlanner/1.0", "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                raw = response.read(512 * 1024 + 1)
+            if len(raw) > 512 * 1024:
+                raise ValueError("oversized geocoder response")
+            items = json.loads(raw)
+            if not isinstance(items, list):
+                raise ValueError("invalid geocoder response")
+            results = []
+            for item in items[:5]:
+                if not isinstance(item, dict):
+                    continue
+                try:
+                    lat, lon = float(item["lat"]), float(item["lon"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if valid_coordinates(lat, lon):
+                    results.append({"lat": lat, "lon": lon, "display_name": str(item.get("display_name") or "Punto del mapa")[:500]})
+        except (OSError, ValueError):
+            return 502, {"success": False, "error": "No se pudo buscar la dirección. Podés elegir el punto en el mapa."}
+        if len(_geocode_cache) >= 256:
+            _geocode_cache.pop(next(iter(_geocode_cache)))
+        _geocode_cache[query.casefold()] = (time.monotonic(), results)
+        return 200, {"success": True, "data": results}
+
+_all_paths_cache: dict[str, list[dict]] = {}
 _all_paths_lock = threading.Lock()
-_all_lines_info = []
+_all_lines_info: list[dict] = []
+_planner_last_refresh = 0.0
+
+
+def planner_route_direction(value) -> str | None:
+    text = str(value or "").lower()
+    vuelta = bool(re.search(r"\((?:v|vuelta)\)|(?:^|[\s_-])vuelta(?:$|[\s_-])", text))
+    ida = bool(re.search(r"\((?:i|ida)\)|(?:^|[\s_-])ida(?:$|[\s_-])", text))
+    return None if ida == vuelta else ("Ida" if ida else "Vuelta")
+
+
+def _planner_cumulative(points: list[tuple[float, float]]) -> list[float]:
+    cumulative = [0.0]
+    for previous, current in zip(points, points[1:]):
+        cumulative.append(cumulative[-1] + haversine_km(*previous, *current) * 1000)
+    return cumulative
+
+
+def planner_order(item):
+    try:
+        value = float(item.get('order') or 0)
+        return value if math.isfinite(value) else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def extract_planner_routes(line: dict, data: dict | None) -> list[dict]:
+    """Normaliza la respuesta de cualquiera de los proveedores.
+
+    Las secciones ordenadas de una ruta se unen. Antes se almacenaban como
+    rutas independientes y un origen en la primera sección no podía alcanzar
+    un destino que estuviera en la segunda.
+    """
+    routes = []
+    if not isinstance(data, dict):
+        return routes
+
+    for service in data.get("services") or []:
+        for route in service.get("routes") or []:
+            points: list[tuple[float, float]] = []
+            gaps = set()
+            sections = sorted(route.get("sections") or [], key=planner_order)
+            for section in sections:
+                section_start = True
+                invalid_previous = False
+                traces = sorted(section.get("traces") or [], key=planner_order)
+                for trace in traces:
+                    try:
+                        point = (float(trace["latitud"]), float(trace["longitud"]))
+                    except (KeyError, TypeError, ValueError):
+                        invalid_previous = True
+                        continue
+                    if not valid_coordinates(*point):
+                        invalid_previous = True
+                        continue
+                    # Los proveedores suelen repetir el extremo entre dos
+                    # secciones. Evitarlo conserva limpio el largo acumulado.
+                    if not points or point != points[-1]:
+                        if points:
+                            step = haversine_km(*points[-1], *point) * 1000
+                            if invalid_previous or step > 2000 or (section_start and step > 75):
+                                gaps.add(len(points) - 1)
+                        points.append(point)
+                    section_start = False
+                    invalid_previous = False
+
+            if len(points) < 2:
+                continue
+            route_name = str(route.get("name") or service.get("name") or "Principal").strip()
+            cumulative = _planner_cumulative(points)
+            routes.append({
+                "line_id": str(line.get("id")),
+                "line_name": str(line.get("name") or f"Línea {line.get('id')}"),
+                "provider": str(line.get("provider") or "jaha"),
+                "service_id": service.get("service_id"),
+                "route_id": route.get("route_id"),
+                "route_name": route_name,
+                "direction": planner_route_direction(route_name),
+                "points": points,
+                "cumulative": cumulative,
+                "length_m": cumulative[-1],
+                # Nearby terminals do not prove that passengers can stay on
+                # board for another circuit. Never infer that connection.
+                "closed": False,
+                "gaps": gaps,
+                "bbox": (
+                    min(point[0] for point in points), min(point[1] for point in points),
+                    max(point[0] for point in points), max(point[1] for point in points),
+                ),
+            })
+    return routes
+
+
+def fetch_planner_path(line: dict) -> dict | None:
+    line_id = str(line.get("id"))
+    if line_id.startswith("mas_"):
+        status, response = get_mas_path(line_id)
+    else:
+        status, raw = call_api(f"/bus/lineServices/{line_id}")
+        try:
+            response = json.loads(raw)
+        except (TypeError, ValueError):
+            return None
+    if status != 200 or not isinstance(response, dict) or not response.get("success"):
+        return None
+    return response.get("data")
+
+
+def refresh_planner_paths(lines: list[dict] | None = None, max_workers: int = 4) -> int:
+    """Actualiza el catálogo sin descartar la última copia si una API falla."""
+    global _all_lines_info, _planner_last_refresh
+    lines = list(lines if lines is not None else get_all_lines_combined())
+    with _all_paths_lock:
+        previous = dict(_all_paths_cache)
+    if not lines:
+        return sum(bool(routes) for routes in previous.values())
+
+    refreshed: dict[str, list[dict]] = {}
+
+    def load(line):
+        data = fetch_planner_path(line)
+        return data, extract_planner_routes(line, data) if data is not None else None
+
+    with ThreadPoolExecutor(max_workers=max(1, min(max_workers, 6))) as executor:
+        futures = {executor.submit(load, line): line for line in lines}
+        for future in as_completed(futures):
+            line = futures[future]
+            line_id = str(line.get("id"))
+            try:
+                data, routes = future.result()
+            except Exception:
+                data, routes = None, None
+            if routes is not None:
+                # Una respuesta válida pero vacía significa que el proveedor
+                # actualmente no posee geometría para esa línea.
+                refreshed[line_id] = routes
+            elif line_id in previous:
+                refreshed[line_id] = previous[line_id]
+
+    with _all_paths_lock:
+        _all_paths_cache.clear()
+        _all_paths_cache.update(refreshed)
+        _all_lines_info = lines
+        _planner_last_refresh = time.time()
+    return sum(bool(routes) for routes in refreshed.values())
+
 
 def path_fetcher_loop():
-    global _all_lines_info
-    time.sleep(2)  # Dar tiempo al server de iniciar
-    status, body = call_api("/bus/lines")
-    if status == 200:
+    # Dar tiempo a que el servidor empiece a responder el HTML. Luego el
+    # catálogo se renueva periódicamente y sobrevive a fallas transitorias.
+    if observed_routes.stop.wait(2):
+        return
+    while not observed_routes.stop.is_set():
         try:
-            data = json.loads(body)
-            if data.get("success"):
-                _all_lines_info = data.get("data", [])
-        except:
-            pass
+            refresh_planner_paths()
+        except Exception as exc:
+            print(f"Error actualizando el planificador: {exc}")
+        observed_routes.stop.wait(PLANNER_REFRESH_SECONDS)
 
-    for line in _all_lines_info:
-        line_id = str(line.get("id"))
-        status, body = call_api(f"/bus/lineServices/{line_id}")
-        if status == 200:
-            try:
-                data = json.loads(body)
-                if data.get("success"):
-                    routes_list = []
-                    for service in data.get("data", {}).get("services", []):
-                        for route in service.get("routes", []):
-                            for section in route.get("sections", []):
-                                points = []
-                                for tr in section.get("traces", []):
-                                    try:
-                                        points.append((float(tr["latitud"]), float(tr["longitud"])))
-                                    except:
-                                        pass
-                                if points:
-                                    routes_list.append(points)
-                    with _all_paths_lock:
-                        _all_paths_cache[line_id] = routes_list
-            except:
-                pass
-        time.sleep(1) # rate limiting simple
+
+def project_point_to_planner_route(lat: float, lon: float, route: dict) -> dict | None:
+    """Proyecta un punto sobre segmentos, no solamente sobre vértices."""
+    points = route.get("points") or []
+    cumulative = route.get("cumulative") or []
+    if len(points) < 2 or len(cumulative) != len(points):
+        return None
+
+    earth_radius = 6371000.0
+    ref_cos = math.cos(math.radians(lat))
+    best = None
+    for index, (start, end) in enumerate(zip(points, points[1:])):
+        if index in route.get("gaps", ()):
+            continue
+        ax = earth_radius * math.radians(start[1] - lon) * ref_cos
+        ay = earth_radius * math.radians(start[0] - lat)
+        bx = earth_radius * math.radians(end[1] - lon) * ref_cos
+        by = earth_radius * math.radians(end[0] - lat)
+        dx, dy = bx - ax, by - ay
+        length_squared = dx * dx + dy * dy
+        fraction = -(ax * dx + ay * dy) / length_squared if length_squared else 0.0
+        fraction = max(0.0, min(1.0, fraction))
+        cx, cy = ax + fraction * dx, ay + fraction * dy
+        distance_m = math.hypot(cx, cy)
+        if best is None or distance_m < best["distance_m"]:
+            segment_length = cumulative[index + 1] - cumulative[index]
+            best = {
+                "distance_m": distance_m,
+                "arc_m": cumulative[index] + fraction * segment_length,
+                "lat": start[0] + fraction * (end[0] - start[0]),
+                "lon": start[1] + fraction * (end[1] - start[1]),
+                "segment": index,
+            }
+    return best
+
+
+def plan_trip(olat: float, olon: float, dlat: float, dlon: float) -> list[dict]:
+    """Devuelve recorridos directos ordenados por tiempo aproximado total."""
+    with _all_paths_lock:
+        snapshot = [route for routes in _all_paths_cache.values() for route in routes]
+
+    options = []
+    for route in snapshot:
+        min_lat, min_lon, max_lat, max_lon = route.get("bbox", (-90, -180, 90, 180))
+        lat_margin = PLANNER_MAX_WALK_KM / 111.2
+        origin_lon_margin = PLANNER_MAX_WALK_KM / max(20.0, 111.2 * math.cos(math.radians(olat)))
+        destination_lon_margin = PLANNER_MAX_WALK_KM / max(20.0, 111.2 * math.cos(math.radians(dlat)))
+        origin_near = (
+            min_lat - lat_margin <= olat <= max_lat + lat_margin
+            and min_lon - origin_lon_margin <= olon <= max_lon + origin_lon_margin
+        )
+        destination_near = (
+            min_lat - lat_margin <= dlat <= max_lat + lat_margin
+            and min_lon - destination_lon_margin <= dlon <= max_lon + destination_lon_margin
+        )
+        if not origin_near or not destination_near:
+            continue
+        origin = project_point_to_planner_route(olat, olon, route)
+        destination = project_point_to_planner_route(dlat, dlon, route)
+        if origin is None or destination is None:
+            continue
+        if origin["distance_m"] >= PLANNER_MAX_WALK_KM * 1000 or destination["distance_m"] >= PLANNER_MAX_WALK_KM * 1000:
+            continue
+
+        ride_distance = destination["arc_m"] - origin["arc_m"]
+        wraps = False
+        if ride_distance < -20 and route.get("closed"):
+            ride_distance = route["length_m"] - origin["arc_m"] + destination["arc_m"]
+            wraps = True
+        if ride_distance <= 20:
+            continue
+        if any(origin['segment'] <= gap <= destination['segment'] for gap in route.get('gaps', ())):
+            continue
+
+        origin_walk = int(round(origin["distance_m"]))
+        destination_walk = int(round(destination["distance_m"]))
+        total_walk = origin_walk + destination_walk
+        walk_minutes = total_walk / PLANNER_WALKING_SPEED_M_PER_MIN
+        bus_minutes = ride_distance / PLANNER_BUS_SPEED_M_PER_MIN
+        estimated_minutes = max(1, int(round(walk_minutes + bus_minutes)))
+        options.append({
+            "id": route["line_id"],
+            "name": route["line_name"],
+            "provider": route["provider"],
+            "serviceId": route["service_id"],
+            "routeId": route["route_id"],
+            "routeName": route["route_name"],
+            "direction": route["direction"],
+            "walkingDist": total_walk,
+            "originWalkMeters": origin_walk,
+            "destinationWalkMeters": destination_walk,
+            "rideDistanceMeters": int(round(ride_distance)),
+            "estimatedMinutes": estimated_minutes,
+            "board": {"lat": origin["lat"], "lon": origin["lon"]},
+            "alight": {"lat": destination["lat"], "lon": destination["lon"]},
+            "wraps": wraps,
+        })
+
+    # Se conserva una alternativa por recorrido/sentido; algunos proveedores
+    # repiten la misma ficha bajo varios servicios internos.
+    options.sort(key=lambda item: (item["estimatedMinutes"], item["walkingDist"], item["rideDistanceMeters"]))
+    unique = []
+    seen = set()
+    for option in options:
+        identity = (
+            option["id"], catalog_identity(option["routeName"]),
+            option["direction"] or "",
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        unique.append(option)
+        if len(unique) >= PLANNER_RESULT_LIMIT:
+            break
+    return unique
 
 
 # VAPID (identidad del servidor para Web Push) - se genera una sola vez y se
@@ -959,7 +1257,7 @@ class Handler(BaseHTTPRequestHandler):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
             "font-src https://fonts.gstatic.com; "
             "img-src 'self' data: blob: https://tiles.openfreemap.org https://unpkg.com; "
-            "connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://router.project-osrm.org; "
+            "connect-src 'self' https://tiles.openfreemap.org https://router.project-osrm.org; "
             "worker-src 'self' blob:; manifest-src 'self'",
         )
         super().end_headers()
@@ -1140,61 +1438,25 @@ class Handler(BaseHTTPRequestHandler):
             if not self._allow_request("planificar", 60):
                 return
             try:
-                olat = float(qs.get("olat", [0])[0])
-                olon = float(qs.get("olon", [0])[0])
-                dlat = float(qs.get("dlat", [0])[0])
-                dlon = float(qs.get("dlon", [0])[0])
-            except ValueError:
+                olat = float(qs.get("olat", [None])[0])
+                olon = float(qs.get("olon", [None])[0])
+                dlat = float(qs.get("dlat", [None])[0])
+                dlon = float(qs.get("dlon", [None])[0])
+            except (TypeError, ValueError):
                 self._send_json(400, b'{"success": false, "error": "coordenadas invalidas"}')
                 return
             if not valid_coordinates(olat, olon) or not valid_coordinates(dlat, dlon):
                 self._send_json(400, b'{"success": false, "error": "coordenadas invalidas"}')
                 return
-
-            best_options = []
-
             with _all_paths_lock:
-                for line_id, routes in _all_paths_cache.items():
-                    if not routes: continue
-                    
-                    best_walk_for_line = float('inf')
-                    
-                    for points in routes:
-                        min_dist_o, best_idx_o = float('inf'), -1
-                        min_dist_d, best_idx_d = float('inf'), -1
-                        
-                        for i, p in enumerate(points):
-                            d_o = haversine_km(olat, olon, p[0], p[1])
-                            if d_o < min_dist_o:
-                                min_dist_o = d_o
-                                best_idx_o = i
-                            
-                            d_d = haversine_km(dlat, dlon, p[0], p[1])
-                            if d_d < min_dist_d:
-                                min_dist_d = d_d
-                                best_idx_d = i
-                        
-                        # Umbral de 1.5km, y debe ir en sentido correcto
-                        if min_dist_o < 1.5 and min_dist_d < 1.5 and best_idx_d > best_idx_o:
-                            total_walk = min_dist_o + min_dist_d
-                            if total_walk < best_walk_for_line:
-                                best_walk_for_line = total_walk
-                    
-                    if best_walk_for_line < float('inf'):
-                        line_name = next((l["name"] for l in _all_lines_info if str(l["id"]) == line_id), f"Linea {line_id}")
-                        best_options.append({
-                            "id": line_id,
-                            "name": line_name,
-                            "walkingDist": int(best_walk_for_line * 1000)
-                        })
-
-            # Ordenar opciones por menor distancia a pie
-            best_options.sort(key=lambda x: x["walkingDist"])
-            top_3 = best_options[:3]
-
-            res = {"success": True, "data": top_3}
-                
-            self._send_json_obj(200, res)
+                loaded_lines = sum(bool(routes) for routes in _all_paths_cache.values())
+                ready = loaded_lines > 0
+            self._send_json_obj(200, {
+                "success": True,
+                "ready": ready,
+                "loadedLines": loaded_lines,
+                "data": plan_trip(olat, olon, dlat, dlon),
+            })
             return
 
         if parsed.path == "/api/notify/vapid-public-key":
@@ -1211,6 +1473,38 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_json_body()
         except RequestBodyError as exc:
             self._send_json_obj(exc.status, {"success": False, "error": exc.message})
+            return
+
+        if parsed.path == "/api/geocode":
+            if not self._allow_request("geocode", 15):
+                return
+            status, result = search_address(body.get("query") if isinstance(body, dict) else None)
+            self._send_json_obj(status, result)
+            return
+
+        if parsed.path == "/api/planificar":
+            if not self._allow_request("planificar", 60):
+                return
+            try:
+                olat = float(body.get("olat"))
+                olon = float(body.get("olon"))
+                dlat = float(body.get("dlat"))
+                dlon = float(body.get("dlon"))
+            except (AttributeError, TypeError, ValueError):
+                self._send_json_obj(400, {"success": False, "error": "coordenadas invalidas"})
+                return
+            if not valid_coordinates(olat, olon) or not valid_coordinates(dlat, dlon):
+                self._send_json_obj(400, {"success": False, "error": "coordenadas invalidas"})
+                return
+            with _all_paths_lock:
+                loaded_lines = sum(bool(routes) for routes in _all_paths_cache.values())
+                ready = loaded_lines > 0
+            self._send_json_obj(200, {
+                "success": True,
+                "ready": ready,
+                "loadedLines": loaded_lines,
+                "data": plan_trip(olat, olon, dlat, dlon),
+            })
             return
 
         if parsed.path == "/api/positions/batch":

@@ -45,6 +45,13 @@ el boton de aviso de proximidad.
   estelas y desvíos sin volver a descargar la línea ni detener su seguimiento.
   Las observaciones nuevas guardan también el nombre del recorrido para que
   los desvíos persistentes permanezcan asociados a su ramal.
+- **Planificador desde la ubicación del usuario**: permite usar el GPS como
+  origen y devuelve recorridos directos de JAHA y Más con ramal, sentido,
+  punto de subida, punto de bajada y una duración aproximada. El servidor une
+  las secciones de cada recorrido y proyecta origen y destino sobre los
+  segmentos completos, sin depender solamente de los vértices publicados. Al
+  elegir una opción, el mapa diferencia las conexiones a pie, el tramo útil en
+  colectivo y las unidades que circulan en el sentido necesario para el viaje.
 - **Avisos de proximidad**: se puede elegir una linea y un radio (1/5/10 km)
   para recibir una notificacion push cuando algun bus de esa linea entre en
   ese radio de tu ubicacion. Usa Web Push estandar (Service Worker + VAPID),
@@ -57,7 +64,7 @@ el boton de aviso de proximidad.
 - **Trayectos observados compartidos**: el servidor consulta las líneas aunque
   no haya una página abierta, compara cada bus con su recorrido oficial y
   conserva solamente la evidencia que queda fuera. La ruta oficial nunca se
-  modifica. La estela GPS reciente se muestra en celeste; los tramos ajustados
+  modifica. La estela GPS reciente se muestra en granate; los tramos ajustados
   a calles usan naranja para 2 buses distintos, azul para 3 y morado para 4 o
   más. Una pasada se identifica por línea, unidad y viaje, de modo que varios
   visitantes mirando el mismo bus no aumentan el conteo.
@@ -107,12 +114,27 @@ Variables opcionales:
 - `OBSERVED_COLLECTOR=0`: desactiva el recolector central.
 - `OBSERVED_POLL_SECONDS`: intervalo objetivo del recolector (mínimo 15 s;
   predeterminado 30 s). El ciclo real también depende del número de líneas.
+- `PLANNER_REFRESH_SECONDS`: intervalo para renovar el catálogo geográfico
+  compartido del planificador (mínimo 5 minutos; predeterminado 30 minutos).
+- `GEOCODER_SEARCH_URL`: endpoint HTTPS de búsqueda compatible con Nominatim,
+  propio o contratado. Sin configurarlo se eligen puntos en el mapa o con GPS;
+  buscar por dirección muestra un aviso. Las búsquedas son explícitas (botón o
+  Enter), con caché y límite compartido, no consultas mientras se escribe.
+  No se utiliza por defecto el servidor público de Nominatim. Confirmar las
+  condiciones y la atribución exigidas por el proveedor antes de configurarlo.
 - `OSRM_MATCH_URL`: servidor compatible con la API Match de OSRM. El valor
   predeterminado es `https://router.project-osrm.org`; para más volumen se
   recomienda una instancia propia.
 
 ## Notas y limitaciones
 
+- El planificador ofrece viajes directos, sin transbordos ni horarios. Los
+  minutos no incluyen espera o tráfico. Las caminatas son distancias en línea
+  recta y los puntos sugeridos no certifican una parada habilitada: verificar
+  accesibilidad y dónde está permitido subir. No une tramos desconectados ni
+  presupone un circuito continuo porque las cabeceras estén cerca.
+- Validación local: `python -m unittest discover -s tests -q` y
+  `node --test tests/test_planner_frontend.cjs`.
 - Consume un endpoint interno no documentado de JAHA. Pensado para uso
   personal; mantener el intervalo de actualizacion razonable (10s por
   defecto) para no generar carga innecesaria en su servidor.
