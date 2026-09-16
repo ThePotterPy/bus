@@ -1,5 +1,5 @@
-self.CACHE_NAME = 'jaha-tracker-v11';
-self.APP_SHELL = ['/', '/index.html', '/observed-routes.js', '/manifest.json'];
+self.CACHE_NAME = 'jaha-tracker-v12';
+self.APP_SHELL = ['/', '/index.html', '/feedback.js', '/observed-routes.js', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

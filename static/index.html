@@ -468,6 +468,45 @@
   /* Leaflet: alejar los controles de zoom de la barra flotante */
   .leaflet-top.leaflet-left { top: 108px; }
 
+  .feedback-entry {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--panel-border);
+    border-radius: 10px; background: rgba(255,255,255,.06); color: var(--text);
+    font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  }
+  .feedback-entry:hover { background: rgba(255,255,255,.12); }
+  #feedbackSettingsRow[hidden] { display:none; }
+  #feedbackOverlay[hidden] { display: none; }
+  #feedbackOverlay {
+    position: fixed; inset: 0; z-index: 3000; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center;
+  }
+  .feedback-dialog {
+    width: min(100%, 440px); max-height: 100%; overflow-y: auto;
+    background: #1b1e28; border: 1px solid var(--panel-border);
+    border-radius: 18px; padding: 18px; box-shadow: 0 24px 64px rgba(0,0,0,.45);
+  }
+  .feedback-head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .feedback-head h2 { font-size: 18px; margin: 0; }
+  .feedback-close { border:0; background:transparent; color:var(--text); font-size:24px; cursor:pointer; padding:3px 8px; }
+  .feedback-dialog p, .feedback-dialog small { color:var(--muted); line-height:1.45; }
+  .feedback-dialog label { display:block; margin:12px 0 5px; font-size:13px; font-weight:600; }
+  .feedback-dialog input:not([type=checkbox]), .feedback-dialog select, .feedback-dialog textarea {
+    display:block; width:100%; padding:10px 12px; border:1px solid var(--panel-border);
+    border-radius:9px; background:#10131b; color:var(--text); font:inherit; font-size:16px;
+  }
+  .feedback-dialog textarea { min-height:110px; resize:vertical; }
+  .feedback-dialog input:focus, .feedback-dialog select:focus, .feedback-dialog textarea:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .feedback-consent { display:flex !important; align-items:flex-start; gap:9px; line-height:1.4; font-weight:400 !important; }
+  .feedback-consent input { margin-top:3px; }
+  .feedback-note { font-size:12px; margin:10px 0; }
+  #feedbackStatus, #feedbackDeleteStatus { min-height:20px; margin-top:10px; font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
+  #feedbackStatus.error { color:#ff809e; }
+  #feedbackStatus.success { color:#64e8a7; }
+  #feedbackDeleteStatus.error { color:#ff809e; }
+  #feedbackDeleteStatus.success { color:#64e8a7; }
+  .feedback-dialog details { margin-top:16px; border-top:1px solid var(--panel-border); padding-top:12px; }
+  .feedback-dialog summary { cursor:pointer; font-size:13px; color:var(--muted); }
+
   @media (max-width: 480px) {
     #topBar { max-width: none; }
     #lineSearch, .settings-row select, .autocomplete-input { font-size: 16px; } /* evita el zoom automatico en iOS */
@@ -556,6 +595,9 @@
           <option value="30">30s</option>
         </select>
       </div>
+      <div class="settings-row" id="feedbackSettingsRow">
+        <button type="button" class="feedback-entry" id="feedbackOpen">✉ Enviar comentario o sugerencia</button>
+      </div>
     </div>
     <div class="float-card" id="planPanel" style="padding: 16px;">
       <div class="plan-header">
@@ -625,6 +667,50 @@
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
 seleccion de linea</span></div>
   <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
+
+  <div id="feedbackOverlay" hidden>
+    <div class="feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+      <div class="feedback-head">
+        <h2 id="feedbackTitle">Tu opinión nos ayuda</h2>
+        <button type="button" class="feedback-close" id="feedbackClose" aria-label="Cerrar">×</button>
+      </div>
+      <p class="feedback-note">El comentario llega en privado al responsable de la app. No se publica en el mapa.</p>
+      <form id="feedbackForm">
+        <label for="feedbackCategory">¿Sobre qué es?</label>
+        <select id="feedbackCategory" required>
+          <option value="error">Un problema de la app</option>
+          <option value="ruta">Un recorrido o colectivo</option>
+          <option value="sugerencia">Una sugerencia</option>
+          <option value="otro">Otro tema</option>
+        </select>
+        <label for="feedbackLine">Línea relacionada (opcional)</label>
+        <input id="feedbackLine" maxlength="80" placeholder="Por ejemplo, 30" autocomplete="off">
+        <label for="feedbackName">Tu nombre (opcional)</label>
+        <input id="feedbackName" maxlength="80" placeholder="Podés dejarlo vacío" autocomplete="name">
+        <label for="feedbackMessage">Tu comentario</label>
+        <textarea id="feedbackMessage" minlength="5" maxlength="3000" required placeholder="Contanos qué pasó o qué mejorarías..."></textarea>
+        <input id="feedbackWebsite" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px">
+        <label class="feedback-consent" for="feedbackDiagnostics">
+          <input type="checkbox" id="feedbackDiagnostics">
+          <span>Quiero adjuntar datos técnicos para ayudar a resolverlo.</span>
+        </label>
+        <small>Solo tipo de dispositivo, sistema, navegador, ancho aproximado de pantalla y versión web. Nunca tu ubicación ni un identificador del teléfono.</small>
+        <p class="feedback-note">Guardamos el comentario hasta 180 días y los datos técnicos hasta 30 días. Podés enviarlo sin nombre y sin datos técnicos.</p>
+        <button type="submit" class="btn-primary" id="feedbackSubmit">Enviar comentario</button>
+        <div id="feedbackStatus" role="status" aria-live="polite"></div>
+        <button type="button" id="feedbackCopyCode" hidden>Copiar código de eliminación</button>
+      </form>
+      <details>
+        <summary>Eliminar un comentario anterior</summary>
+        <form id="feedbackDeleteForm">
+          <label for="feedbackDeleteCode">Código privado que recibiste al enviarlo</label>
+          <input id="feedbackDeleteCode" autocomplete="off" required placeholder="C-000001-…">
+          <button type="submit" class="btn-primary danger" style="margin-top:10px">Eliminar comentario</button>
+          <div id="feedbackDeleteStatus" role="status" aria-live="polite"></div>
+        </form>
+      </details>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2755,6 +2841,7 @@ calculatePlanBtn.addEventListener('click', async () => {
 });
 
 </script>
+<script src="/feedback.js"></script>
 <script src="/observed-routes.js"></script>
 </body>
 </html>

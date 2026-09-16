@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Comentarios · Administración</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background:#10131b; color:#f5f6fa; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:20px; }
+    main { max-width:850px; margin:0 auto; }
+    h1 { font-size:clamp(22px,4vw,32px); margin:0 0 8px; }
+    p, small { color:#a6afc1; line-height:1.5; }
+    .card { background:#1c2230; border:1px solid #353c4b; border-radius:14px; padding:18px; margin:14px 0; }
+    .login { max-width:420px; }
+    label { display:block; margin:10px 0 6px; }
+    input, select { width:100%; background:#111722; color:#fff; border:1px solid #4c586d; border-radius:8px; padding:11px; font:inherit; }
+    button { border:1px solid #607087; border-radius:8px; background:#2b3445; color:#fff; padding:9px 12px; font:inherit; cursor:pointer; }
+    button:hover { background:#39465a; }
+    button:disabled { opacity:.5; cursor:default; }
+    button.primary { background:#00d3ec; color:#06131b; border-color:#00d3ec; font-weight:700; }
+    button.danger { border-color:#a94459; color:#ffb4c2; }
+    .toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:16px 0; }
+    .toolbar select { width:auto; }
+    .toolbar button:last-child { margin-left:auto; }
+    .head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
+    .meta { color:#a6afc1; font-size:13px; }
+    .message { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.5; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .diagnostics { font-size:12px; color:#b9c5d7; background:#121925; border-radius:8px; padding:10px; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .error { color:#ff9fb2; }
+    .success { color:#7bf0ae; }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Comentarios recibidos</h1>
+  <p>Panel privado. Los mensajes no son visibles para otros usuarios.</p>
+  <section id="loginPanel" class="card login">
+    <form id="loginForm">
+      <label for="password">Contraseña de administración</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button class="primary" type="submit" style="margin-top:12px">Entrar</button>
+    </form>
+    <p id="loginStatus" role="status"></p>
+  </section>
+  <section id="adminPanel" hidden>
+    <div class="toolbar">
+      <label for="filter" style="margin:0">Ver</label>
+      <select id="filter">
+        <option value="todos">Todos</option>
+        <option value="nuevo">Nuevos</option>
+        <option value="revisado">Revisados</option>
+      </select>
+      <button id="refresh" type="button">Actualizar</button>
+      <button id="logout" type="button">Salir</button>
+    </div>
+    <p id="adminStatus" role="status"></p>
+    <div id="comments"></div>
+    <button id="more" type="button" hidden>Ver más</button>
+  </section>
+</main>
+<script>
+  const loginPanel = document.getElementById('loginPanel');
+  const adminPanel = document.getElementById('adminPanel');
+  const comments = document.getElementById('comments');
+  const adminStatus = document.getElementById('adminStatus');
+  const more = document.getElementById('more');
+  let csrf = null;
+  let nextBefore = null;
+
+  async function api(url, options = {}) {
+    const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store', ...options });
+    const data = await response.json();
+    if (!response.ok) {
+      if (response.status === 401) showLogin();
+      throw new Error(data.error || `Error ${response.status}`);
+    }
+    return data;
+  }
+
+  function showLogin() {
+    csrf = null;
+    loginPanel.hidden = false;
+    adminPanel.hidden = true;
+    comments.replaceChildren();
+  }
+
+  async function showAdmin() {
+    const session = await api('/api/admin/feedback/session');
+    if (!session.active) { showLogin(); return; }
+    csrf = session.csrf;
+    loginPanel.hidden = true;
+    adminPanel.hidden = false;
+    await loadComments(false);
+  }
+
+  function text(tag, content, className = '') {
+    const element = document.createElement(tag);
+    element.textContent = content;
+    if (className) element.className = className;
+    return element;
+  }
+
+  function action(label, className, handler) {
+    const button = text('button', label, className);
+    button.type = 'button';
+    button.addEventListener('click', handler);
+    return button;
+  }
+
+  async function changeComment(path, body) {
+    await api(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+      body: JSON.stringify(body),
+    });
+    await loadComments(false);
+  }
+
+  function renderComment(item) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.append(
+      text('strong', `C-${String(item.id).padStart(6, '0')} · ${item.name || 'Sin nombre'}`),
+      text('span', new Date(item.created_at * 1000).toLocaleString('es-PY'), 'meta'),
+    );
+    card.append(head);
+    const meta = [item.category, item.line_id ? `Línea ${item.line_id}` : null, item.status]
+      .filter(Boolean).join(' · ');
+    card.append(text('div', meta, 'meta'), text('p', item.message, 'message'));
+    if (item.diagnostics) {
+      card.append(text('div', `Datos técnicos consentidos: ${Object.entries(item.diagnostics)
+        .map(([key, value]) => `${key}: ${value}`).join(' · ')}`, 'diagnostics'));
+    }
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.append(action(item.status === 'nuevo' ? 'Marcar revisado' : 'Marcar nuevo', '', async () => {
+      try {
+        await changeComment('/api/admin/feedback/status', {
+          id: item.id, status: item.status === 'nuevo' ? 'revisado' : 'nuevo',
+        });
+      } catch (error) { adminStatus.textContent = error.message; adminStatus.className = 'error'; }
+    }));
+    actions.append(action('Eliminar', 'danger', async () => {
+      if (!confirm(`¿Eliminar definitivamente el comentario C-${String(item.id).padStart(6, '0')}?`)) return;
+      try {
+        await changeComment('/api/admin/feedback/delete', { id: item.id });
+      } catch (error) { adminStatus.textContent = error.message; adminStatus.className = 'error'; }
+    }));
+    card.append(actions);
+    return card;
+  }
+
+  async function loadComments(append) {
+    const filter = document.getElementById('filter').value;
+    const before = append && nextBefore ? `&before=${nextBefore}` : '';
+    adminStatus.textContent = 'Cargando…';
+    try {
+      const data = await api(`/api/admin/feedback?status=${encodeURIComponent(filter)}&limit=50${before}`);
+      if (!append) comments.replaceChildren();
+      data.items.forEach(item => comments.append(renderComment(item)));
+      nextBefore = data.nextBefore;
+      more.hidden = !nextBefore;
+      adminStatus.textContent = comments.children.length
+        ? `${comments.children.length} comentario(s) cargados` : 'No hay comentarios en este filtro.';
+      adminStatus.className = '';
+    } catch (error) {
+      adminStatus.textContent = error.message;
+      adminStatus.className = 'error';
+    }
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const password = document.getElementById('password');
+    const loginStatus = document.getElementById('loginStatus');
+    try {
+      await api('/api/admin/feedback/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password.value }),
+      });
+      password.value = '';
+      loginStatus.textContent = '';
+      await showAdmin();
+    } catch (error) {
+      loginStatus.textContent = error.message;
+      loginStatus.className = 'error';
+    }
+  });
+  document.getElementById('filter').addEventListener('change', () => loadComments(false));
+  document.getElementById('refresh').addEventListener('click', () => loadComments(false));
+  more.addEventListener('click', () => loadComments(true));
+  document.getElementById('logout').addEventListener('click', async () => {
+    try {
+      await api('/api/admin/feedback/logout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+        body: '{}',
+      });
+    } finally { showLogin(); }
+  });
+  showAdmin().catch(() => showLogin());
+</script>
+</body>
+</html>

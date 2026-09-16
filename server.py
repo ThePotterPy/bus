@@ -27,17 +27,20 @@ import math
 import mimetypes
 import os
 import re
+import secrets
 import sqlite3
 import threading
 import time
 import unicodedata
 from datetime import datetime
+from http.cookies import CookieError, SimpleCookie
 import urllib.request
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs, urlencode
+from feedback import FeedbackStore, SESSION_SECONDS, validate_feedback
 from observed_routes import ObservedRoutes
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
@@ -52,6 +55,18 @@ DATA_DIR = Path(os.environ.get("DATA_DIR") or os.environ.get("RAILWAY_VOLUME_MOU
 SUBS_FILE = DATA_DIR / "notify_subscriptions.json"
 VAPID_FILE = DATA_DIR / "vapid_private.pem"
 TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
+FEEDBACK_DB_FILE = DATA_DIR / "feedback.sqlite3"
+feedback_store = FeedbackStore(FEEDBACK_DB_FILE)
+
+
+def _feedback_admin_password() -> str:
+    return os.environ.get("FEEDBACK_ADMIN_PASSWORD", "")
+
+
+def feedback_enabled() -> bool:
+    return len(_feedback_admin_password()) >= 16
+
+
 observed_routes = ObservedRoutes(
     TRACKS_DB_FILE,
     osrm_url=os.environ.get("OSRM_MATCH_URL", "https://router.project-osrm.org"),
@@ -1360,6 +1375,32 @@ class Handler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, json.JSONDecodeError):
             raise RequestBodyError(400, "JSON invalido")
 
+    def _feedback_admin_token(self) -> str:
+        try:
+            cookie = SimpleCookie()
+            cookie.load(self.headers.get("Cookie", ""))
+            return cookie["feedback_admin"].value if "feedback_admin" in cookie else ""
+        except (CookieError, ValueError):
+            return ""
+
+    def _feedback_cookie(self, token: str = "") -> str:
+        # Railway termina HTTPS antes de llegar a este servidor HTTP.
+        secure = bool(os.environ.get("RAILWAY_ENVIRONMENT_ID")) or self.headers.get("X-Forwarded-Proto") == "https"
+        cookie = f"feedback_admin={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_SECONDS if token else 0}"
+        return cookie + ("; Secure" if secure else "")
+
+    def _require_feedback_admin(self, csrf=False) -> bool:
+        session_csrf = feedback_store.session(
+            self._feedback_admin_token(), _feedback_admin_password()
+        ) if feedback_enabled() else None
+        if not session_csrf:
+            self._send_json_obj(401, {"success": False, "error": "iniciá sesión"})
+            return False
+        if csrf and not secrets.compare_digest(self.headers.get("X-Feedback-CSRF", ""), session_csrf):
+            self._send_json_obj(403, {"success": False, "error": "solicitud no autorizada"})
+            return False
+        return True
+
     def _send_file(self, rel_path: str):
         file_path = resolve_static_file(rel_path)
         if file_path is None:
@@ -1384,6 +1425,41 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/" or parsed.path == "/index.html":
             self._send_file("index.html")
+            return
+
+        if parsed.path == "/admin/feedback":
+            self._send_file("admin-feedback.html")
+            return
+
+        if parsed.path == "/api/feedback/config":
+            self._send_json_obj(200, {"success": True, "enabled": feedback_enabled()})
+            return
+
+        if parsed.path == "/api/admin/feedback/session":
+            csrf = feedback_store.session(
+                self._feedback_admin_token(), _feedback_admin_password()
+            ) if feedback_enabled() else None
+            self._send_json_obj(200, {"success": True, "active": bool(csrf), "csrf": csrf})
+            return
+
+        if parsed.path == "/api/admin/feedback":
+            if not self._require_feedback_admin():
+                return
+            status = qs.get("status", ["todos"])[0]
+            if status not in {"todos", "nuevo", "revisado"}:
+                self._send_json_obj(400, {"success": False, "error": "filtro inválido"})
+                return
+            try:
+                before = int(qs["before"][0]) if "before" in qs else None
+                limit = int(qs.get("limit", ["50"])[0])
+            except (ValueError, IndexError):
+                self._send_json_obj(400, {"success": False, "error": "paginación inválida"})
+                return
+            if (before is not None and not 0 < before <= 2**63 - 1) or not 1 <= limit <= 100:
+                self._send_json_obj(400, {"success": False, "error": "paginación inválida"})
+                return
+            items, next_before = feedback_store.list(status, before, limit)
+            self._send_json_obj(200, {"success": True, "items": items, "nextBefore": next_before})
             return
 
         if parsed.path == "/api/lines":
@@ -1536,6 +1612,72 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_json_body()
         except RequestBodyError as exc:
             self._send_json_obj(exc.status, {"success": False, "error": exc.message})
+            return
+
+        if parsed.path == "/api/feedback":
+            if not feedback_enabled():
+                self._send_json_obj(503, {"success": False, "error": "comentarios aún no disponibles"})
+                return
+            if not self._allow_request("feedback", 3, 3600):
+                return
+            try:
+                record = validate_feedback(body)
+            except ValueError as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+            feedback_id, delete_token = feedback_store.create(record)
+            self._send_json_obj(201, {"success": True, "code": f"C-{feedback_id:06d}-{delete_token}"})
+            return
+
+        if parsed.path == "/api/feedback/delete":
+            if not feedback_enabled():
+                self._send_json_obj(503, {"success": False, "error": "comentarios aún no disponibles"})
+                return
+            if not self._allow_request("feedback-delete", 10, 3600):
+                return
+            code = body.get("code") if isinstance(body, dict) else None
+            deleted = feedback_store.delete_with_code(code)
+            self._send_json_obj(200 if deleted else 400, {
+                "success": deleted,
+                "error": None if deleted else "código inválido o comentario ya eliminado",
+            })
+            return
+
+        if parsed.path == "/api/admin/feedback/login":
+            if not self._allow_request("feedback-admin-login", 5, 900):
+                return
+            configured_password = _feedback_admin_password()
+            if len(configured_password) < 16:
+                self._send_json_obj(503, {"success": False, "error": "panel no configurado"})
+                return
+            token = feedback_store.login(body.get("password") if isinstance(body, dict) else None,
+                                         configured_password)
+            if not token:
+                self._send_json_obj(401, {"success": False, "error": "contraseña incorrecta"})
+                return
+            self._send_json_obj(200, {"success": True}, {"Set-Cookie": self._feedback_cookie(token)})
+            return
+
+        if parsed.path in {"/api/admin/feedback/status", "/api/admin/feedback/delete", "/api/admin/feedback/logout"}:
+            if not self._require_feedback_admin(csrf=True):
+                return
+            if parsed.path == "/api/admin/feedback/logout":
+                feedback_store.logout(self._feedback_admin_token(), _feedback_admin_password())
+                self._send_json_obj(200, {"success": True}, {"Set-Cookie": self._feedback_cookie()})
+                return
+            feedback_id = body.get("id") if isinstance(body, dict) else None
+            if type(feedback_id) is not int or not 0 < feedback_id <= 2**63 - 1:
+                self._send_json_obj(400, {"success": False, "error": "comentario inválido"})
+                return
+            if parsed.path == "/api/admin/feedback/status":
+                status = body.get("status")
+                if status not in {"nuevo", "revisado"}:
+                    self._send_json_obj(400, {"success": False, "error": "estado inválido"})
+                    return
+                found = feedback_store.set_status(feedback_id, status)
+            else:
+                found = feedback_store.delete(feedback_id)
+            self._send_json_obj(200 if found else 404, {"success": found})
             return
 
         if parsed.path == "/api/geocode":
@@ -1762,11 +1904,22 @@ def osrm_processor_loop():
             
         time.sleep(4 * 3600)  # every 4 hours
 
+def feedback_prune_loop():
+    while not observed_routes.stop.is_set():
+        try:
+            feedback_store.prune()
+        except sqlite3.Error as exc:
+            print(f"Error al depurar comentarios: {exc}")
+        observed_routes.stop.wait(3600)
+
+
 def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     init_tracks_db()
+    feedback_store.init()
     observed_routes.init()
     load_subs()
+    threading.Thread(target=feedback_prune_loop, daemon=True).start()
     
     # Iniciar fetcher en background para el planificador
     threading.Thread(target=path_fetcher_loop, daemon=True).start()

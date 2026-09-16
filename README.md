@@ -78,6 +78,10 @@ el boton de aviso de proximidad.
   la línea resultante cuando el ajuste de OSRM tiene confianza suficiente. Una
   respuesta dudosa queda como puntos celestes, sin unir edificios con una
   recta inventada.
+- **Comentarios privados**: desde Ajustes se puede enviar un problema o
+  sugerencia con nombre o sin él. Los datos técnicos son opcionales y requieren
+  una casilla marcada expresamente. Un código privado permite al remitente
+  eliminar su comentario sin iniciar sesión.
 
 ## Estructura
 
@@ -87,15 +91,19 @@ el boton de aviso de proximidad.
   proximidad cada 20s y manda los push con `pywebpush`).
 - `observed_routes.py` - recolector central, detección de salida y regreso,
   almacenamiento de pasadas, ajuste a calles y estadísticas compartidas.
+- `feedback.py` - validación y almacenamiento privado de comentarios y sesiones
+  de administración.
 - `static/index.html` - mapa (Leaflet + OpenStreetMap), buscador de lineas,
   calculo de rumbo/sentido, y el panel de avisos de proximidad.
 - `static/observed-routes.js` - representa las estelas y alternativas enviadas
   por el servidor; el navegador no puede crear ni inflar evidencia compartida.
+- `static/feedback.js` - formulario de comentarios y consentimiento opcional.
+- `static/admin-feedback.html` - panel privado para revisar comentarios.
 - `static/sw.js` - service worker minimo, solo recibe el push y muestra la
   notificacion.
 - `data/` - generado en el primer uso (clave VAPID + suscripciones activas).
   También incluye `observed_bus_tracks.sqlite3`, el historial compartido de
-  posiciones de buses. No se sube al repositorio.
+  posiciones de buses, y `feedback.sqlite3`. No se sube al repositorio.
 
 ## Railway y almacenamiento persistente
 
@@ -127,6 +135,32 @@ Variables opcionales:
 - `OSRM_MATCH_URL`: servidor compatible con la API Match de OSRM. El valor
   predeterminado es `https://router.project-osrm.org`; para más volumen se
   recomienda una instancia propia.
+- `FEEDBACK_ADMIN_PASSWORD`: contraseña exclusiva del panel de comentarios,
+  con al menos 16 caracteres. Sin ella el panel no permite iniciar sesión.
+
+## Comentarios y privacidad
+
+El formulario está en **Ajustes → Enviar comentario o sugerencia**. El nombre y
+la línea son opcionales. Los mensajes solo aparecen en el panel privado
+`/admin/feedback`; conocer esa URL no concede acceso. Sin contraseña configurada
+la función pública permanece desactivada. El panel exige la contraseña,
+limita los intentos de acceso y usa una sesión de 12
+horas con cookie `HttpOnly`, `SameSite=Strict` y `Secure` en Railway. Las
+acciones administrativas también exigen un token de protección.
+
+El formulario no adjunta datos técnicos salvo que el usuario marque la casilla
+correspondiente. En ese caso se envían solo tipo de dispositivo, sistema,
+navegador, ancho aproximado de pantalla y versión web. El servidor no agrega
+IP, ubicación del usuario ni identificadores del dispositivo a la base de
+comentarios. Los mensajes se conservan hasta 180 días; los datos técnicos se
+eliminan a los 30 días. Cada envío devuelve un código privado para eliminar
+el mensaje y sus datos técnicos desde el mismo formulario. El código debe
+guardarse: no puede recuperarse desde el servidor.
+
+Antes de activar esta función en Railway, hay que crear una copia manual del
+volumen de producción desde **bus → Backups → Create Backup** y configurar
+`FEEDBACK_ADMIN_PASSWORD` como variable privada del servicio. No se debe
+guardar la contraseña en Git ni enviar a otras personas una copia de `data/`.
 
 ## Notas y limitaciones
 
