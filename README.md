@@ -52,15 +52,17 @@ el boton de aviso de proximidad.
   segmentos completos, sin depender solamente de los vértices publicados. Al
   elegir una opción, el mapa diferencia las conexiones a pie, el tramo útil en
   colectivo y las unidades que circulan en el sentido necesario para el viaje.
-- **Avisos de proximidad**: se puede elegir una linea y un radio (1/5/10 km)
+- **Avisos de proximidad**: se puede elegir una línea y un radio (500 m, 1/2/5/10 km)
   para recibir una notificacion push cuando algun bus de esa linea entre en
-  ese radio de tu ubicacion. Usa Web Push estandar (Service Worker + VAPID),
+  ese radio del último punto de ubicación guardado. Usa Web Push estándar
+  (Service Worker + VAPID),
   asi que funciona aunque la pestana este cerrada, y soporta muchos
   dispositivos en paralelo sin mezclarse entre si (cada uno tiene su propia
   suscripcion en el servidor, con su propia linea/radio/ubicacion). Para
-  evitar notificaciones repetidas, el servidor solo avisa en la transicion
-  de "fuera del radio" a "dentro del radio"; si el bus se queda adentro no
-  vuelve a avisar hasta que salga y vuelva a entrar.
+  evitar notificaciones repetidas, el servidor conserva el estado al recargar,
+  tolera pequeñas oscilaciones del GPS y no interpreta una respuesta vacía
+  como alejamiento inmediato. Al tocar el aviso se abre esa línea en el mapa.
+  Con la página cerrada, el aviso usa el último punto de ubicación guardado.
 - **Trayectos observados compartidos**: el servidor consulta las líneas aunque
   no haya una página abierta, compara cada bus con su recorrido oficial y
   conserva solamente la evidencia que queda fuera. La ruta oficial nunca se

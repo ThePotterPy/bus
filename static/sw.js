@@ -1,4 +1,4 @@
-self.CACHE_NAME = 'jaha-tracker-v10';
+self.CACHE_NAME = 'jaha-tracker-v11';
 self.APP_SHELL = ['/', '/index.html', '/observed-routes.js', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
@@ -54,7 +54,25 @@ self.addEventListener('push', function(event) {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
+      data: { line: data.line },
       icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMjgsMjBBMTQ0LjcsMTQ0LjcsMCwwLDAsMzIsMTA0djU2YTMyLDMyLDAsMCwwLDMyLDMyYTE2LDE2LDAsMCwxLDMyLDBhMTYsMTYsMCwwLDEsMzIsMGExNiwxNiwwLDAsMSwzMiwwYTE2LDE2LDAsMCwxLDMyLDBhMzIsMzIsMCwwLDAsMzItMzJWMTA0QTE0NC43LDE0NC43LDAsMCwwLDEyOCwyMFoiIGZpbGw9IiMzYWEwZmYiLz48L3N2Zz4='
     })
   );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL('/', self.location.origin);
+  const line = event.notification.data && event.notification.data.line;
+  if (typeof line === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(line)) {
+    url.searchParams.set('line', line);
+  }
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
+    const current = windows.find(client => new URL(client.url).origin === self.location.origin);
+    if (current) {
+      await current.navigate(url.href);
+      return current.focus();
+    }
+    return self.clients.openWindow(url.href);
+  }));
 });

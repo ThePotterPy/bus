@@ -1040,6 +1040,7 @@ if PUSH_AVAILABLE:
 # para este volumen de datos.
 # ---------------------------------------------------------------------------
 _subs_lock = threading.Lock()
+_subs_file_lock = threading.Lock()
 _subs: dict[str, dict] = {}
 
 
@@ -1062,9 +1063,10 @@ def load_subs():
 
 
 def save_subs():
-    DATA_DIR.mkdir(exist_ok=True)
-    with _subs_lock:
-        snapshot = json.dumps(_subs)
+    with _subs_file_lock:
+        DATA_DIR.mkdir(exist_ok=True)
+        with _subs_lock:
+            snapshot = json.dumps(_subs)
         temporary = SUBS_FILE.with_suffix(".tmp")
         temporary.write_text(snapshot, encoding="utf-8")
         os.replace(temporary, SUBS_FILE)
@@ -1079,101 +1081,145 @@ def haversine_km(lat1, lon1, lat2, lon2) -> float:
     return 2 * r * math.asin(min(1, math.sqrt(a)))
 
 
-def send_push(push_subscription: dict, title: str, body_text: str) -> str | None:
-    """Devuelve 'expired' si la suscripcion ya no es valida y hay que borrarla."""
+def send_push(push_subscription: dict, title: str, body_text: str,
+              line_id: str | None = None) -> str:
+    """Distingue entrega aceptada, fallo temporal y suscripción vencida."""
     try:
         webpush(
             subscription_info=push_subscription,
-            data=json.dumps({"title": title, "body": body_text}),
+            data=json.dumps({"title": title, "body": body_text, "line": line_id}),
             vapid_private_key=_vapid,
             vapid_claims={"sub": VAPID_CLAIMS_SUB},
         )
+        return "sent"
     except WebPushException as exc:
         status_code = getattr(getattr(exc, "response", None), "status_code", None)
         print("push error:", exc)
         if status_code in (404, 410):
             return "expired"
+        return "failed"
     except Exception as exc:
         print("push error inesperado:", exc)
-    return None
+        return "failed"
+
+
+def proximity_transition(sub: dict, min_dist: float | None, now: float) -> tuple[str | None, bool]:
+    """Decide el cambio de estado; ninguna muestra válida no equivale a alejamiento."""
+    was_inside = bool(sub.get("insideRadius"))
+    if min_dist is None:
+        last_seen = float(sub.get("lastObservedAt") or now)
+        return None, was_inside and now - last_seen < 300
+    radius = float(sub.get("radiusKm", 5))
+    if was_inside:
+        # Un GPS que oscila sobre el borde no genera múltiples avisos.
+        return None, min_dist < radius + max(0.15, radius * 0.1)
+    if min_dist <= radius:
+        if now < float(sub.get("pushRetryAfter") or 0):
+            return None, False
+        return "notify", False
+    return None, False
+
+
+def same_notification_watch(previous: dict | None, line: str, radius: float,
+                            lat: float, lon: float) -> bool:
+    return bool(previous and previous.get("line") == line
+                and previous.get("radiusKm") == radius
+                and valid_coordinates(previous.get("lat"), previous.get("lon"))
+                and haversine_km(float(previous["lat"]), float(previous["lon"]), lat, lon) < 0.15)
+
+
+def check_notifications_once():
+    """Evalúa un ciclo con estado persistido por suscriptor."""
+    with _subs_lock:
+        snapshot = list(_subs.items())
+
+    by_line: dict[str, list[tuple[str, dict]]] = {}
+    stale_ids = []
+    cutoff = time.time() - SUBSCRIPTION_TTL_SECONDS
+    for client_id, sub in snapshot:
+        if float(sub.get("updatedAt") or 0) < cutoff:
+            stale_ids.append(client_id)
+            continue
+        if not sub.get("line") or sub.get("lat") is None or sub.get("lon") is None:
+            continue
+        by_line.setdefault(sub["line"], []).append((client_id, sub))
+
+    expired_ids = list(stale_ids)
+    changed = False
+
+    for line, entries in by_line.items():
+        try:
+            _status, body = get_positions_cached(line)
+            data = json.loads(body)
+        except Exception as exc:
+            print(f"Error consultando posiciones para avisos de {line}: {exc}")
+            continue
+        if _status != 200 or not isinstance(data, dict) or not data.get("success"):
+            continue
+        units = data.get("data") or []
+
+        for client_id, sub in entries:
+            min_dist = None
+            for u in units:
+                try:
+                    ulat, ulon = float(u["lat"]), float(u["lon"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if not valid_coordinates(ulat, ulon):
+                    continue
+                d = haversine_km(sub["lat"], sub["lon"], ulat, ulon)
+                if min_dist is None or d < min_dist:
+                    min_dist = d
+
+            now = time.time()
+            action, inside = proximity_transition(sub, min_dist, now)
+            if action == "notify":
+                line_name = sub.get("lineName") or f"Linea {line}"
+                result = send_push(
+                    sub["pushSubscription"],
+                    "\U0001f68c Bus cerca",
+                    f"{line_name} está a unos {min_dist:.1f} km del último punto guardado.",
+                    line,
+                )
+                if result == "expired":
+                    expired_ids.append(client_id)
+                    continue
+                if result == "sent":
+                    inside = True
+
+            with _subs_lock:
+                if _subs.get(client_id) is not sub:
+                    continue
+                if action == "notify" and result == "failed":
+                    # Reintentar sin insistir cada 20 segundos.
+                    sub["pushRetryAfter"] = now + 120
+                    changed = True
+                if min_dist is not None and now - float(sub.get("lastObservedAt") or 0) >= 60:
+                    sub["lastObservedAt"] = now
+                    changed = True
+                if sub.get("insideRadius") != inside:
+                    sub["insideRadius"] = inside
+                    changed = True
+
+    if expired_ids:
+        with _subs_lock:
+            for cid in expired_ids:
+                _subs.pop(cid, None)
+        changed = True
+
+    if changed:
+        save_subs()
 
 
 def notifier_loop():
-    """Cada NOTIFY_CHECK_INTERVAL segundos revisa, por linea vigilada, si
-    algun bus entro en el radio configurado por cada suscriptor. Aplica
-    histeresis (solo avisa en la transicion fuera->dentro) para no mandar
-    una notificacion por cada actualizacion de posicion."""
+    """Cada NOTIFY_CHECK_INTERVAL segundos comprueba las líneas vigiladas."""
     while True:
         time.sleep(NOTIFY_CHECK_INTERVAL)
-        if not PUSH_AVAILABLE:
-            continue
-
-        with _subs_lock:
-            snapshot = list(_subs.items())
-
-        by_line: dict[str, list[tuple[str, dict]]] = {}
-        stale_ids = []
-        cutoff = time.time() - SUBSCRIPTION_TTL_SECONDS
-        for client_id, sub in snapshot:
-            if float(sub.get("updatedAt") or 0) < cutoff:
-                stale_ids.append(client_id)
-                continue
-            if not sub.get("line") or sub.get("lat") is None or sub.get("lon") is None:
-                continue
-            by_line.setdefault(sub["line"], []).append((client_id, sub))
-
-        expired_ids = list(stale_ids)
-        changed = False
-
-        for line, entries in by_line.items():
-            _status, body = get_positions_cached(line)
+        if PUSH_AVAILABLE:
             try:
-                data = json.loads(body)
-            except Exception:
-                continue
-            if not data.get("success"):
-                continue
-            units = data.get("data") or []
-
-            for client_id, sub in entries:
-                min_dist = None
-                for u in units:
-                    try:
-                        ulat, ulon = float(u["lat"]), float(u["lon"])
-                    except (KeyError, TypeError, ValueError):
-                        continue
-                    d = haversine_km(sub["lat"], sub["lon"], ulat, ulon)
-                    if min_dist is None or d < min_dist:
-                        min_dist = d
-
-                radius = sub.get("radiusKm", 5)
-                inside = min_dist is not None and min_dist <= radius
-                was_inside = sub.get("insideRadius", False)
-
-                if inside and not was_inside:
-                    line_name = sub.get("lineName") or f"Linea {line}"
-                    result = send_push(
-                        sub["pushSubscription"],
-                        "\U0001f68c Bus cerca",
-                        f"{line_name} esta a unos {min_dist:.1f} km de tu ubicacion.",
-                    )
-                    if result == "expired":
-                        expired_ids.append(client_id)
-                        continue
-
-                with _subs_lock:
-                    if client_id in _subs and _subs[client_id].get("insideRadius") != inside:
-                        _subs[client_id]["insideRadius"] = inside
-                        changed = True
-
-        if expired_ids:
-            with _subs_lock:
-                for cid in expired_ids:
-                    _subs.pop(cid, None)
-            changed = True
-
-        if changed:
-            save_subs()
+                check_notifications_once()
+            except Exception as exc:
+                print(f"Error revisando avisos: {exc}")
 
 
 class RequestBodyError(ValueError):
@@ -1463,6 +1509,23 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"available": PUSH_AVAILABLE, "publicKey": _vapid_public_b64})
             return
 
+        if parsed.path == "/api/notify/status":
+            client_id = qs.get("clientId", [""])[0]
+            if not valid_client_id(client_id):
+                self._send_json_obj(400, {"success": False, "error": "clientId invalido"})
+                return
+            if not self._allow_request("notify-status", 60):
+                return
+            with _subs_lock:
+                sub = _subs.get(client_id)
+                state = None if not sub else {
+                    "line": sub.get("line"), "lineName": sub.get("lineName"),
+                    "radiusKm": sub.get("radiusKm"),
+                    "locationUpdatedAt": sub.get("locationUpdatedAt", sub.get("updatedAt")),
+                }
+            self._send_json_obj(200, {"success": True, "active": state is not None, "data": state})
+            return
+
         # cualquier otro archivo estatico (por si se agregan mas, ej. sw.js)
         self._send_file(parsed.path.lstrip("/"))
 
@@ -1569,6 +1632,9 @@ class Handler(BaseHTTPRequestHandler):
             if not self._allow_request("notify", 30):
                 return
             with _subs_lock:
+                previous = _subs.get(client_id)
+                same_point = same_notification_watch(previous, line, radius,
+                                                     float(body["lat"]), float(body["lon"]))
                 _subs[client_id] = {
                     "line": line,
                     "lineName": str(body.get("lineName") or "")[:120],
@@ -1578,8 +1644,11 @@ class Handler(BaseHTTPRequestHandler):
                     # precisión completa del GPS del usuario (~11 m alcanza).
                     "lat": round(float(body["lat"]), 4),
                     "lon": round(float(body["lon"]), 4),
-                    "insideRadius": False,
+                    "insideRadius": bool(previous.get("insideRadius")) if same_point else False,
+                    "pushRetryAfter": previous.get("pushRetryAfter", 0) if same_point else 0,
+                    "lastObservedAt": previous.get("lastObservedAt", 0) if same_point else 0,
                     "updatedAt": time.time(),
+                    "locationUpdatedAt": time.time(),
                 }
             save_subs()
             self._send_json_obj(200, {"success": True})
@@ -1600,6 +1669,7 @@ class Handler(BaseHTTPRequestHandler):
                     _subs[client_id]["lat"] = round(float(body["lat"]), 4)
                     _subs[client_id]["lon"] = round(float(body["lon"]), 4)
                     _subs[client_id]["updatedAt"] = time.time()
+                    _subs[client_id]["locationUpdatedAt"] = time.time()
                     found = True
                 else:
                     found = False

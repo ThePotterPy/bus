@@ -526,7 +526,7 @@
     <div class="branch-bar" id="branchBar" aria-label="Filtrar por ramal"></div>
     <div class="float-card" id="lineList"></div>
     <div class="float-card" id="notifyPanel">
-      <div class="notify-intro">Te avisamos cuando el bus de una linea este cerca tuyo (con la pagina cerrada tambien).</div>
+      <div class="notify-intro">Te avisamos cuando un bus se acerque al último punto guardado. Con la página abierta actualizamos tu ubicación; al cerrarla el punto queda fijo.</div>
       <div class="settings-row">
         <span>Linea a vigilar</span>
         <select id="notifyLineSelect"><option value="">Elegi una linea</option></select>
@@ -534,7 +534,9 @@
       <div class="settings-row">
         <span>Radio</span>
         <select id="notifyRadiusSelect">
+          <option value="0.5">500 m</option>
           <option value="1">1 km</option>
+          <option value="2">2 km</option>
           <option value="5" selected>5 km</option>
           <option value="10">10 km</option>
         </select>
@@ -2179,26 +2181,43 @@ function renderNotifyLineOptions() {
 
 function updateNotifyUI() {
   notifyRadiusSelect.value = String(notifyState.radiusKm || 5);
+  if (notifyState.active) notifyLineSelect.value = notifyState.line;
+  notifyLineSelect.disabled = !!notifyState.active;
+  notifyRadiusSelect.disabled = !!notifyState.active;
   notifyToggleBtn.classList.toggle('danger', !!notifyState.active);
   if (notifyState.active) {
     notifyToggleBtn.textContent = 'Desactivar aviso';
-    notifyStatus.textContent = `Te vamos a avisar cuando "${notifyState.lineName || 'la linea elegida'}" este a ${notifyState.radiusKm} km o menos de tu ubicacion.`;
+    const distance = notifyState.radiusKm === 0.5 ? '500 m' : `${notifyState.radiusKm} km`;
+    notifyStatus.textContent = `Aviso activo: ${notifyState.lineName || 'línea elegida'} a ${distance} o menos del último punto guardado.`;
   } else {
     notifyToggleBtn.textContent = 'Activar aviso';
     notifyStatus.textContent = 'Sin avisos activos.';
   }
 }
 
-function sendLocationUpdate(lat, lon) {
-  fetch('/api/notify/location', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ clientId, lat, lon }),
-  }).catch(() => {});
+async function sendLocationUpdate(lat, lon) {
+  try {
+    const res = await fetch('/api/notify/location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, lat, lon }),
+    });
+    if (res.status === 404 && notifyState.active) {
+      stopLocationWatch();
+      notifyState.active = false;
+      saveNotifyState();
+      updateNotifyUI();
+      notifyStatus.textContent = 'El aviso dejó de estar activo en el servidor. Podés activarlo de nuevo.';
+    }
+  } catch (err) {
+    // El servidor mantiene el último punto guardado si hay un corte de red.
+  }
 }
 
 function handleGeoUpdate(pos) {
   const { latitude, longitude } = pos.coords;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+  if (Number.isFinite(pos.coords.accuracy) && pos.coords.accuracy > Math.max(300, notifyState.radiusKm * 1000)) return;
   const now = Date.now();
   const moved = lastSentLat == null || haversineMeters(lastSentLat, lastSentLon, latitude, longitude) > LOCATION_MIN_DISPLACEMENT_M;
   if (now - lastLocationSentAt > LOCATION_MIN_INTERVAL_MS || moved) {
@@ -2233,7 +2252,7 @@ async function enableProximityAlert(lineId, lineName, radiusKm) {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      notifyStatus.textContent = 'No diste permiso para mostrar notificaciones.';
+      notifyStatus.textContent = 'Permití las notificaciones del navegador para activar el aviso.';
       return false;
     }
 
@@ -2255,10 +2274,15 @@ async function enableProximityAlert(lineId, lineName, radiusKm) {
     }
 
     const pos = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, maximumAge: 20000, timeout: 15000 });
+      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, maximumAge: 20000, timeout: 15000 });
     }).catch(() => null);
     if (!pos) {
       notifyStatus.textContent = 'No se pudo obtener tu ubicacion (revisa el permiso de ubicacion del navegador).';
+      return false;
+    }
+    if (!Number.isFinite(pos.coords.latitude) || !Number.isFinite(pos.coords.longitude) ||
+        (Number.isFinite(pos.coords.accuracy) && pos.coords.accuracy > Math.max(300, radiusKm * 1000))) {
+      notifyStatus.textContent = 'La ubicación es poco precisa para este radio. Probá de nuevo cerca de una ventana o elegí un radio mayor.';
       return false;
     }
     lastSentLat = pos.coords.latitude;
@@ -2288,21 +2312,29 @@ async function enableProximityAlert(lineId, lineName, radiusKm) {
   }
 }
 
-function disableProximityAlert() {
-  stopLocationWatch();
-  fetch('/api/notify/unsubscribe', {
+async function disableProximityAlert() {
+  const res = await fetch('/api/notify/unsubscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ clientId }),
-  }).catch(() => {});
+  });
+  if (!res.ok) throw new Error('No se pudo desactivar el aviso en el servidor. Probá nuevamente.');
+  stopLocationWatch();
 }
 
 notifyToggleBtn.addEventListener('click', async () => {
   if (notifyState.active) {
-    disableProximityAlert();
-    notifyState = { active: false, line: '', lineName: '', radiusKm: notifyState.radiusKm };
-    saveNotifyState();
-    updateNotifyUI();
+    notifyToggleBtn.disabled = true;
+    try {
+      await disableProximityAlert();
+      notifyState = { active: false, line: '', lineName: '', radiusKm: notifyState.radiusKm };
+      saveNotifyState();
+      updateNotifyUI();
+    } catch (err) {
+      notifyStatus.textContent = err.message;
+    } finally {
+      notifyToggleBtn.disabled = false;
+    }
     return;
   }
 
@@ -2312,7 +2344,7 @@ notifyToggleBtn.addEventListener('click', async () => {
     return;
   }
   const line = allLines.find(l => String(l.id) === String(lineId));
-  const radiusKm = parseInt(notifyRadiusSelect.value, 10) || 5;
+  const radiusKm = parseFloat(notifyRadiusSelect.value) || 5;
 
   notifyToggleBtn.disabled = true;
   notifyStatus.textContent = 'Activando...';
@@ -2323,21 +2355,37 @@ notifyToggleBtn.addEventListener('click', async () => {
     notifyState = { active: true, line: lineId, lineName: line ? lineLabel(line) : lineId, radiusKm };
     saveNotifyState();
   }
-  updateNotifyUI();
+  if (ok) updateNotifyUI();
 });
 
 loadLines().then(() => {
   renderNotifyLineOptions();
   updateNotifyUI();
+  const notificationLine = new URLSearchParams(location.search).get('line');
+  if (notificationLine && allLines.some(line => String(line.id) === notificationLine)) {
+    selectLine(notificationLine);
+    history.replaceState(null, '', location.pathname);
+  }
   if (notifyState.active) {
-    // reactivamos en silencio (sin volver a pedir permiso si ya estaba
-    // concedido) para retomar el aviso despues de recargar la pagina
-    enableProximityAlert(notifyState.line, notifyState.lineName, notifyState.radiusKm).then(ok => {
-      if (!ok) {
+    // Una recarga no debe recrear la suscripción ni reiniciar la detección.
+    fetch('/api/notify/status?clientId=' + encodeURIComponent(clientId)).then(async res => {
+      if (!res.ok) throw new Error('estado no disponible');
+      const state = await res.json();
+      if (!state.active) {
         notifyState.active = false;
         saveNotifyState();
+        updateNotifyUI();
+        return;
       }
+      notifyState.line = state.data.line;
+      notifyState.lineName = state.data.lineName;
+      notifyState.radiusKm = state.data.radiusKm;
+      saveNotifyState();
       updateNotifyUI();
+      if ('Notification' in window && Notification.permission === 'granted') startLocationWatch();
+      else notifyStatus.textContent = 'El aviso está guardado, pero el navegador no permite mostrar notificaciones. Revisá los permisos.';
+    }).catch(() => {
+      notifyStatus.textContent = 'No pudimos comprobar el aviso con el servidor. Conservamos el último estado guardado.';
     });
   }
 });
