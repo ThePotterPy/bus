@@ -52,6 +52,9 @@ el boton de aviso de proximidad.
   segmentos completos, sin depender solamente de los vértices publicados. Al
   elegir una opción, el mapa diferencia las conexiones a pie, el tramo útil en
   colectivo y las unidades que circulan en el sentido necesario para el viaje.
+  En el teléfono, al marcar puntos manualmente el panel se minimiza para dejar
+  libre el mapa; desde la barra compacta se puede cambiar A/B, buscar o ampliar
+  el formulario sin perder lo elegido.
 - **Avisos de proximidad**: se puede elegir una línea y un radio (500 m, 1/2/5/10 km)
   para recibir una notificacion push cuando algun bus de esa linea entre en
   ese radio del último punto de ubicación guardado. Usa Web Push estándar

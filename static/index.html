@@ -319,13 +319,17 @@
       .plan-location-btn:disabled { opacity: .6; cursor: wait; }
       #originAccuracy { display: block; min-height: 15px; margin-top: 4px; color: var(--muted); font-size: 11px; }
       .plan-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+      .plan-heading { min-width:0; }
+      .plan-header-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
       .plan-title { color:var(--text); font-size:17px; font-weight:750; }
       #planHint { margin-top:3px; color:var(--muted); font-size:12px; line-height:1.35; }
-      .plan-clear-btn, .plan-swap-btn {
+      .plan-clear-btn, .plan-swap-btn, .plan-collapse-btn {
         border:1px solid var(--panel-border); background:rgba(255,255,255,.06);
         color:var(--text); cursor:pointer;
       }
       .plan-clear-btn { border-radius:8px; padding:6px 9px; font-size:11px; }
+      .plan-collapse-btn, .plan-compact-actions { display:none; }
+      #planPanel { padding:16px; max-height:calc(100dvh - 105px); overflow-y:auto; }
       .plan-field {
         display:flex; align-items:flex-start; gap:10px; margin-top:11px; padding:10px;
         border:1px solid var(--panel-border); border-radius:12px;
@@ -366,7 +370,6 @@
       .plan-option.best { border-color: var(--accent); background: rgba(58,160,255,.13); }
       .plan-option-title { font-size: 14px; font-weight: 700; }
       .plan-option-detail { margin-top: 4px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
-      #planPanel { max-height: calc(100dvh - 105px); overflow-y: auto; }
   #notifyStatus { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
 
   /* --- pastilla de estado, flotante abajo --- */
@@ -417,7 +420,14 @@
       }
       .bus-icon-wrap.moving { background: var(--green); border-color: #27ae60; }
       .bus-icon-wrap.stopped { background: var(--red); border-color: #c0392b; }
-      .bus-icon-wrap svg { transition: transform 0.3s; }
+      /* Flecha de rumbo: punta + vástago para distinguirla de un vistazo. */
+      .bus-icon-wrap .bus-direction {
+        display: block;
+        width: 23px; height: 23px;
+        transform-origin: 50% 50%;
+        transition: transform 0.3s ease-out;
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,.45));
+      }
 
       .leaflet-popup-content-wrapper { background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: var(--text); border: 1px solid var(--panel-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
       .leaflet-popup-tip { background: var(--panel); border-bottom: 1px solid var(--panel-border); border-right: 1px solid var(--panel-border); }
@@ -509,6 +519,29 @@
 
   @media (max-width: 480px) {
     #topBar { max-width: none; }
+    #planPanel { max-height:min(65dvh, calc(100dvh - 138px)); }
+    .plan-collapse-btn { display:block; min-height:40px; border-radius:8px; padding:7px 10px; font:inherit; font-size:12px; font-weight:700; }
+    #topBar.planner-map-pick .provider-filter-bar,
+    #topBar.planner-map-pick .branch-bar { display:none !important; }
+    #planPanel.compact { padding:9px 10px; }
+    #planPanel.compact .plan-body,
+    #planPanel.compact #planHint,
+    #planPanel.compact #clearPlanBtn { display:none; }
+    #planPanel.compact .plan-header { align-items:center; }
+    #planPanel.compact .plan-title { font-size:13px; }
+    #planCompactStatus { display:none; }
+    #planPanel.compact #planCompactStatus { display:block; color:var(--muted); font-size:11px; line-height:1.3; }
+    #planPanel.compact .plan-compact-actions { display:flex; gap:6px; margin-top:7px; }
+    #planCompactActions[hidden] { display:none !important; }
+    .plan-compact-actions button {
+      flex:1; min-width:0; min-height:40px; border:1px solid var(--panel-border);
+      border-radius:9px; background:rgba(255,255,255,.06); color:var(--text);
+      font:inherit; font-size:12px; font-weight:700; cursor:pointer;
+    }
+    .plan-compact-actions button.active { border-color:var(--accent); color:var(--accent); }
+    .plan-compact-actions button.complete { border-color:var(--green); }
+    .plan-compact-actions button:disabled { opacity:.5; cursor:default; }
+    #planCompactSearchBtn:not(:disabled) { background:var(--accent); color:#06131f; border-color:var(--accent); }
     #lineSearch, .settings-row select, .autocomplete-input { font-size: 16px; } /* evita el zoom automatico en iOS */
     .branch-bar { scrollbar-width: none; }
     .branch-bar::-webkit-scrollbar { display: none; }
@@ -599,14 +632,24 @@
         <button type="button" class="feedback-entry" id="feedbackOpen">✉ Enviar comentario o sugerencia</button>
       </div>
     </div>
-    <div class="float-card" id="planPanel" style="padding: 16px;">
+    <div class="float-card" id="planPanel">
       <div class="plan-header">
-        <div>
+        <div class="plan-heading">
           <div class="plan-title">¿A dónde querés ir?</div>
           <div id="planHint">Elegí desde dónde salís.</div>
+          <div id="planCompactStatus" role="status">Tocá el mapa para marcar la salida.</div>
         </div>
-        <button type="button" id="clearPlanBtn" class="plan-clear-btn">Limpiar</button>
+        <div class="plan-header-actions">
+          <button type="button" id="planCompactToggle" class="plan-collapse-btn" aria-controls="planBody" aria-expanded="true">Minimizar</button>
+          <button type="button" id="clearPlanBtn" class="plan-clear-btn">Limpiar</button>
+        </div>
       </div>
+      <div id="planCompactActions" class="plan-compact-actions" hidden>
+        <button type="button" id="planCompactOriginBtn" aria-label="Marcar salida en el mapa">A · Salida</button>
+        <button type="button" id="planCompactDestBtn" aria-label="Marcar destino en el mapa">B · Destino</button>
+        <button type="button" id="planCompactSearchBtn" disabled>Buscar</button>
+      </div>
+      <div id="planBody" class="plan-body">
 
       <div class="plan-field" id="originField">
         <span class="plan-step-marker">A</span>
@@ -615,6 +658,7 @@
           <div class="autocomplete-wrap">
             <input type="text" id="originInput" class="autocomplete-input" placeholder="Tocá el mapa o escribí una dirección" autocomplete="off" enterkeyhint="search">
             <button type="button" id="searchOriginBtn" class="plan-location-btn">Buscar dirección de salida</button>
+            <button type="button" id="selectOriginMapBtn" class="plan-location-btn">Marcar salida en el mapa</button>
             <div class="autocomplete-list" id="originList"></div>
             <button type="button" id="useMyLocationBtn" class="plan-location-btn">◎ Usar mi ubicación actual</button>
             <span id="originAccuracy"></span>
@@ -633,6 +677,7 @@
           <div class="autocomplete-wrap">
             <input type="text" id="destInput" class="autocomplete-input" placeholder="Tocá el mapa o escribí tu destino" autocomplete="off" enterkeyhint="search">
             <button type="button" id="searchDestBtn" class="plan-location-btn">Buscar dirección de destino</button>
+            <button type="button" id="selectDestMapBtn" class="plan-location-btn">Marcar destino en el mapa</button>
             <div class="autocomplete-list" id="destList"></div>
           </div>
         </div>
@@ -640,6 +685,7 @@
 
       <button class="btn-primary" id="calculatePlanBtn" style="margin-top:14px" disabled>Elegí origen y destino</button>
       <div id="planResult" style="margin-top: 12px; font-size: 14px; font-weight: 500; text-align: center;"></div>
+      </div>
     </div>
   </div>
 
@@ -754,6 +800,12 @@ const planResult = document.getElementById('planResult');
 const useMyLocationBtn = document.getElementById('useMyLocationBtn');
 const originAccuracy = document.getElementById('originAccuracy');
 const planHint = document.getElementById('planHint');
+const planCompactStatus = document.getElementById('planCompactStatus');
+const planCompactActions = document.getElementById('planCompactActions');
+const planCompactToggle = document.getElementById('planCompactToggle');
+const planCompactOriginBtn = document.getElementById('planCompactOriginBtn');
+const planCompactDestBtn = document.getElementById('planCompactDestBtn');
+const planCompactSearchBtn = document.getElementById('planCompactSearchBtn');
 const originField = document.getElementById('originField');
 const destField = document.getElementById('destField');
 const clearPlanBtn = document.getElementById('clearPlanBtn');
@@ -1496,6 +1548,7 @@ function togglePlanPanel() {
   planBtn.classList.toggle('active', willOpen);
   
   if (willOpen) {
+    setPlannerCompact(false);
     enterPlanningMode();
   } else {
     exitPlanningMode();
@@ -1811,7 +1864,7 @@ function iconFor(unit, angleDeg) {
   return L.divIcon({
     className: '',
     html: `<div class="bus-icon-wrap ${moving ? 'moving' : 'stopped'}">
-             <svg style="transform: rotate(${angleDeg}deg)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 22 20 12 17 2 20 12 2"></polygon></svg>
+             <svg class="bus-direction" style="transform: rotate(${angleDeg}deg)" xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="currentColor" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"><path d="M12 1.5 23 13h-7v9.5H8V13H1z"></path></svg>
            </div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
@@ -2486,6 +2539,32 @@ let planLoading = false;
 let planRevision = 0;
 let planRequest = null;
 
+function setPlannerCompact(enabled) {
+  const compact = enabled && window.matchMedia('(max-width: 480px)').matches;
+  planPanel.classList.toggle('compact', compact);
+  document.getElementById('topBar').classList.toggle('planner-map-pick', compact && planPanel.classList.contains('open'));
+  planCompactActions.hidden = !compact;
+  planCompactToggle.textContent = compact ? 'Ampliar' : 'Minimizar';
+  planCompactToggle.setAttribute('aria-expanded', String(!compact));
+  updatePlannerUI();
+}
+
+function choosePlanPointOnMap(type) {
+  setPlannerTarget(type);
+  originList.style.display = 'none';
+  destList.style.display = 'none';
+  document.activeElement?.blur?.();
+  setPlannerCompact(true);
+  setStatus(type === 'origin' ? 'Tocá el mapa para marcar la SALIDA' : 'Tocá el mapa para marcar el DESTINO', true);
+}
+
+planCompactToggle.addEventListener('click', () => setPlannerCompact(!planPanel.classList.contains('compact')));
+planCompactOriginBtn.addEventListener('click', () => choosePlanPointOnMap('origin'));
+planCompactDestBtn.addEventListener('click', () => choosePlanPointOnMap('dest'));
+planCompactSearchBtn.addEventListener('click', () => calculatePlanBtn.click());
+document.getElementById('selectOriginMapBtn').addEventListener('click', () => choosePlanPointOnMap('origin'));
+document.getElementById('selectDestMapBtn').addEventListener('click', () => choosePlanPointOnMap('dest'));
+
 function invalidatePlan() {
   planRevision++;
   if (planRequest) planRequest.abort();
@@ -2528,6 +2607,7 @@ function enterPlanningMode() {
 
 function exitPlanningMode() {
   isPlanningMode = false;
+  setPlannerCompact(false);
   document.getElementById('map').style.cursor = '';
   originList.style.display = 'none';
   destList.style.display = 'none';
@@ -2541,6 +2621,17 @@ function updatePlannerUI() {
   destField.classList.toggle('complete', !!planDest);
   swapPlanBtn.disabled = !ready;
   calculatePlanBtn.disabled = planLoading || !ready;
+  planCompactSearchBtn.disabled = planLoading || !ready;
+  planCompactOriginBtn.classList.toggle('active', planTarget === 'origin');
+  planCompactDestBtn.classList.toggle('active', planTarget === 'dest');
+  planCompactOriginBtn.classList.toggle('complete', !!planOrigin);
+  planCompactDestBtn.classList.toggle('complete', !!planDest);
+  planCompactOriginBtn.setAttribute('aria-pressed', String(planTarget === 'origin'));
+  planCompactDestBtn.setAttribute('aria-pressed', String(planTarget === 'dest'));
+  planCompactStatus.textContent = planLoading ? 'Buscando recorridos…'
+    : !planOrigin ? 'Tocá el mapa para marcar la salida.'
+    : !planDest ? 'Tocá el mapa para marcar el destino.'
+    : 'Puntos listos. Podés buscar o corregir A/B.';
   if (planLoading) {
     calculatePlanBtn.textContent = 'Buscando colectivos…';
     planHint.textContent = 'Estamos comparando los recorridos cercanos.';
@@ -2644,7 +2735,7 @@ destField.addEventListener('click', event => {
 map.on('click', (e) => {
   if (!isPlanningMode) return;
   if (!planTarget) {
-    setStatus('Para cambiar un punto, tocá primero el campo de salida o destino.', true);
+    setStatus('Para cambiar un punto, tocá A o B en el panel de viaje.', true);
     return;
   }
   const lat = e.latlng.lat;
@@ -2656,6 +2747,7 @@ map.on('click', (e) => {
   } else {
     setPlanPoint('dest', lat, lon, coordStr);
   }
+  setPlannerCompact(true);
   showPlannerProgressStatus();
 });
 
@@ -2772,6 +2864,7 @@ document.addEventListener('click', (e) => {
 
 calculatePlanBtn.addEventListener('click', async () => {
   if (!planOrigin || !planDest || planLoading) return;
+  setPlannerCompact(false);
   const revision = planRevision;
   const controller = new AbortController();
   planRequest = controller;
