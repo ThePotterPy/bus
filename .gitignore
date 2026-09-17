@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
-data/
+data/*
+!data/asuncion_stops.json
+!data/asuncion_traffic_lights.json
+!data/asuncion_pois.json

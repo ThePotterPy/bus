@@ -1,0 +1,6246 @@
+[
+  {
+    "id": "poi-1",
+    "name": "C. DE SALUD N°8 DR. RICARDO ODRIOSOLA",
+    "category": "Salud",
+    "lat": -25.294104,
+    "lon": -57.665334
+  },
+  {
+    "id": "poi-2",
+    "name": "XII SALA CATEDRA NEUROLOGICA",
+    "category": "Lugar de Interés",
+    "lat": -25.279958,
+    "lon": -57.655556
+  },
+  {
+    "id": "poi-3",
+    "name": "HOSP. DE CLINICAS",
+    "category": "Salud",
+    "lat": -25.280039,
+    "lon": -57.651903
+  },
+  {
+    "id": "poi-4",
+    "name": "SANAT. CRUZ BLANCA",
+    "category": "Salud",
+    "lat": -25.287837,
+    "lon": -57.645196
+  },
+  {
+    "id": "poi-5",
+    "name": "SANAT.CRUZ BLANCA",
+    "category": "Salud",
+    "lat": -25.287715,
+    "lon": -57.643562
+  },
+  {
+    "id": "poi-6",
+    "name": "CLIN. MED. UNION PY. DE VETERANOS",
+    "category": "Salud",
+    "lat": -25.287728,
+    "lon": -57.642791
+  },
+  {
+    "id": "poi-7",
+    "name": "PATRON. LEPROSOS D/ PY.( CLIN.DERMAT.)",
+    "category": "Salud",
+    "lat": -25.282164,
+    "lon": -57.644358
+  },
+  {
+    "id": "poi-8",
+    "name": "HOSP. MILITAR CTRAL. DE LAS FF.AA.",
+    "category": "Salud",
+    "lat": -25.27953,
+    "lon": -57.645914
+  },
+  {
+    "id": "poi-9",
+    "name": "CTRO. ASISTENCIAL PSICOLOG.",
+    "category": "Lugar de Interés",
+    "lat": -25.291657,
+    "lon": -57.630146
+  },
+  {
+    "id": "poi-10",
+    "name": "CTRO. MED. ALBA",
+    "category": "Lugar de Interés",
+    "lat": -25.291431,
+    "lon": -57.620301
+  },
+  {
+    "id": "poi-11",
+    "name": "CLIN. BOQUERON",
+    "category": "Salud",
+    "lat": -25.295235,
+    "lon": -57.624588
+  },
+  {
+    "id": "poi-12",
+    "name": "EME (EQ. MED. DE EMERG.)",
+    "category": "Salud",
+    "lat": -25.287621,
+    "lon": -57.610315
+  },
+  {
+    "id": "poi-13",
+    "name": "CLIN. CODAS",
+    "category": "Salud",
+    "lat": -25.28569,
+    "lon": -57.612909
+  },
+  {
+    "id": "poi-14",
+    "name": "SANAT.AMERICANO",
+    "category": "Salud",
+    "lat": -25.286311,
+    "lon": -57.615046
+  },
+  {
+    "id": "poi-15",
+    "name": "BIO CTRO. (LAB. CLINICO)",
+    "category": "Salud",
+    "lat": -25.286854,
+    "lon": -57.61507
+  },
+  {
+    "id": "poi-16",
+    "name": "CLIN. LAS MERCEDES",
+    "category": "Salud",
+    "lat": -25.280291,
+    "lon": -57.611804
+  },
+  {
+    "id": "poi-17",
+    "name": "SANAT.ITALIANO",
+    "category": "Salud",
+    "lat": -25.288584,
+    "lon": -57.597762
+  },
+  {
+    "id": "poi-18",
+    "name": "HOSP. PRIV. FRANCES",
+    "category": "Salud",
+    "lat": -25.276357,
+    "lon": -57.598822
+  },
+  {
+    "id": "poi-19",
+    "name": "CLIN. MATERNO INF. S. VICENTE",
+    "category": "Salud",
+    "lat": -25.260394,
+    "lon": -57.597762
+  },
+  {
+    "id": "poi-20",
+    "name": "SANAT.SAN ROQUE",
+    "category": "Salud",
+    "lat": -25.288996,
+    "lon": -57.620767
+  },
+  {
+    "id": "poi-21",
+    "name": "SANAT.SAN MARCOS",
+    "category": "Salud",
+    "lat": -25.294181,
+    "lon": -57.623826
+  },
+  {
+    "id": "poi-22",
+    "name": "HOSP. MAT. INF. REINA SOFIA",
+    "category": "Salud",
+    "lat": -25.284318,
+    "lon": -57.622134
+  },
+  {
+    "id": "poi-23",
+    "name": "CRUZ ROJA PARAGUAYA",
+    "category": "Salud",
+    "lat": -25.28396,
+    "lon": -57.622463
+  },
+  {
+    "id": "poi-24",
+    "name": "CTRO. MED. DE ESPEC. EN NIÑOS",
+    "category": "Lugar de Interés",
+    "lat": -25.294867,
+    "lon": -57.614551
+  },
+  {
+    "id": "poi-25",
+    "name": "C. DE SALUD N°3 DR. JUAN V. ESTIGARRIBIA",
+    "category": "Salud",
+    "lat": -25.281695,
+    "lon": -57.643982
+  },
+  {
+    "id": "poi-26",
+    "name": "LAB. INTERNACIONAL",
+    "category": "Lugar de Interés",
+    "lat": -25.295026,
+    "lon": -57.632417
+  },
+  {
+    "id": "poi-27",
+    "name": "HOSP. DE POLICIA",
+    "category": "Salud",
+    "lat": -25.292941,
+    "lon": -57.602975
+  },
+  {
+    "id": "poi-28",
+    "name": "BANCO DE OJO INST. ANDRES BARBERO",
+    "category": "Lugar de Interés",
+    "lat": -25.283271,
+    "lon": -57.622179
+  },
+  {
+    "id": "poi-29",
+    "name": "CLIN. DE TUMORES FDO. OCA DEL VALLE",
+    "category": "Salud",
+    "lat": -25.282795,
+    "lon": -57.622315
+  },
+  {
+    "id": "poi-30",
+    "name": "FAIT CHRISTIAN SCHOLL",
+    "category": "Lugar de Interés",
+    "lat": -25.287089,
+    "lon": -57.599399
+  },
+  {
+    "id": "poi-31",
+    "name": "P. DE SALUD FUND.HAY UN NIÑO EN TU CAMINO",
+    "category": "Salud",
+    "lat": -25.267057,
+    "lon": -57.603133
+  },
+  {
+    "id": "poi-32",
+    "name": "C. DE AYUDA MUTUA Y SALUD PARA TODOS CAMSAT",
+    "category": "Salud",
+    "lat": -25.312489,
+    "lon": -57.667878
+  },
+  {
+    "id": "poi-33",
+    "name": "HOSP. MATERNO INF. B° OBRERO",
+    "category": "Salud",
+    "lat": -25.299341,
+    "lon": -57.64435
+  },
+  {
+    "id": "poi-34",
+    "name": "SANAT.SAN ALFONSO",
+    "category": "Salud",
+    "lat": -25.301882,
+    "lon": -57.635475
+  },
+  {
+    "id": "poi-35",
+    "name": "HOSP. DE CARIDAD CAPELLANES DEL CHACO",
+    "category": "Salud",
+    "lat": -25.317433,
+    "lon": -57.640733
+  },
+  {
+    "id": "poi-36",
+    "name": "C.DE SALUD N° 11 B° REPUBLIC.",
+    "category": "Salud",
+    "lat": -25.318034,
+    "lon": -57.638247
+  },
+  {
+    "id": "poi-37",
+    "name": "SANAT.MEDICIS",
+    "category": "Salud",
+    "lat": -25.314217,
+    "lon": -57.630124
+  },
+  {
+    "id": "poi-38",
+    "name": "CLIN. PEDIAT. B° S. VICENTE",
+    "category": "Salud",
+    "lat": -25.309787,
+    "lon": -57.624884
+  },
+  {
+    "id": "poi-39",
+    "name": "HOSP. DR. LUIS M. ARGAÑA",
+    "category": "Salud",
+    "lat": -25.300443,
+    "lon": -57.612791
+  },
+  {
+    "id": "poi-40",
+    "name": "C. DE SALUD N° 9 MATERNO INF.",
+    "category": "Salud",
+    "lat": -25.298663,
+    "lon": -57.61401
+  },
+  {
+    "id": "poi-41",
+    "name": "CLIN. DE NIÑOS SAN MARTIN DE PORRES",
+    "category": "Salud",
+    "lat": -25.303695,
+    "lon": -57.605772
+  },
+  {
+    "id": "poi-42",
+    "name": "HOSP.SAMARITANO",
+    "category": "Salud",
+    "lat": -25.326049,
+    "lon": -57.598271
+  },
+  {
+    "id": "poi-43",
+    "name": "CTRO. MED.",
+    "category": "Lugar de Interés",
+    "lat": -25.31881,
+    "lon": -57.599533
+  },
+  {
+    "id": "poi-44",
+    "name": "HOSP. PRIV. SAN LUCAS",
+    "category": "Salud",
+    "lat": -25.308233,
+    "lon": -57.599057
+  },
+  {
+    "id": "poi-45",
+    "name": "CLIN. MARIA AUXILIADORA",
+    "category": "Salud",
+    "lat": -25.30597,
+    "lon": -57.596173
+  },
+  {
+    "id": "poi-46",
+    "name": "CLIN. STA. ANA",
+    "category": "Salud",
+    "lat": -25.313935,
+    "lon": -57.648022
+  },
+  {
+    "id": "poi-47",
+    "name": "CLIN. PARROQ. SAN CAYETANO",
+    "category": "Salud",
+    "lat": -25.320912,
+    "lon": -57.648267
+  },
+  {
+    "id": "poi-48",
+    "name": "I.P.S. 12 DE JUNIO",
+    "category": "Lugar de Interés",
+    "lat": -25.325842,
+    "lon": -57.624684
+  },
+  {
+    "id": "poi-49",
+    "name": "CLIN. REGENEMITUN",
+    "category": "Salud",
+    "lat": -25.284102,
+    "lon": -57.591899
+  },
+  {
+    "id": "poi-50",
+    "name": "A.N.D.E.",
+    "category": "Lugar de Interés",
+    "lat": -25.285945,
+    "lon": -57.58754
+  },
+  {
+    "id": "poi-51",
+    "name": "HOSP. PSIQUIAT. UNIV. Y FAC. DE CIENCIAS MEDICAS",
+    "category": "Salud",
+    "lat": -25.280023,
+    "lon": -57.592032
+  },
+  {
+    "id": "poi-52",
+    "name": "HOSP. PSIQUIAT.",
+    "category": "Salud",
+    "lat": -25.278655,
+    "lon": -57.592389
+  },
+  {
+    "id": "poi-53",
+    "name": "HOSP. TROPICAL",
+    "category": "Salud",
+    "lat": -25.277169,
+    "lon": -57.592793
+  },
+  {
+    "id": "poi-54",
+    "name": "SANAT. JUAN MAX BOETTNER",
+    "category": "Salud",
+    "lat": -25.274981,
+    "lon": -57.592677
+  },
+  {
+    "id": "poi-55",
+    "name": "INST. JUAN MAX BOETTNER",
+    "category": "Lugar de Interés",
+    "lat": -25.276969,
+    "lon": -57.58954
+  },
+  {
+    "id": "poi-56",
+    "name": "CTRO. MATERNO INF. LOMA PYTA",
+    "category": "Salud",
+    "lat": -25.241444,
+    "lon": -57.544522
+  },
+  {
+    "id": "poi-57",
+    "name": "HOSP.UNIV. NTRA. SRA. DE LA ASUNCION Y U.C.A",
+    "category": "Salud",
+    "lat": -25.292072,
+    "lon": -57.562211
+  },
+  {
+    "id": "poi-58",
+    "name": "MEDICAL CENTER",
+    "category": "Lugar de Interés",
+    "lat": -25.281534,
+    "lon": -57.565804
+  },
+  {
+    "id": "poi-59",
+    "name": "CERENIF -CTRO. DE REHABIL. DE NIÑOS IMPEDIDOS",
+    "category": "Lugar de Interés",
+    "lat": -25.270507,
+    "lon": -57.560176
+  },
+  {
+    "id": "poi-60",
+    "name": "I.P.S. CLIN. PERIF. ZEBALLOS -CUE",
+    "category": "Salud",
+    "lat": -25.231076,
+    "lon": -57.564661
+  },
+  {
+    "id": "poi-61",
+    "name": "CTRO. DE SALUD ZEBALLOS CUÉ",
+    "category": "Salud",
+    "lat": -25.233758,
+    "lon": -57.567634
+  },
+  {
+    "id": "poi-62",
+    "name": "CTRO. DE DIAGNOSTICO Y TRATAM.NUCLEAR",
+    "category": "Lugar de Interés",
+    "lat": -25.267771,
+    "lon": -57.58146
+  },
+  {
+    "id": "poi-63",
+    "name": "HOSP.. DE SALUD INST. NAC. MAT. INF. SANTISIMA",
+    "category": "Salud",
+    "lat": -25.260816,
+    "lon": -57.576038
+  },
+  {
+    "id": "poi-64",
+    "name": "P. DE SALUD PERPETUO SOCORRO",
+    "category": "Salud",
+    "lat": -25.243789,
+    "lon": -57.582718
+  },
+  {
+    "id": "poi-65",
+    "name": "INST. CODAS THOMPSON",
+    "category": "Lugar de Interés",
+    "lat": -25.290979,
+    "lon": -57.586325
+  },
+  {
+    "id": "poi-66",
+    "name": "CLIN. DOCTOR BROWN",
+    "category": "Salud",
+    "lat": -25.292017,
+    "lon": -57.586273
+  },
+  {
+    "id": "poi-67",
+    "name": "UNIV. DEL PACIFICO",
+    "category": "Educación",
+    "lat": -25.286953,
+    "lon": -57.572515
+  },
+  {
+    "id": "poi-68",
+    "name": "EMERG. MEDICAS SASA",
+    "category": "Salud",
+    "lat": -25.296539,
+    "lon": -57.577316
+  },
+  {
+    "id": "poi-69",
+    "name": "CLIN. GINECOLOGIA Y OBSTETRICIA",
+    "category": "Salud",
+    "lat": -25.269454,
+    "lon": -57.578683
+  },
+  {
+    "id": "poi-70",
+    "name": "SANAT. STA. BARBARA",
+    "category": "Salud",
+    "lat": -25.258618,
+    "lon": -57.581153
+  },
+  {
+    "id": "poi-71",
+    "name": "CTRO. MED. SAN AGUSTIN",
+    "category": "Lugar de Interés",
+    "lat": -25.243016,
+    "lon": -57.547223
+  },
+  {
+    "id": "poi-72",
+    "name": "INST.DE NEUROPSICOLOGIA Y PATOLG. D/ LENGUAJE",
+    "category": "Lugar de Interés",
+    "lat": -25.304724,
+    "lon": -57.591409
+  },
+  {
+    "id": "poi-73",
+    "name": "HOSP. PRIV. NAZARENO",
+    "category": "Salud",
+    "lat": -25.318511,
+    "lon": -57.595272
+  },
+  {
+    "id": "poi-74",
+    "name": "SANAT. SAN MARTIN",
+    "category": "Salud",
+    "lat": -25.320196,
+    "lon": -57.593622
+  },
+  {
+    "id": "poi-75",
+    "name": "HOSP. MATERNO INF. SAN PABLO",
+    "category": "Salud",
+    "lat": -25.319663,
+    "lon": -57.578082
+  },
+  {
+    "id": "poi-76",
+    "name": "SANAT. MBURUCUYA",
+    "category": "Salud",
+    "lat": -25.332151,
+    "lon": -57.580455
+  },
+  {
+    "id": "poi-77",
+    "name": "CTRO. MED. SAN CRISTOBAL",
+    "category": "Lugar de Interés",
+    "lat": -25.299957,
+    "lon": -57.561167
+  },
+  {
+    "id": "poi-78",
+    "name": "CLIN. STA. MARIA",
+    "category": "Salud",
+    "lat": -25.300089,
+    "lon": -57.551338
+  },
+  {
+    "id": "poi-79",
+    "name": "CTRO. MED. BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.299288,
+    "lon": -57.578615
+  },
+  {
+    "id": "poi-80",
+    "name": "GEMA GRUPO DE EMERG. MEDICAS",
+    "category": "Salud",
+    "lat": -25.300711,
+    "lon": -57.566167
+  },
+  {
+    "id": "poi-81",
+    "name": "IRIS IND. Y COMERCIAL",
+    "category": "Lugar de Interés",
+    "lat": -25.285735,
+    "lon": -57.661489
+  },
+  {
+    "id": "poi-82",
+    "name": "ITASA IND. TEXT. ASUNCENA S. A.",
+    "category": "Lugar de Interés",
+    "lat": -25.28316,
+    "lon": -57.660414
+  },
+  {
+    "id": "poi-83",
+    "name": "MOLINO ARINERO DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.284073,
+    "lon": -57.6656
+  },
+  {
+    "id": "poi-84",
+    "name": "SHELL PY .LIMITED PLANTA CALERA CUE",
+    "category": "Lugar de Interés",
+    "lat": -25.279595,
+    "lon": -57.660636
+  },
+  {
+    "id": "poi-85",
+    "name": "CERVEPAR S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.278985,
+    "lon": -57.642989
+  },
+  {
+    "id": "poi-86",
+    "name": "CAPASA ( CAÑA PARAGUAYA S.A.)",
+    "category": "Lugar de Interés",
+    "lat": -25.277495,
+    "lon": -57.641838
+  },
+  {
+    "id": "poi-87",
+    "name": "AZPA ( ASUCARERA PARAGUAYA)",
+    "category": "Lugar de Interés",
+    "lat": -25.282197,
+    "lon": -57.617975
+  },
+  {
+    "id": "poi-88",
+    "name": "CUPAR ( CUEROS PARAGUAYOS)",
+    "category": "Lugar de Interés",
+    "lat": -25.277612,
+    "lon": -57.608673
+  },
+  {
+    "id": "poi-89",
+    "name": "LARSON S.R.L ( FAB. DE CUEROS )",
+    "category": "Lugar de Interés",
+    "lat": -25.278892,
+    "lon": -57.608784
+  },
+  {
+    "id": "poi-90",
+    "name": "PARESA ( PARAGUAY REFRESCOS)",
+    "category": "Lugar de Interés",
+    "lat": -25.287171,
+    "lon": -57.598127
+  },
+  {
+    "id": "poi-91",
+    "name": "CIA .CERVECERA ASUNCION S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.351707,
+    "lon": -57.6425
+  },
+  {
+    "id": "poi-92",
+    "name": "CIA. CERVECERA ASUNCION S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.353556,
+    "lon": -57.643001
+  },
+  {
+    "id": "poi-93",
+    "name": "FUTURA S.A. HILANDERIA Y LAVAND. DE TEXTIL",
+    "category": "Lugar de Interés",
+    "lat": -25.333887,
+    "lon": -57.636967
+  },
+  {
+    "id": "poi-94",
+    "name": "FAB. PARAGUAYA DE VIDRIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.329187,
+    "lon": -57.625109
+  },
+  {
+    "id": "poi-95",
+    "name": "CTRO. INDL. METALURGICO",
+    "category": "Lugar de Interés",
+    "lat": -25.294015,
+    "lon": -57.592481
+  },
+  {
+    "id": "poi-96",
+    "name": "A.D.N. PROCESOS ELECTR. DE SEGURIDAD INDL.",
+    "category": "Lugar de Interés",
+    "lat": -25.289782,
+    "lon": -57.59252
+  },
+  {
+    "id": "poi-97",
+    "name": "LA QUIMICA FARMACEUTICA LAB.",
+    "category": "Lugar de Interés",
+    "lat": -25.285663,
+    "lon": -57.59396
+  },
+  {
+    "id": "poi-98",
+    "name": "EL RUBIO FAB. DE CARROCERIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.283182,
+    "lon": -57.593912
+  },
+  {
+    "id": "poi-99",
+    "name": "GRUPO PLASTIMAR (INDL. Y COMERCIAL S.A.)",
+    "category": "Lugar de Interés",
+    "lat": -25.276314,
+    "lon": -57.594453
+  },
+  {
+    "id": "poi-100",
+    "name": "FAB. DE HARINA DE TRIGO E.R.S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.261976,
+    "lon": -57.593354
+  },
+  {
+    "id": "poi-101",
+    "name": "CURTIEMBRE GUARANI S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.261677,
+    "lon": -57.592013
+  },
+  {
+    "id": "poi-102",
+    "name": "FRIGORIFICO FRIGOMEC",
+    "category": "Lugar de Interés",
+    "lat": -25.260336,
+    "lon": -57.59282
+  },
+  {
+    "id": "poi-103",
+    "name": "FRIGORIFICO INCADER",
+    "category": "Lugar de Interés",
+    "lat": -25.260893,
+    "lon": -57.592081
+  },
+  {
+    "id": "poi-104",
+    "name": "FRIGORIFICO BEEF",
+    "category": "Lugar de Interés",
+    "lat": -25.259149,
+    "lon": -57.592922
+  },
+  {
+    "id": "poi-105",
+    "name": "FRIGORIFICO IPSA",
+    "category": "Lugar de Interés",
+    "lat": -25.258782,
+    "lon": -57.594787
+  },
+  {
+    "id": "poi-106",
+    "name": "FRIGORIFICO EXPACAR S.R.L",
+    "category": "Lugar de Interés",
+    "lat": -25.255974,
+    "lon": -57.595156
+  },
+  {
+    "id": "poi-107",
+    "name": "EMPRESA HIDRACAL",
+    "category": "Lugar de Interés",
+    "lat": -25.240747,
+    "lon": -57.587939
+  },
+  {
+    "id": "poi-108",
+    "name": "SCARPETA FAB. DE MUEBLES",
+    "category": "Lugar de Interés",
+    "lat": -25.281315,
+    "lon": -57.587404
+  },
+  {
+    "id": "poi-109",
+    "name": "MARTEL S.A. (IND. DE TEJIDOS)",
+    "category": "Lugar de Interés",
+    "lat": -25.296104,
+    "lon": -57.581503
+  },
+  {
+    "id": "poi-110",
+    "name": "AMERICA TEXTIL",
+    "category": "Lugar de Interés",
+    "lat": -25.289725,
+    "lon": -57.58225
+  },
+  {
+    "id": "poi-111",
+    "name": "WHALDREEN",
+    "category": "Lugar de Interés",
+    "lat": -25.266746,
+    "lon": -57.581674
+  },
+  {
+    "id": "poi-112",
+    "name": "CERAMICA PARAGUAYA S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.262055,
+    "lon": -57.581915
+  },
+  {
+    "id": "poi-113",
+    "name": "CERAMICA PARAGUAYA S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.260597,
+    "lon": -57.581832
+  },
+  {
+    "id": "poi-114",
+    "name": "FRIGORIFICO LIEVIX",
+    "category": "Lugar de Interés",
+    "lat": -25.227848,
+    "lon": -57.569478
+  },
+  {
+    "id": "poi-115",
+    "name": "LABS. CATEDRAL (SCAVONE HERMANOS)",
+    "category": "Lugar de Interés",
+    "lat": -25.285615,
+    "lon": -57.572967
+  },
+  {
+    "id": "poi-116",
+    "name": "FAB. DE GUITARRAS GUSTAVO SANABRIA",
+    "category": "Lugar de Interés",
+    "lat": -25.282427,
+    "lon": -57.561642
+  },
+  {
+    "id": "poi-117",
+    "name": "EMPRESA DE CONFECCIONES DINASTIA",
+    "category": "Lugar de Interés",
+    "lat": -25.257267,
+    "lon": -57.556477
+  },
+  {
+    "id": "poi-118",
+    "name": "DISTRIBUIDORA GUARANI S.A. - PEPSI",
+    "category": "Lugar de Interés",
+    "lat": -25.295194,
+    "lon": -57.552257
+  },
+  {
+    "id": "poi-119",
+    "name": "INDS. LACTEAS GUARANI S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.289086,
+    "lon": -57.544497
+  },
+  {
+    "id": "poi-120",
+    "name": "METALCAR S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.285832,
+    "lon": -57.547571
+  },
+  {
+    "id": "poi-121",
+    "name": "PARABRISAS LA MODERNA",
+    "category": "Lugar de Interés",
+    "lat": -25.315545,
+    "lon": -57.573717
+  },
+  {
+    "id": "poi-122",
+    "name": "TREBOL FAB. DE COLCHONES",
+    "category": "Lugar de Interés",
+    "lat": -25.314135,
+    "lon": -57.569884
+  },
+  {
+    "id": "poi-123",
+    "name": "CASA MARCO (INDUSTRIA. DEL VIDRIO)",
+    "category": "Lugar de Interés",
+    "lat": -25.308104,
+    "lon": -57.574045
+  },
+  {
+    "id": "poi-124",
+    "name": "COMPLEJO INDL. MONTSERRAT S. A.",
+    "category": "Lugar de Interés",
+    "lat": -25.317666,
+    "lon": -57.566313
+  },
+  {
+    "id": "poi-125",
+    "name": "FAB. DE PLEGADOS DE CHAPA",
+    "category": "Lugar de Interés",
+    "lat": -25.31835,
+    "lon": -57.559922
+  },
+  {
+    "id": "poi-126",
+    "name": "FRIGORIFICO SAN MIGUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.321375,
+    "lon": -57.562435
+  },
+  {
+    "id": "poi-127",
+    "name": "BOTANIC LABORATORIO",
+    "category": "Lugar de Interés",
+    "lat": -25.307217,
+    "lon": -57.581911
+  },
+  {
+    "id": "poi-128",
+    "name": "FRIGORIFICO GRINGO",
+    "category": "Lugar de Interés",
+    "lat": -25.300064,
+    "lon": -57.566051
+  },
+  {
+    "id": "poi-129",
+    "name": "IGL. BAUTISTA BETANIA",
+    "category": "Lugar de Interés",
+    "lat": -25.298253,
+    "lon": -57.546065
+  },
+  {
+    "id": "poi-130",
+    "name": "CAP. DE LA NATIVIDAD DE LA STA. MARIA",
+    "category": "Lugar de Interés",
+    "lat": -25.298904,
+    "lon": -57.548423
+  },
+  {
+    "id": "poi-131",
+    "name": "TEMPLO CRISTIANO",
+    "category": "Lugar de Interés",
+    "lat": -25.298856,
+    "lon": -57.558033
+  },
+  {
+    "id": "poi-132",
+    "name": "CAP. STA. ELENA",
+    "category": "Lugar de Interés",
+    "lat": -25.314698,
+    "lon": -57.559316
+  },
+  {
+    "id": "poi-133",
+    "name": "LA IGL. DE J.C. DE LOS STOS. DE LOS ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.299224,
+    "lon": -57.561174
+  },
+  {
+    "id": "poi-134",
+    "name": "PARROQ.Y CTRO. CATEQ. VIRGEN DEL PILAR",
+    "category": "Lugar de Interés",
+    "lat": -25.30951,
+    "lon": -57.571783
+  },
+  {
+    "id": "poi-135",
+    "name": "IGL. EVANG. LA ESPERANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.307708,
+    "lon": -57.570863
+  },
+  {
+    "id": "poi-136",
+    "name": "IGL. EVANG. PENTECOSTAL",
+    "category": "Lugar de Interés",
+    "lat": -25.317888,
+    "lon": -57.574129
+  },
+  {
+    "id": "poi-137",
+    "name": "IGL. EVANG. ASAMBLEA DE DIOS EN EL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.319887,
+    "lon": -57.571607
+  },
+  {
+    "id": "poi-138",
+    "name": "LA IGL. DE J.C. DE LOS STOS. DE LOS ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.321995,
+    "lon": -57.571439
+  },
+  {
+    "id": "poi-139",
+    "name": "IGL. CATOL. SAN JOSE",
+    "category": "Lugar de Interés",
+    "lat": -25.325845,
+    "lon": -57.568381
+  },
+  {
+    "id": "poi-140",
+    "name": "PARROQ. SAN RAFAEL",
+    "category": "Lugar de Interés",
+    "lat": -25.307127,
+    "lon": -57.587258
+  },
+  {
+    "id": "poi-141",
+    "name": "IGL. EVANG. MISIONERA ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.314058,
+    "lon": -57.586958
+  },
+  {
+    "id": "poi-142",
+    "name": "CAPILLLA SAN IGNACIO DE LOYOLA",
+    "category": "Lugar de Interés",
+    "lat": -25.317449,
+    "lon": -57.589321
+  },
+  {
+    "id": "poi-143",
+    "name": "IGL. EVANG. BAUTISTA EMANUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.320697,
+    "lon": -57.592196
+  },
+  {
+    "id": "poi-144",
+    "name": "CAP. SAN MIGUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.325763,
+    "lon": -57.589874
+  },
+  {
+    "id": "poi-145",
+    "name": "IGL. SAN PABLO",
+    "category": "Lugar de Interés",
+    "lat": -25.328254,
+    "lon": -57.584334
+  },
+  {
+    "id": "poi-146",
+    "name": "CAP. NTRA. SRA. DE LA ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.32588,
+    "lon": -57.593139
+  },
+  {
+    "id": "poi-147",
+    "name": "IGL. EVANG. DE BENDICION CUADRANGULAR",
+    "category": "Lugar de Interés",
+    "lat": -25.329895,
+    "lon": -57.590931
+  },
+  {
+    "id": "poi-148",
+    "name": "CAP. NTRA. SRA. DE LA ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.335136,
+    "lon": -57.583607
+  },
+  {
+    "id": "poi-149",
+    "name": "PARROQ. NTRA. SRA. DE LOS MILAGROS",
+    "category": "Lugar de Interés",
+    "lat": -25.334835,
+    "lon": -57.590335
+  },
+  {
+    "id": "poi-150",
+    "name": "CAP. SAN JUAN",
+    "category": "Lugar de Interés",
+    "lat": -25.321862,
+    "lon": -57.58842
+  },
+  {
+    "id": "poi-151",
+    "name": "IGL. EVANG. JESUCRISTO ES EL SEÑOR",
+    "category": "Lugar de Interés",
+    "lat": -25.315595,
+    "lon": -57.575703
+  },
+  {
+    "id": "poi-152",
+    "name": "IGL. EVANG. BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.323859,
+    "lon": -57.58017
+  },
+  {
+    "id": "poi-153",
+    "name": "IGL. EVANG. RAYO DE LUZ",
+    "category": "Lugar de Interés",
+    "lat": -25.324096,
+    "lon": -57.576655
+  },
+  {
+    "id": "poi-154",
+    "name": "IGL. EVANG. BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.307443,
+    "lon": -57.563741
+  },
+  {
+    "id": "poi-155",
+    "name": "IGL. EVANG. PENTECOSTES DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.309118,
+    "lon": -57.564619
+  },
+  {
+    "id": "poi-156",
+    "name": "IGL. CRISTIANA EVANG.",
+    "category": "Lugar de Interés",
+    "lat": -25.311976,
+    "lon": -57.562922
+  },
+  {
+    "id": "poi-157",
+    "name": "CAP. SAN BLAS",
+    "category": "Lugar de Interés",
+    "lat": -25.302341,
+    "lon": -57.589598
+  },
+  {
+    "id": "poi-158",
+    "name": "PARROQ. VIRGEN DE FATIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.296216,
+    "lon": -57.658849
+  },
+  {
+    "id": "poi-159",
+    "name": "PARROQ. VIRGEN DEL ROSARIO",
+    "category": "Lugar de Interés",
+    "lat": -25.294267,
+    "lon": -57.666521
+  },
+  {
+    "id": "poi-160",
+    "name": "TEMPLO DE LA STA. CRUZ",
+    "category": "Lugar de Interés",
+    "lat": -25.289902,
+    "lon": -57.659741
+  },
+  {
+    "id": "poi-161",
+    "name": "CAP. DON BOSCO",
+    "category": "Lugar de Interés",
+    "lat": -25.280189,
+    "lon": -57.661864
+  },
+  {
+    "id": "poi-162",
+    "name": "CAP. Y SEDE SOCIAL MARIA AUXILIADORA",
+    "category": "Lugar de Interés",
+    "lat": -25.27861,
+    "lon": -57.656093
+  },
+  {
+    "id": "poi-163",
+    "name": "IGL. CRIST. EVANG. PRINCIPE DE PAZ",
+    "category": "Lugar de Interés",
+    "lat": -25.280485,
+    "lon": -57.650957
+  },
+  {
+    "id": "poi-164",
+    "name": "IGL. CRISTIANA DE LA PAZ",
+    "category": "Lugar de Interés",
+    "lat": -25.28203,
+    "lon": -57.656763
+  },
+  {
+    "id": "poi-165",
+    "name": "INST. BIBLICO ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.282794,
+    "lon": -57.657861
+  },
+  {
+    "id": "poi-166",
+    "name": "PARROQ. Y C. EDUC. S. ANTONIO DE PADUA",
+    "category": "Lugar de Interés",
+    "lat": -25.284392,
+    "lon": -57.655247
+  },
+  {
+    "id": "poi-167",
+    "name": "IGL. DE J.C. DE LOS STOS. DE LOS ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.288412,
+    "lon": -57.655961
+  },
+  {
+    "id": "poi-168",
+    "name": "IGL. CRIST. EVANG. DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.285514,
+    "lon": -57.652046
+  },
+  {
+    "id": "poi-169",
+    "name": "IGL. DISCIPULOS DE CRISTO",
+    "category": "Lugar de Interés",
+    "lat": -25.292427,
+    "lon": -57.650007
+  },
+  {
+    "id": "poi-170",
+    "name": "IGL. INMACULADA CONCEPCION",
+    "category": "Lugar de Interés",
+    "lat": -25.294016,
+    "lon": -57.647247
+  },
+  {
+    "id": "poi-171",
+    "name": "S.A. IGL. ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.284992,
+    "lon": -57.64358
+  },
+  {
+    "id": "poi-172",
+    "name": "CAP. STELLA MARIS",
+    "category": "Lugar de Interés",
+    "lat": -25.276553,
+    "lon": -57.647944
+  },
+  {
+    "id": "poi-173",
+    "name": "IGL. DE LA ENCARNACION",
+    "category": "Lugar de Interés",
+    "lat": -25.284146,
+    "lon": -57.638665
+  },
+  {
+    "id": "poi-174",
+    "name": "IGL. ADVENT. DEL 7° DIA",
+    "category": "Lugar de Interés",
+    "lat": -25.287527,
+    "lon": -57.635583
+  },
+  {
+    "id": "poi-175",
+    "name": "TEMPLO EVANG. FILADELFIA",
+    "category": "Lugar de Interés",
+    "lat": -25.295659,
+    "lon": -57.6405
+  },
+  {
+    "id": "poi-176",
+    "name": "C. PARROQ. JUAN CORONEL",
+    "category": "Lugar de Interés",
+    "lat": -25.296735,
+    "lon": -57.635582
+  },
+  {
+    "id": "poi-177",
+    "name": "IGL. COREANA DELA ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.296815,
+    "lon": -57.629226
+  },
+  {
+    "id": "poi-178",
+    "name": "IGL. EVANG. MARATANA",
+    "category": "Lugar de Interés",
+    "lat": -25.297011,
+    "lon": -57.630597
+  },
+  {
+    "id": "poi-179",
+    "name": "PARROQ.S.CORAZON DE JESUS Y T.MUN.SALESIANO",
+    "category": "Lugar de Interés",
+    "lat": -25.293475,
+    "lon": -57.628402
+  },
+  {
+    "id": "poi-180",
+    "name": "IGL. COREANA EN ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.294026,
+    "lon": -57.622242
+  },
+  {
+    "id": "poi-181",
+    "name": "MISION BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.289167,
+    "lon": -57.610217
+  },
+  {
+    "id": "poi-182",
+    "name": "CATEDRAL SAN ANDRES",
+    "category": "Lugar de Interés",
+    "lat": -25.287246,
+    "lon": -57.609788
+  },
+  {
+    "id": "poi-183",
+    "name": "TEMPLO BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.280514,
+    "lon": -57.604598
+  },
+  {
+    "id": "poi-184",
+    "name": "IGL. C. FLIAR. DE ADORACION",
+    "category": "Lugar de Interés",
+    "lat": -25.287526,
+    "lon": -57.599866
+  },
+  {
+    "id": "poi-185",
+    "name": "CAP. STA. ROSA DE LIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.295817,
+    "lon": -57.600736
+  },
+  {
+    "id": "poi-186",
+    "name": "COL. PARROQ. VIRGEN DE FATIMA",
+    "category": "Educación",
+    "lat": -25.272192,
+    "lon": -57.59868
+  },
+  {
+    "id": "poi-187",
+    "name": "CAP. STA. LIBRADA",
+    "category": "Lugar de Interés",
+    "lat": -25.267749,
+    "lon": -57.598736
+  },
+  {
+    "id": "poi-188",
+    "name": "CAP. NTRA. SRA. DE LA ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.265166,
+    "lon": -57.599679
+  },
+  {
+    "id": "poi-189",
+    "name": "CAP. SAN VICENTE DE PAUL",
+    "category": "Lugar de Interés",
+    "lat": -25.255721,
+    "lon": -57.599145
+  },
+  {
+    "id": "poi-190",
+    "name": "CAP. NTRA. SRA. D/ PERPETUO SOCORRO",
+    "category": "Lugar de Interés",
+    "lat": -25.28493,
+    "lon": -57.636769
+  },
+  {
+    "id": "poi-191",
+    "name": "LA CATEDRAL",
+    "category": "Lugar de Interés",
+    "lat": -25.281584,
+    "lon": -57.63242
+  },
+  {
+    "id": "poi-192",
+    "name": "SEDE DE LA NUNCIATURA APOSTOLICA",
+    "category": "Lugar de Interés",
+    "lat": -25.294448,
+    "lon": -57.606295
+  },
+  {
+    "id": "poi-193",
+    "name": "IGL. METODISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.259876,
+    "lon": -57.596266
+  },
+  {
+    "id": "poi-194",
+    "name": "IGL. NUEVA APOSTOLICA",
+    "category": "Lugar de Interés",
+    "lat": -25.294359,
+    "lon": -57.623878
+  },
+  {
+    "id": "poi-195",
+    "name": "IGL. LAS MERCEDES",
+    "category": "Lugar de Interés",
+    "lat": -25.280607,
+    "lon": -57.61193
+  },
+  {
+    "id": "poi-196",
+    "name": "CAP. STA. TERESA",
+    "category": "Lugar de Interés",
+    "lat": -25.29711,
+    "lon": -57.661157
+  },
+  {
+    "id": "poi-197",
+    "name": "IGL. PERPETUO SOCORRO",
+    "category": "Lugar de Interés",
+    "lat": -25.296288,
+    "lon": -57.636398
+  },
+  {
+    "id": "poi-198",
+    "name": "PARROQ.SAN PEDRO Y SAN PABLO",
+    "category": "Lugar de Interés",
+    "lat": -25.302715,
+    "lon": -57.599294
+  },
+  {
+    "id": "poi-199",
+    "name": "IGL.DE J.C.DE LOS SANT.DE LOS ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.305506,
+    "lon": -57.597218
+  },
+  {
+    "id": "poi-200",
+    "name": "IGL. EVANG. DE LOS HERMANOS EN EL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.310105,
+    "lon": -57.59993
+  },
+  {
+    "id": "poi-201",
+    "name": "CAP. SAN MIGUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.311172,
+    "lon": -57.599323
+  },
+  {
+    "id": "poi-202",
+    "name": "IGL. EVANG. PENTECOSTAL",
+    "category": "Lugar de Interés",
+    "lat": -25.323375,
+    "lon": -57.600394
+  },
+  {
+    "id": "poi-203",
+    "name": "IGL. EVANG. REINO DE LOS TEST.DE JEHOVA",
+    "category": "Lugar de Interés",
+    "lat": -25.322283,
+    "lon": -57.601253
+  },
+  {
+    "id": "poi-204",
+    "name": "IGL. EVANG. BAUTISTA DE PANAMBI-RETA",
+    "category": "Lugar de Interés",
+    "lat": -25.320491,
+    "lon": -57.604493
+  },
+  {
+    "id": "poi-205",
+    "name": "PARROQ.SAN JUAN BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.311904,
+    "lon": -57.606554
+  },
+  {
+    "id": "poi-206",
+    "name": "IGL.CRISTIANA ROCA DE PAZ",
+    "category": "Lugar de Interés",
+    "lat": -25.310009,
+    "lon": -57.602604
+  },
+  {
+    "id": "poi-207",
+    "name": "IGL. EVANG. TESTIGOS DE JEHOVA",
+    "category": "Lugar de Interés",
+    "lat": -25.310934,
+    "lon": -57.601318
+  },
+  {
+    "id": "poi-208",
+    "name": "CAP. SAN ISIDRO",
+    "category": "Lugar de Interés",
+    "lat": -25.310967,
+    "lon": -57.602063
+  },
+  {
+    "id": "poi-209",
+    "name": "TEMPLO MANANTIAL HERMANAS DOMINICAS",
+    "category": "Lugar de Interés",
+    "lat": -25.297261,
+    "lon": -57.607452
+  },
+  {
+    "id": "poi-210",
+    "name": "IGL. SAN MAXIMILIANO",
+    "category": "Lugar de Interés",
+    "lat": -25.29858,
+    "lon": -57.607499
+  },
+  {
+    "id": "poi-211",
+    "name": "CAP. STA. ROSA DE LIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.307497,
+    "lon": -57.610378
+  },
+  {
+    "id": "poi-212",
+    "name": "IGL. EVANG.PARAG. ASAMBLEAS DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.307933,
+    "lon": -57.610181
+  },
+  {
+    "id": "poi-213",
+    "name": "IGL. EVANG. EBEN- EZER",
+    "category": "Lugar de Interés",
+    "lat": -25.312516,
+    "lon": -57.613718
+  },
+  {
+    "id": "poi-214",
+    "name": "IGL. EVANG. PRESBITERIANA CTRAL.",
+    "category": "Lugar de Interés",
+    "lat": -25.323989,
+    "lon": -57.624492
+  },
+  {
+    "id": "poi-215",
+    "name": "CAP. STA. TERESITA DEL NIÑO JESUS",
+    "category": "Lugar de Interés",
+    "lat": -25.321704,
+    "lon": -57.624041
+  },
+  {
+    "id": "poi-216",
+    "name": "IGL. PRESBIT.BENDIC.ABIERTA- JARD.INF.",
+    "category": "Lugar de Interés",
+    "lat": -25.3162,
+    "lon": -57.623826
+  },
+  {
+    "id": "poi-217",
+    "name": "IGL. EVANG. PCPAL. DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.312776,
+    "lon": -57.620907
+  },
+  {
+    "id": "poi-218",
+    "name": "PARROQ.SAN JUAN",
+    "category": "Lugar de Interés",
+    "lat": -25.308132,
+    "lon": -57.623412
+  },
+  {
+    "id": "poi-219",
+    "name": "1a.IGL. BAUTISTA COREANA EN PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.306526,
+    "lon": -57.622672
+  },
+  {
+    "id": "poi-220",
+    "name": "VICARIA DE LA DIVINA ESPERANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.307073,
+    "lon": -57.624884
+  },
+  {
+    "id": "poi-221",
+    "name": "IGL. CRISTIANA HOREB",
+    "category": "Lugar de Interés",
+    "lat": -25.303448,
+    "lon": -57.620979
+  },
+  {
+    "id": "poi-222",
+    "name": "IGL. SUR AMERICA COREANA",
+    "category": "Lugar de Interés",
+    "lat": -25.302631,
+    "lon": -57.623429
+  },
+  {
+    "id": "poi-223",
+    "name": "IGL. SANTIF. CTRAL. COREANA",
+    "category": "Lugar de Interés",
+    "lat": -25.302022,
+    "lon": -57.623394
+  },
+  {
+    "id": "poi-224",
+    "name": "IGL. EVANG. PRESBIT. DE LOS COREANOS",
+    "category": "Lugar de Interés",
+    "lat": -25.300501,
+    "lon": -57.628404
+  },
+  {
+    "id": "poi-225",
+    "name": "IGL.DE J.C.DE LOS SANT. D/L/ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.301999,
+    "lon": -57.631686
+  },
+  {
+    "id": "poi-226",
+    "name": "IGL. CATOL. VIRGEN DE LOS DOLORES",
+    "category": "Lugar de Interés",
+    "lat": -25.303711,
+    "lon": -57.627329
+  },
+  {
+    "id": "poi-227",
+    "name": "IGL. PRESBIT. DEL AMOR DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.302133,
+    "lon": -57.625724
+  },
+  {
+    "id": "poi-228",
+    "name": "IGL . EVANG. METODISTA DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.306612,
+    "lon": -57.626139
+  },
+  {
+    "id": "poi-229",
+    "name": "IGL. METODISTA COREANA",
+    "category": "Lugar de Interés",
+    "lat": -25.307123,
+    "lon": -57.627347
+  },
+  {
+    "id": "poi-230",
+    "name": "IGL.PRESBIT.VICTORIA E INST.TEOLOG.LINGUIST.GUARA",
+    "category": "Lugar de Interés",
+    "lat": -25.307516,
+    "lon": -57.628906
+  },
+  {
+    "id": "poi-231",
+    "name": "TEMPLO EVANG. BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.308545,
+    "lon": -57.63152
+  },
+  {
+    "id": "poi-232",
+    "name": "IGL. NUEVA EVANG. APOSTOLICA",
+    "category": "Lugar de Interés",
+    "lat": -25.31691,
+    "lon": -57.630472
+  },
+  {
+    "id": "poi-233",
+    "name": "IGL. DE DIOS PORTAL DE BELEN",
+    "category": "Lugar de Interés",
+    "lat": -25.3163,
+    "lon": -57.63168
+  },
+  {
+    "id": "poi-234",
+    "name": "IGL. CATOL. SAN NICOLAS",
+    "category": "Lugar de Interés",
+    "lat": -25.324093,
+    "lon": -57.628459
+  },
+  {
+    "id": "poi-235",
+    "name": "IGL. CATOL. MARIA AUXILIADORA",
+    "category": "Lugar de Interés",
+    "lat": -25.332589,
+    "lon": -57.627864
+  },
+  {
+    "id": "poi-236",
+    "name": "IGL. DE J.C.DE LOS SANT. D/ L/ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.343293,
+    "lon": -57.636999
+  },
+  {
+    "id": "poi-237",
+    "name": "IGL. SAGRADA FLIA.",
+    "category": "Lugar de Interés",
+    "lat": -25.347266,
+    "lon": -57.638698
+  },
+  {
+    "id": "poi-238",
+    "name": "CAP. VIRGEN DE LA MERCED",
+    "category": "Lugar de Interés",
+    "lat": -25.337342,
+    "lon": -57.639484
+  },
+  {
+    "id": "poi-239",
+    "name": "PARROQ.SAN PEDRO Y SAN PABLO",
+    "category": "Lugar de Interés",
+    "lat": -25.32134,
+    "lon": -57.635606
+  },
+  {
+    "id": "poi-240",
+    "name": "CAP. VIRGEN DEL CARMEN",
+    "category": "Lugar de Interés",
+    "lat": -25.31731,
+    "lon": -57.635892
+  },
+  {
+    "id": "poi-241",
+    "name": "PARROQ.SAN GERARDO",
+    "category": "Lugar de Interés",
+    "lat": -25.317142,
+    "lon": -57.641202
+  },
+  {
+    "id": "poi-242",
+    "name": "IGL. EVANG.",
+    "category": "Lugar de Interés",
+    "lat": -25.316329,
+    "lon": -57.633411
+  },
+  {
+    "id": "poi-243",
+    "name": "IGL. EVANG. MISIONERA",
+    "category": "Lugar de Interés",
+    "lat": -25.304003,
+    "lon": -57.638391
+  },
+  {
+    "id": "poi-244",
+    "name": "IGL. DE DIOS SEMINARIO TEOLOGICO",
+    "category": "Lugar de Interés",
+    "lat": -25.29963,
+    "lon": -57.648041
+  },
+  {
+    "id": "poi-245",
+    "name": "IGL. EVANG. DEL NAZARENO",
+    "category": "Lugar de Interés",
+    "lat": -25.302467,
+    "lon": -57.643019
+  },
+  {
+    "id": "poi-246",
+    "name": "PARROQ. SAN ALFONSO",
+    "category": "Lugar de Interés",
+    "lat": -25.303075,
+    "lon": -57.645773
+  },
+  {
+    "id": "poi-247",
+    "name": "IGL.DE J.C.DE LOS SANT.D/L/ ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.304449,
+    "lon": -57.649733
+  },
+  {
+    "id": "poi-248",
+    "name": "CAP. SAN RAMON",
+    "category": "Lugar de Interés",
+    "lat": -25.306191,
+    "lon": -57.649889
+  },
+  {
+    "id": "poi-249",
+    "name": "IGL. EVANG. DE DIOS EBENEZER",
+    "category": "Lugar de Interés",
+    "lat": -25.311943,
+    "lon": -57.647913
+  },
+  {
+    "id": "poi-250",
+    "name": "IGL. EVANG. DIOS ES AMOR",
+    "category": "Lugar de Interés",
+    "lat": -25.311707,
+    "lon": -57.647047
+  },
+  {
+    "id": "poi-251",
+    "name": "PARROQ. STA. ANA",
+    "category": "Lugar de Interés",
+    "lat": -25.313722,
+    "lon": -57.648425
+  },
+  {
+    "id": "poi-252",
+    "name": "IGL. EVANG. ASAMBLEAS DE DIOS PY.",
+    "category": "Lugar de Interés",
+    "lat": -25.321198,
+    "lon": -57.646095
+  },
+  {
+    "id": "poi-253",
+    "name": "ESC. FE Y ALEGRIA",
+    "category": "Educación",
+    "lat": -25.323714,
+    "lon": -57.643459
+  },
+  {
+    "id": "poi-254",
+    "name": "IGL. EVANG. PENTEC. ANTORCHA DE LA PAZ",
+    "category": "Lugar de Interés",
+    "lat": -25.323648,
+    "lon": -57.655679
+  },
+  {
+    "id": "poi-255",
+    "name": "CAP. VIRGEN DE LUJAN",
+    "category": "Lugar de Interés",
+    "lat": -25.322032,
+    "lon": -57.654406
+  },
+  {
+    "id": "poi-256",
+    "name": "IGL. EVANG. ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.319892,
+    "lon": -57.651346
+  },
+  {
+    "id": "poi-257",
+    "name": "CAP. STA. ROSA DE LIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.317019,
+    "lon": -57.652529
+  },
+  {
+    "id": "poi-258",
+    "name": "CAP. SAGRADO CORAZON DE JESUS",
+    "category": "Lugar de Interés",
+    "lat": -25.30234,
+    "lon": -57.653328
+  },
+  {
+    "id": "poi-259",
+    "name": "IGL. EVANG. SAJONIA",
+    "category": "Lugar de Interés",
+    "lat": -25.298985,
+    "lon": -57.66311
+  },
+  {
+    "id": "poi-260",
+    "name": "CAP. SAN GERONIMO",
+    "category": "Lugar de Interés",
+    "lat": -25.299118,
+    "lon": -57.665076
+  },
+  {
+    "id": "poi-261",
+    "name": "CAP. SAN MIGUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.302396,
+    "lon": -57.665281
+  },
+  {
+    "id": "poi-262",
+    "name": "IGL. EVANG. FE ESPERANZA Y AMOR",
+    "category": "Lugar de Interés",
+    "lat": -25.31123,
+    "lon": -57.667419
+  },
+  {
+    "id": "poi-263",
+    "name": "IGL. EVANG. NAZARENO APOSTOLICO",
+    "category": "Lugar de Interés",
+    "lat": -25.30603,
+    "lon": -57.666911
+  },
+  {
+    "id": "poi-264",
+    "name": "CAP. SAN CAYETANO",
+    "category": "Lugar de Interés",
+    "lat": -25.320449,
+    "lon": -57.648421
+  },
+  {
+    "id": "poi-265",
+    "name": "CAP. SAN FELIPE Y SANTIAGO",
+    "category": "Lugar de Interés",
+    "lat": -25.312511,
+    "lon": -57.66768
+  },
+  {
+    "id": "poi-266",
+    "name": "MISION EVANG. MARANATA",
+    "category": "Lugar de Interés",
+    "lat": -25.299131,
+    "lon": -57.596841
+  },
+  {
+    "id": "poi-267",
+    "name": "C. EVANG. EMANUEL ASAMBLEAS DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.319616,
+    "lon": -57.638002
+  },
+  {
+    "id": "poi-268",
+    "name": "SEMIN.MAYOR DEPEND. DE LA CONF. EPISC. PYA.",
+    "category": "Lugar de Interés",
+    "lat": -25.326986,
+    "lon": -57.637956
+  },
+  {
+    "id": "poi-269",
+    "name": "CTRO. PARROQ. SAN VICENTE",
+    "category": "Lugar de Interés",
+    "lat": -25.314162,
+    "lon": -57.62305
+  },
+  {
+    "id": "poi-270",
+    "name": "PRESBITERIANA ESPERANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.317502,
+    "lon": -57.633663
+  },
+  {
+    "id": "poi-271",
+    "name": "IGL. CATOL. SAGRADA FLIA",
+    "category": "Lugar de Interés",
+    "lat": -25.261962,
+    "lon": -57.594478
+  },
+  {
+    "id": "poi-272",
+    "name": "IGL. EVANG. ADVENT. DEL 7° DIA",
+    "category": "Lugar de Interés",
+    "lat": -25.25962,
+    "lon": -57.591748
+  },
+  {
+    "id": "poi-273",
+    "name": "EVANG. LIBRE",
+    "category": "Lugar de Interés",
+    "lat": -25.259039,
+    "lon": -57.59582
+  },
+  {
+    "id": "poi-274",
+    "name": "IGL. EVANG. ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.243766,
+    "lon": -57.583587
+  },
+  {
+    "id": "poi-275",
+    "name": "IGL. EVANG. PENTEC.",
+    "category": "Lugar de Interés",
+    "lat": -25.251388,
+    "lon": -57.584479
+  },
+  {
+    "id": "poi-276",
+    "name": "IGL. EVANG. ASAMBLEA DE DIOS",
+    "category": "Lugar de Interés",
+    "lat": -25.261197,
+    "lon": -57.591047
+  },
+  {
+    "id": "poi-277",
+    "name": "CAP. INMACULADA CONCEPCION",
+    "category": "Lugar de Interés",
+    "lat": -25.262493,
+    "lon": -57.591252
+  },
+  {
+    "id": "poi-278",
+    "name": "SEMINARIO DE LOS CARMELITOS DESCALZOS",
+    "category": "Lugar de Interés",
+    "lat": -25.262957,
+    "lon": -57.586919
+  },
+  {
+    "id": "poi-279",
+    "name": "HERMANOS FRANCISCANOS CAPUCHINOS PAZ Y BIEN",
+    "category": "Lugar de Interés",
+    "lat": -25.264999,
+    "lon": -57.587305
+  },
+  {
+    "id": "poi-280",
+    "name": "IGL. EVANG. BAUTISTA DE TRINIDAD",
+    "category": "Lugar de Interés",
+    "lat": -25.265694,
+    "lon": -57.587309
+  },
+  {
+    "id": "poi-281",
+    "name": "VICARIA NIÑO SALVADOR DEL MUNDO",
+    "category": "Lugar de Interés",
+    "lat": -25.269196,
+    "lon": -57.588524
+  },
+  {
+    "id": "poi-282",
+    "name": "CAP. VIRGEN DEL MILAN",
+    "category": "Lugar de Interés",
+    "lat": -25.270793,
+    "lon": -57.586181
+  },
+  {
+    "id": "poi-283",
+    "name": "IGL. EVANG. MENNONITA CONCORDIA",
+    "category": "Lugar de Interés",
+    "lat": -25.271902,
+    "lon": -57.587039
+  },
+  {
+    "id": "poi-284",
+    "name": "CAP. SAN CARLOS",
+    "category": "Lugar de Interés",
+    "lat": -25.266827,
+    "lon": -57.586294
+  },
+  {
+    "id": "poi-285",
+    "name": "C.O.C. STO. DOMINGO SAVIO PARROQ. RECOLETA",
+    "category": "Lugar de Interés",
+    "lat": -25.29684,
+    "lon": -57.585706
+  },
+  {
+    "id": "poi-286",
+    "name": "PARROQ. DE HABLA ALEMANA",
+    "category": "Lugar de Interés",
+    "lat": -25.291898,
+    "lon": -57.587018
+  },
+  {
+    "id": "poi-287",
+    "name": "IGL. CATOL. SAN JOSE OBRERO",
+    "category": "Lugar de Interés",
+    "lat": -25.288991,
+    "lon": -57.576546
+  },
+  {
+    "id": "poi-288",
+    "name": "IGL. CATOL. SANTISIMA TRINIDAD",
+    "category": "Lugar de Interés",
+    "lat": -25.258927,
+    "lon": -57.580491
+  },
+  {
+    "id": "poi-289",
+    "name": "CAP. SAN JOSÉ",
+    "category": "Lugar de Interés",
+    "lat": -25.25464,
+    "lon": -57.575247
+  },
+  {
+    "id": "poi-290",
+    "name": "IGL. EVANGELICO DEL NAZARENO",
+    "category": "Lugar de Interés",
+    "lat": -25.251938,
+    "lon": -57.577051
+  },
+  {
+    "id": "poi-291",
+    "name": "IGL. EVANG. LA AMISTAD",
+    "category": "Lugar de Interés",
+    "lat": -25.243109,
+    "lon": -57.58132
+  },
+  {
+    "id": "poi-292",
+    "name": "CAP. MEDALLA MILAGROSA",
+    "category": "Lugar de Interés",
+    "lat": -25.238461,
+    "lon": -57.580982
+  },
+  {
+    "id": "poi-293",
+    "name": "IGL. EVANG. PALABRA DE LA VIDA",
+    "category": "Lugar de Interés",
+    "lat": -25.232245,
+    "lon": -57.574833
+  },
+  {
+    "id": "poi-294",
+    "name": "IGL. EVANG. PALABRA DE LA VIDA",
+    "category": "Lugar de Interés",
+    "lat": -25.231874,
+    "lon": -57.573738
+  },
+  {
+    "id": "poi-295",
+    "name": "LA IGL. DE J.C. DE LOS STOS. DE LOS ULTIMOS DIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.231769,
+    "lon": -57.57239
+  },
+  {
+    "id": "poi-296",
+    "name": "CAP. SAN FRANCISCO DE ASIS",
+    "category": "Lugar de Interés",
+    "lat": -25.232904,
+    "lon": -57.570186
+  },
+  {
+    "id": "poi-297",
+    "name": "CAP. SAN PEDRO",
+    "category": "Lugar de Interés",
+    "lat": -25.274864,
+    "lon": -57.574244
+  },
+  {
+    "id": "poi-298",
+    "name": "CTRO. PARROQ. SAN MIGUEL ARCANGEL",
+    "category": "Lugar de Interés",
+    "lat": -25.275741,
+    "lon": -57.567483
+  },
+  {
+    "id": "poi-299",
+    "name": "IGL. ANGLICANA PARAGUAYA CRISTO SALVADOR",
+    "category": "Lugar de Interés",
+    "lat": -25.277396,
+    "lon": -57.567843
+  },
+  {
+    "id": "poi-300",
+    "name": "CTRO. PARROQ. SAN JUAN BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.281597,
+    "lon": -57.569514
+  },
+  {
+    "id": "poi-301",
+    "name": "CTRO. PARROQ. SAN JUAN BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.281364,
+    "lon": -57.569951
+  },
+  {
+    "id": "poi-302",
+    "name": "MONASTERIO DE LAS CARMELITAS DESCALZAS",
+    "category": "Lugar de Interés",
+    "lat": -25.28109,
+    "lon": -57.574134
+  },
+  {
+    "id": "poi-303",
+    "name": "IGL. EVANG. MUNDIAL NUEVA ESPERANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.294903,
+    "lon": -57.561243
+  },
+  {
+    "id": "poi-304",
+    "name": "IGL. DE REFUGIO DEFENSORES DE LA FE CRISTIANA",
+    "category": "Lugar de Interés",
+    "lat": -25.292599,
+    "lon": -57.558653
+  },
+  {
+    "id": "poi-305",
+    "name": "MIS. DE INTERSECC.EN EL ESPIRITU STO.CASA DE ORAC.",
+    "category": "Lugar de Interés",
+    "lat": -25.27776,
+    "lon": -57.565173
+  },
+  {
+    "id": "poi-306",
+    "name": "PARROQ. SAGRADOS CORAZONES DE MARIA Y JESUS",
+    "category": "Lugar de Interés",
+    "lat": -25.277288,
+    "lon": -57.561502
+  },
+  {
+    "id": "poi-307",
+    "name": "IGL. EVANG. BAUTISTA KOINONIA",
+    "category": "Lugar de Interés",
+    "lat": -25.273847,
+    "lon": -57.566041
+  },
+  {
+    "id": "poi-308",
+    "name": "CAP. SAN JUAN",
+    "category": "Lugar de Interés",
+    "lat": -25.262955,
+    "lon": -57.564072
+  },
+  {
+    "id": "poi-309",
+    "name": "CAP. SAN MIGUEL ARCANGEL",
+    "category": "Lugar de Interés",
+    "lat": -25.235818,
+    "lon": -57.558908
+  },
+  {
+    "id": "poi-310",
+    "name": "CAP. SAN JUAN",
+    "category": "Lugar de Interés",
+    "lat": -25.23343,
+    "lon": -57.565441
+  },
+  {
+    "id": "poi-311",
+    "name": "IGL. EVANG. ANGLICANA",
+    "category": "Lugar de Interés",
+    "lat": -25.23359,
+    "lon": -57.558254
+  },
+  {
+    "id": "poi-312",
+    "name": "IGL. ADVENT. DEL SEPTIMO DIA",
+    "category": "Lugar de Interés",
+    "lat": -25.231629,
+    "lon": -57.562907
+  },
+  {
+    "id": "poi-313",
+    "name": "IGL. MEDALLA MILAGROSA",
+    "category": "Lugar de Interés",
+    "lat": -25.232179,
+    "lon": -57.563335
+  },
+  {
+    "id": "poi-314",
+    "name": "CAP. STA. LIBRADA",
+    "category": "Lugar de Interés",
+    "lat": -25.230095,
+    "lon": -57.562427
+  },
+  {
+    "id": "poi-315",
+    "name": "CAP. NTRA. SRA. DE LA PROVIDENCIA",
+    "category": "Lugar de Interés",
+    "lat": -25.228951,
+    "lon": -57.564121
+  },
+  {
+    "id": "poi-316",
+    "name": "PARROQ. SALVADOR DEL MUNDO",
+    "category": "Lugar de Interés",
+    "lat": -25.277707,
+    "lon": -57.555045
+  },
+  {
+    "id": "poi-317",
+    "name": "IGL. EVANG. BAUTISTA \"EL SALVADOR\"",
+    "category": "Lugar de Interés",
+    "lat": -25.265235,
+    "lon": -57.556723
+  },
+  {
+    "id": "poi-318",
+    "name": "IGL. CATOL. LA PIEDAD",
+    "category": "Lugar de Interés",
+    "lat": -25.25916,
+    "lon": -57.557156
+  },
+  {
+    "id": "poi-319",
+    "name": "CAP. LAS MERCEDES",
+    "category": "Lugar de Interés",
+    "lat": -25.250952,
+    "lon": -57.557475
+  },
+  {
+    "id": "poi-320",
+    "name": "IGL. EVANG. PENTEC.",
+    "category": "Lugar de Interés",
+    "lat": -25.248731,
+    "lon": -57.553519
+  },
+  {
+    "id": "poi-321",
+    "name": "CAP. VIRGEN DE CAACUPE",
+    "category": "Lugar de Interés",
+    "lat": -25.246676,
+    "lon": -57.552748
+  },
+  {
+    "id": "poi-322",
+    "name": "CAP. SAN RAFAEL",
+    "category": "Lugar de Interés",
+    "lat": -25.24657,
+    "lon": -57.555432
+  },
+  {
+    "id": "poi-323",
+    "name": "IGL. EVANG. DIOS PENTEC.",
+    "category": "Lugar de Interés",
+    "lat": -25.245435,
+    "lon": -57.553738
+  },
+  {
+    "id": "poi-324",
+    "name": "IGL. EVANG. DEL NAZARENO",
+    "category": "Lugar de Interés",
+    "lat": -25.244489,
+    "lon": -57.553066
+  },
+  {
+    "id": "poi-325",
+    "name": "CAP. SAN FRANCISCO DE ASIS",
+    "category": "Lugar de Interés",
+    "lat": -25.243082,
+    "lon": -57.553083
+  },
+  {
+    "id": "poi-326",
+    "name": "IGL. EVANG. BAUTISTA",
+    "category": "Lugar de Interés",
+    "lat": -25.241744,
+    "lon": -57.551447
+  },
+  {
+    "id": "poi-327",
+    "name": "CAP. SAN PEDRO",
+    "category": "Lugar de Interés",
+    "lat": -25.23811,
+    "lon": -57.554092
+  },
+  {
+    "id": "poi-328",
+    "name": "CAP. VIRGEN DEL CARMEN",
+    "category": "Lugar de Interés",
+    "lat": -25.24127,
+    "lon": -57.547131
+  },
+  {
+    "id": "poi-329",
+    "name": "IGL. PENTEC. EVANG.",
+    "category": "Lugar de Interés",
+    "lat": -25.243219,
+    "lon": -57.544784
+  },
+  {
+    "id": "poi-330",
+    "name": "IGL. SAN AGUSTIN",
+    "category": "Lugar de Interés",
+    "lat": -25.24426,
+    "lon": -57.545926
+  },
+  {
+    "id": "poi-331",
+    "name": "CAP. VIRGEN DEL ROSARIO",
+    "category": "Lugar de Interés",
+    "lat": -25.245924,
+    "lon": -57.542604
+  },
+  {
+    "id": "poi-332",
+    "name": "CAP. MADRE SALVADORA",
+    "category": "Lugar de Interés",
+    "lat": -25.280722,
+    "lon": -57.543181
+  },
+  {
+    "id": "poi-333",
+    "name": "CAP. VIRGEN DE LA PAZ",
+    "category": "Lugar de Interés",
+    "lat": -25.282047,
+    "lon": -57.548135
+  },
+  {
+    "id": "poi-334",
+    "name": "IGL. EVANG. RIO DE AGUA VIVA",
+    "category": "Lugar de Interés",
+    "lat": -25.248782,
+    "lon": -57.53564
+  },
+  {
+    "id": "poi-335",
+    "name": "CAP. SAN ROQUE GONZALEZ DE STA.- CRUZ",
+    "category": "Lugar de Interés",
+    "lat": -25.244997,
+    "lon": -57.535806
+  },
+  {
+    "id": "poi-336",
+    "name": "IGL. DE J.C. DE LOS STOS. DE LOS ULTIMO",
+    "category": "Lugar de Interés",
+    "lat": -25.241853,
+    "lon": -57.53909
+  },
+  {
+    "id": "poi-337",
+    "name": "IGL. EVANG. LUZ Y VIDA",
+    "category": "Lugar de Interés",
+    "lat": -25.243354,
+    "lon": -57.530883
+  },
+  {
+    "id": "poi-338",
+    "name": "CAP. SAN BLAS",
+    "category": "Lugar de Interés",
+    "lat": -25.24124,
+    "lon": -57.530995
+  },
+  {
+    "id": "poi-339",
+    "name": "TEMPLO DE SAN ANTONIO",
+    "category": "Lugar de Interés",
+    "lat": -25.245462,
+    "lon": -57.58436
+  },
+  {
+    "id": "poi-340",
+    "name": "UNION HEBRAICA DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.277706,
+    "lon": -57.586537
+  },
+  {
+    "id": "poi-341",
+    "name": "CTRO. FLIAR DE ADORACION",
+    "category": "Lugar de Interés",
+    "lat": -25.231544,
+    "lon": -57.561803
+  },
+  {
+    "id": "poi-342",
+    "name": "VICARIA CASTRENSE",
+    "category": "Lugar de Interés",
+    "lat": -25.280793,
+    "lon": -57.582485
+  },
+  {
+    "id": "poi-343",
+    "name": "PARROQ. DE LOS CORAZONES Y CTRO. SAN JOSE",
+    "category": "Lugar de Interés",
+    "lat": -25.272447,
+    "lon": -57.555199
+  },
+  {
+    "id": "poi-344",
+    "name": "CASA EJERCITO DE LA ORACION",
+    "category": "Lugar de Interés",
+    "lat": -25.294348,
+    "lon": -57.586999
+  },
+  {
+    "id": "poi-345",
+    "name": "CAP. SAN MIGUEL",
+    "category": "Lugar de Interés",
+    "lat": -25.245182,
+    "lon": -57.583174
+  },
+  {
+    "id": "poi-346",
+    "name": "ESC. N° 175 REP. DE EL SALVADOR",
+    "category": "Educación",
+    "lat": -25.304841,
+    "lon": -57.59592
+  },
+  {
+    "id": "poi-347",
+    "name": "ESC. N° 201 Y COL . DR. BLAS GARAY",
+    "category": "Educación",
+    "lat": -25.318812,
+    "lon": -57.591554
+  },
+  {
+    "id": "poi-348",
+    "name": "COL. NAC. E.M. D. STELLA MARIS",
+    "category": "Educación",
+    "lat": -25.319424,
+    "lon": -57.591839
+  },
+  {
+    "id": "poi-349",
+    "name": "COL. NAC. E.M.D. YSATY",
+    "category": "Educación",
+    "lat": -25.324602,
+    "lon": -57.593689
+  },
+  {
+    "id": "poi-350",
+    "name": "ESC. N° 142 MARIA FELICIDAD GONZALEZ",
+    "category": "Educación",
+    "lat": -25.327465,
+    "lon": -57.595001
+  },
+  {
+    "id": "poi-351",
+    "name": "ESC. N° 805 DR. FACUNDO INSFRAN",
+    "category": "Educación",
+    "lat": -25.335319,
+    "lon": -57.590792
+  },
+  {
+    "id": "poi-352",
+    "name": "ESC. N° 1804 GRAL. PATRICIO ESCOBAR",
+    "category": "Educación",
+    "lat": -25.333143,
+    "lon": -57.584894
+  },
+  {
+    "id": "poi-353",
+    "name": "ESC. PRIVADA SAN RAFAEL",
+    "category": "Educación",
+    "lat": -25.328547,
+    "lon": -57.589455
+  },
+  {
+    "id": "poi-354",
+    "name": "ESC. J. PRE-ESCOLAR SAN MIGUEL",
+    "category": "Educación",
+    "lat": -25.331542,
+    "lon": -57.583445
+  },
+  {
+    "id": "poi-355",
+    "name": "COL. SAN CARLOS",
+    "category": "Educación",
+    "lat": -25.316157,
+    "lon": -57.589899
+  },
+  {
+    "id": "poi-356",
+    "name": "COL. NAC. FULGENCIO R. MORENO",
+    "category": "Educación",
+    "lat": -25.308892,
+    "lon": -57.590782
+  },
+  {
+    "id": "poi-357",
+    "name": "ESC. N° 202 JUAN DE SALAZAR Y ESPINOZA",
+    "category": "Educación",
+    "lat": -25.309577,
+    "lon": -57.589946
+  },
+  {
+    "id": "poi-358",
+    "name": "COL. PRIV. SAN LUIS",
+    "category": "Educación",
+    "lat": -25.306659,
+    "lon": -57.583483
+  },
+  {
+    "id": "poi-359",
+    "name": "INST. DE FORMACION DOCENTE Y COL. EL SEMBRADOR",
+    "category": "Educación",
+    "lat": -25.305166,
+    "lon": -57.588777
+  },
+  {
+    "id": "poi-360",
+    "name": "COL. PRIV. CAMPO ALTO",
+    "category": "Educación",
+    "lat": -25.300533,
+    "lon": -57.58807
+  },
+  {
+    "id": "poi-361",
+    "name": "ESC. N° 198 FULGENCIO R. MORENO",
+    "category": "Educación",
+    "lat": -25.301187,
+    "lon": -57.583618
+  },
+  {
+    "id": "poi-362",
+    "name": "ESC. CIENTIFICA BASILIO",
+    "category": "Educación",
+    "lat": -25.298923,
+    "lon": -57.582277
+  },
+  {
+    "id": "poi-363",
+    "name": "COL. STA. CLARA Y CAMPO DEPORT. SAN ROQUE GONZALEZ",
+    "category": "Educación",
+    "lat": -25.297771,
+    "lon": -57.583572
+  },
+  {
+    "id": "poi-364",
+    "name": "COL. BAUTISTA",
+    "category": "Educación",
+    "lat": -25.300146,
+    "lon": -57.579498
+  },
+  {
+    "id": "poi-365",
+    "name": "COL. STA. RITA DECASIA",
+    "category": "Educación",
+    "lat": -25.302345,
+    "lon": -57.574789
+  },
+  {
+    "id": "poi-366",
+    "name": "COL. LATINOAMERICANO",
+    "category": "Educación",
+    "lat": -25.304453,
+    "lon": -57.582959
+  },
+  {
+    "id": "poi-367",
+    "name": "CTRO. EDUC. LOS LAURELES",
+    "category": "Lugar de Interés",
+    "lat": -25.307496,
+    "lon": -57.577359
+  },
+  {
+    "id": "poi-368",
+    "name": "ESC. Y COL CAP. PEDRO JUAN CABALLERO",
+    "category": "Educación",
+    "lat": -25.310399,
+    "lon": -57.577589
+  },
+  {
+    "id": "poi-369",
+    "name": "COL. NAC. GRAL. PABLO L. AVILA",
+    "category": "Educación",
+    "lat": -25.326368,
+    "lon": -57.580594
+  },
+  {
+    "id": "poi-370",
+    "name": "ESC. N° 300 HERMINIO GIMENEZ",
+    "category": "Educación",
+    "lat": -25.325376,
+    "lon": -57.58283
+  },
+  {
+    "id": "poi-371",
+    "name": "COL. APOSTOLICO SAN JOSE",
+    "category": "Educación",
+    "lat": -25.325075,
+    "lon": -57.567906
+  },
+  {
+    "id": "poi-372",
+    "name": "COL. VILLA SAN FRANCISCO",
+    "category": "Educación",
+    "lat": -25.319843,
+    "lon": -57.568289
+  },
+  {
+    "id": "poi-373",
+    "name": "ESC. N° 449 Y COL. NAC. JUAN ALBERTO SAMANIE",
+    "category": "Educación",
+    "lat": -25.32225,
+    "lon": -57.565398
+  },
+  {
+    "id": "poi-374",
+    "name": "ESC. Y COL. JUAN EUDORO CACERES",
+    "category": "Educación",
+    "lat": -25.320338,
+    "lon": -57.574988
+  },
+  {
+    "id": "poi-375",
+    "name": "INST. DE ENSEÑANZA PROFESIONAL LA MUSICA PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.314618,
+    "lon": -57.572886
+  },
+  {
+    "id": "poi-376",
+    "name": "INST. DE ENSEÑANZA VILLA AURELIA",
+    "category": "Lugar de Interés",
+    "lat": -25.311614,
+    "lon": -57.571765
+  },
+  {
+    "id": "poi-377",
+    "name": "J. DE INFANTES RETOÑOS",
+    "category": "Lugar de Interés",
+    "lat": -25.299615,
+    "lon": -57.571326
+  },
+  {
+    "id": "poi-378",
+    "name": "CTRO. CULT. CONFUCIO EN EL COL. CHIANKAISHEI",
+    "category": "Educación",
+    "lat": -25.299862,
+    "lon": -57.576267
+  },
+  {
+    "id": "poi-379",
+    "name": "SPIECEN CERNEN UNDKINDERGARDEN J. DE INFANTE",
+    "category": "Lugar de Interés",
+    "lat": -25.301765,
+    "lon": -57.569007
+  },
+  {
+    "id": "poi-380",
+    "name": "RAIMBOW CTRO. EDUC.",
+    "category": "Lugar de Interés",
+    "lat": -25.2986,
+    "lon": -57.567656
+  },
+  {
+    "id": "poi-381",
+    "name": "COL. EL REDENTOR",
+    "category": "Educación",
+    "lat": -25.301568,
+    "lon": -57.562801
+  },
+  {
+    "id": "poi-382",
+    "name": "COL. DEL SOL",
+    "category": "Educación",
+    "lat": -25.304647,
+    "lon": -57.562897
+  },
+  {
+    "id": "poi-383",
+    "name": "ESC. N° 478 DR. ROBERTO L. PETIT",
+    "category": "Educación",
+    "lat": -25.313338,
+    "lon": -57.562772
+  },
+  {
+    "id": "poi-384",
+    "name": "J. INF. MUNDO DE COLORES",
+    "category": "Lugar de Interés",
+    "lat": -25.301686,
+    "lon": -57.553349
+  },
+  {
+    "id": "poi-385",
+    "name": "LICEO STA. MARIA",
+    "category": "Lugar de Interés",
+    "lat": -25.299384,
+    "lon": -57.550029
+  },
+  {
+    "id": "poi-386",
+    "name": "ESC. N° 477 PROF. EDUARDO LOPEZ",
+    "category": "Educación",
+    "lat": -25.301524,
+    "lon": -57.550242
+  },
+  {
+    "id": "poi-387",
+    "name": "INST. PROFESIONAL DE MARIA",
+    "category": "Lugar de Interés",
+    "lat": -25.29955,
+    "lon": -57.548859
+  },
+  {
+    "id": "poi-388",
+    "name": "COL. LA NATIVIDAD DE LA STA. MA. ( INTERN. DE NI Ñ",
+    "category": "Educación",
+    "lat": -25.299078,
+    "lon": -57.548284
+  },
+  {
+    "id": "poi-389",
+    "name": "COL. VICTORIANO HERRERA",
+    "category": "Educación",
+    "lat": -25.29902,
+    "lon": -57.557703
+  },
+  {
+    "id": "poi-390",
+    "name": "J. DE INFANTES TORTUGUITA",
+    "category": "Lugar de Interés",
+    "lat": -25.302488,
+    "lon": -57.566545
+  },
+  {
+    "id": "poi-391",
+    "name": "I.P.E.O. INST. PRIV. DE ESPECIALIZACION",
+    "category": "Lugar de Interés",
+    "lat": -25.298546,
+    "lon": -57.57399
+  },
+  {
+    "id": "poi-392",
+    "name": "ESC. N° 213 GRAL. SAN MARTIN",
+    "category": "Educación",
+    "lat": -25.301071,
+    "lon": -57.570262
+  },
+  {
+    "id": "poi-393",
+    "name": "J. INF. MARGARTE",
+    "category": "Lugar de Interés",
+    "lat": -25.300481,
+    "lon": -57.568417
+  },
+  {
+    "id": "poi-394",
+    "name": "GUARD. CRISTINA BURT",
+    "category": "Lugar de Interés",
+    "lat": -25.297844,
+    "lon": -57.569055
+  },
+  {
+    "id": "poi-395",
+    "name": "J. INF. PRE-ESCOLAR N° 328 PASITOS",
+    "category": "Lugar de Interés",
+    "lat": -25.30255,
+    "lon": -57.586522
+  },
+  {
+    "id": "poi-396",
+    "name": "NEW WORLD INSTITUTE J. INF.",
+    "category": "Lugar de Interés",
+    "lat": -25.308555,
+    "lon": -57.584835
+  },
+  {
+    "id": "poi-397",
+    "name": "HOGAR INF. STA. TERESITA ( HOGAR DE BENEF.)",
+    "category": "Lugar de Interés",
+    "lat": -25.310361,
+    "lon": -57.595434
+  },
+  {
+    "id": "poi-398",
+    "name": "COL. CRISTIANO CHOFERES DEL CHACO",
+    "category": "Educación",
+    "lat": -25.302451,
+    "lon": -57.594831
+  },
+  {
+    "id": "poi-399",
+    "name": "GUARD.J. DE INFANTES LOS SOBRINOS DE CRISTO",
+    "category": "Lugar de Interés",
+    "lat": -25.319557,
+    "lon": -57.591341
+  },
+  {
+    "id": "poi-400",
+    "name": "J. PRE-ESCOLAR N° 343 MICHELO",
+    "category": "Lugar de Interés",
+    "lat": -25.320915,
+    "lon": -57.57567
+  },
+  {
+    "id": "poi-401",
+    "name": "CTRO. CRISTIANO DE EDUC. CONTINUA",
+    "category": "Lugar de Interés",
+    "lat": -25.324115,
+    "lon": -57.580008
+  },
+  {
+    "id": "poi-402",
+    "name": "MARIA KAROL J. DE INFANTES",
+    "category": "Lugar de Interés",
+    "lat": -25.317001,
+    "lon": -57.563176
+  },
+  {
+    "id": "poi-403",
+    "name": "VIRGIN OF SCHOOL HOPE ( COL. BILINGUE)",
+    "category": "Educación",
+    "lat": -25.304054,
+    "lon": -57.573357
+  },
+  {
+    "id": "poi-404",
+    "name": "I.S.E. UNIV.",
+    "category": "Educación",
+    "lat": -25.319742,
+    "lon": -57.58349
+  },
+  {
+    "id": "poi-405",
+    "name": "J. DE PRE-ESCOLAR OSITOS MIMOSOS",
+    "category": "Lugar de Interés",
+    "lat": -25.304251,
+    "lon": -57.589602
+  },
+  {
+    "id": "poi-406",
+    "name": "CTRO. EDUC. PARROQ. SAN PABLO",
+    "category": "Lugar de Interés",
+    "lat": -25.328931,
+    "lon": -57.584423
+  },
+  {
+    "id": "poi-407",
+    "name": "ESC. N° 225 DR. JUAN LEON MALLORQUIN",
+    "category": "Educación",
+    "lat": -25.296736,
+    "lon": -57.661766
+  },
+  {
+    "id": "poi-408",
+    "name": "ESC. N° 17 REP. DEL PERU",
+    "category": "Educación",
+    "lat": -25.292277,
+    "lon": -57.661763
+  },
+  {
+    "id": "poi-409",
+    "name": "ESC. POLITEC. CIRILO DUARTE",
+    "category": "Educación",
+    "lat": -25.290317,
+    "lon": -57.659586
+  },
+  {
+    "id": "poi-410",
+    "name": "COL. SAGRADO CORAZON DE JESUS",
+    "category": "Educación",
+    "lat": -25.286138,
+    "lon": -57.660948
+  },
+  {
+    "id": "poi-411",
+    "name": "ESC. EL MOLINO",
+    "category": "Educación",
+    "lat": -25.284302,
+    "lon": -57.663671
+  },
+  {
+    "id": "poi-412",
+    "name": "U.N.A. COL. EXP. PY- BR. FAC. DE FILOSOFIA",
+    "category": "Educación",
+    "lat": -25.283926,
+    "lon": -57.6623
+  },
+  {
+    "id": "poi-413",
+    "name": "COL. ALBERTO SCHWEITZER",
+    "category": "Educación",
+    "lat": -25.280309,
+    "lon": -57.660416
+  },
+  {
+    "id": "poi-414",
+    "name": "C.CULT.Y SOCIAL DR. GASPAR R. DE FRANCIA",
+    "category": "Lugar de Interés",
+    "lat": -25.276394,
+    "lon": -57.651492
+  },
+  {
+    "id": "poi-415",
+    "name": "HOGAR SAGRADA FLIA. DE NAZARETH",
+    "category": "Lugar de Interés",
+    "lat": -25.276984,
+    "lon": -57.652142
+  },
+  {
+    "id": "poi-416",
+    "name": "GUARD. INF. STA. LUISA DE MARILLAC",
+    "category": "Lugar de Interés",
+    "lat": -25.277049,
+    "lon": -57.652875
+  },
+  {
+    "id": "poi-417",
+    "name": "INST. DE INVEST. DE CIENCIA DE LA SALUD",
+    "category": "Salud",
+    "lat": -25.279324,
+    "lon": -57.652639
+  },
+  {
+    "id": "poi-418",
+    "name": "ESC . SAN VICENTE DE PADUA",
+    "category": "Lugar de Interés",
+    "lat": -25.280238,
+    "lon": -57.654175
+  },
+  {
+    "id": "poi-419",
+    "name": "ESC. N°442 DELIA FRUTOS DE SANCHEZ",
+    "category": "Educación",
+    "lat": -25.282776,
+    "lon": -57.653153
+  },
+  {
+    "id": "poi-420",
+    "name": "ESC. DE ARTE INTERNACIONAL",
+    "category": "Educación",
+    "lat": -25.296207,
+    "lon": -57.644063
+  },
+  {
+    "id": "poi-421",
+    "name": "COL. MAGISTRAL",
+    "category": "Educación",
+    "lat": -25.292252,
+    "lon": -57.645282
+  },
+  {
+    "id": "poi-422",
+    "name": "U.C.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.292324,
+    "lon": -57.646738
+  },
+  {
+    "id": "poi-423",
+    "name": "ESC. DE COMERCIO N°1 ALFONSO B. CAMPOS",
+    "category": "Educación",
+    "lat": -25.29306,
+    "lon": -57.642031
+  },
+  {
+    "id": "poi-424",
+    "name": "INST. AMERICANO",
+    "category": "Lugar de Interés",
+    "lat": -25.289931,
+    "lon": -57.645097
+  },
+  {
+    "id": "poi-425",
+    "name": "INST. DE FORMAC. DOCENTE ATLANTICA",
+    "category": "Lugar de Interés",
+    "lat": -25.290339,
+    "lon": -57.648128
+  },
+  {
+    "id": "poi-426",
+    "name": "COL. BEJAMIN ACEVAL",
+    "category": "Educación",
+    "lat": -25.289423,
+    "lon": -57.642389
+  },
+  {
+    "id": "poi-427",
+    "name": "COL. NAC. DR. J.DE ANTEQUERA Y CASTRO",
+    "category": "Educación",
+    "lat": -25.28869,
+    "lon": -57.648799
+  },
+  {
+    "id": "poi-428",
+    "name": "LA ROCHELLE INTERN. C. DE LA ENSEÑANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.285739,
+    "lon": -57.646746
+  },
+  {
+    "id": "poi-429",
+    "name": "COL. DEL INMACULADO CORAZON DE MARIA",
+    "category": "Educación",
+    "lat": -25.285161,
+    "lon": -57.646721
+  },
+  {
+    "id": "poi-430",
+    "name": "COL. Y PARROQ. CRISTO REY",
+    "category": "Educación",
+    "lat": -25.287306,
+    "lon": -57.646873
+  },
+  {
+    "id": "poi-431",
+    "name": "COL. IBERO AMERICANO",
+    "category": "Educación",
+    "lat": -25.288009,
+    "lon": -57.643028
+  },
+  {
+    "id": "poi-432",
+    "name": "ESC. DE CINE Y ARTES JOSE BENEGAS",
+    "category": "Educación",
+    "lat": -25.283481,
+    "lon": -57.645451
+  },
+  {
+    "id": "poi-433",
+    "name": "ASUNCION HIGH SCHOOL",
+    "category": "Lugar de Interés",
+    "lat": -25.284468,
+    "lon": -57.646038
+  },
+  {
+    "id": "poi-434",
+    "name": "COL. PARROQ. MONSEÑOR LASAGÑA",
+    "category": "Educación",
+    "lat": -25.281379,
+    "lon": -57.646582
+  },
+  {
+    "id": "poi-435",
+    "name": "ESC.PARROQ. N° 10353 STO. DOMINGO SAVIO",
+    "category": "Educación",
+    "lat": -25.281315,
+    "lon": -57.647757
+  },
+  {
+    "id": "poi-436",
+    "name": "ESC. CIENTIFICA BASILIO",
+    "category": "Educación",
+    "lat": -25.27863,
+    "lon": -57.636501
+  },
+  {
+    "id": "poi-437",
+    "name": "UNIV. AUTONOMA DE ASUNCION",
+    "category": "Educación",
+    "lat": -25.278781,
+    "lon": -57.637996
+  },
+  {
+    "id": "poi-438",
+    "name": "INIV. AUTONOMA DE ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.280377,
+    "lon": -57.640542
+  },
+  {
+    "id": "poi-439",
+    "name": "COL. NAC. COMERCIO N°2 PTE. FRANCO",
+    "category": "Educación",
+    "lat": -25.284661,
+    "lon": -57.635487
+  },
+  {
+    "id": "poi-440",
+    "name": "COL. DANTE ALEGHIERI",
+    "category": "Educación",
+    "lat": -25.285238,
+    "lon": -57.638045
+  },
+  {
+    "id": "poi-441",
+    "name": "UNIV. TECNICA INTERCONTINENTAL",
+    "category": "Educación",
+    "lat": -25.28668,
+    "lon": -57.635476
+  },
+  {
+    "id": "poi-442",
+    "name": "ATENEO PARAGUAYO",
+    "category": "Lugar de Interés",
+    "lat": -25.286113,
+    "lon": -57.637306
+  },
+  {
+    "id": "poi-443",
+    "name": "LICEO DELFIN CHAMORRO",
+    "category": "Lugar de Interés",
+    "lat": -25.286783,
+    "lon": -57.638905
+  },
+  {
+    "id": "poi-444",
+    "name": "COMPLEJO EDUC. UNIV. POLITECNICO ETICO",
+    "category": "Educación",
+    "lat": -25.288436,
+    "lon": -57.634882
+  },
+  {
+    "id": "poi-445",
+    "name": "UNIV. TECNICA INTEGRAL",
+    "category": "Educación",
+    "lat": -25.288802,
+    "lon": -57.638689
+  },
+  {
+    "id": "poi-446",
+    "name": "COL. ACUÑA DE FIGUEROA",
+    "category": "Educación",
+    "lat": -25.29527,
+    "lon": -57.636373
+  },
+  {
+    "id": "poi-447",
+    "name": "ESC. NORMAL DE MUSICA",
+    "category": "Educación",
+    "lat": -25.296354,
+    "lon": -57.639837
+  },
+  {
+    "id": "poi-448",
+    "name": "COL. PERPETUO SOCORRO",
+    "category": "Educación",
+    "lat": -25.296379,
+    "lon": -57.636077
+  },
+  {
+    "id": "poi-449",
+    "name": "COL. SAGRADO CORAZON",
+    "category": "Educación",
+    "lat": -25.294155,
+    "lon": -57.626827
+  },
+  {
+    "id": "poi-450",
+    "name": "CTRO. EDUC- PANAL",
+    "category": "Lugar de Interés",
+    "lat": -25.293648,
+    "lon": -57.62607
+  },
+  {
+    "id": "poi-451",
+    "name": "FAC. DE CIENCIAS VIVAS",
+    "category": "Lugar de Interés",
+    "lat": -25.291058,
+    "lon": -57.629194
+  },
+  {
+    "id": "poi-452",
+    "name": "ESC. N° 105 EE.UU",
+    "category": "Educación",
+    "lat": -25.291381,
+    "lon": -57.629185
+  },
+  {
+    "id": "poi-453",
+    "name": "CTRO. DE ESTUDIOS FISCALES",
+    "category": "Lugar de Interés",
+    "lat": -25.291472,
+    "lon": -57.633173
+  },
+  {
+    "id": "poi-454",
+    "name": "INST. AMERICANO",
+    "category": "Lugar de Interés",
+    "lat": -25.293011,
+    "lon": -57.630627
+  },
+  {
+    "id": "poi-455",
+    "name": "COL. MARIA AUXILIADORA",
+    "category": "Educación",
+    "lat": -25.288845,
+    "lon": -57.63095
+  },
+  {
+    "id": "poi-456",
+    "name": "UNIV. DEL PACIFICO",
+    "category": "Educación",
+    "lat": -25.287769,
+    "lon": -57.632895
+  },
+  {
+    "id": "poi-457",
+    "name": "UNIV. AUTONOMA DE ASUNCION",
+    "category": "Educación",
+    "lat": -25.28761,
+    "lon": -57.628796
+  },
+  {
+    "id": "poi-458",
+    "name": "UNIV. COLUMBIA",
+    "category": "Educación",
+    "lat": -25.28613,
+    "lon": -57.629972
+  },
+  {
+    "id": "poi-459",
+    "name": "ESC. N° 1032 E SUB ALTERNA",
+    "category": "Educación",
+    "lat": -25.284476,
+    "lon": -57.628308
+  },
+  {
+    "id": "poi-460",
+    "name": "COL-DE LA PROVIDENCIA",
+    "category": "Lugar de Interés",
+    "lat": -25.282062,
+    "lon": -57.631357
+  },
+  {
+    "id": "poi-461",
+    "name": "UCA",
+    "category": "Lugar de Interés",
+    "lat": -25.280806,
+    "lon": -57.632283
+  },
+  {
+    "id": "poi-462",
+    "name": "COL. JUAN R. DAHLQUIS E.M.D.",
+    "category": "Educación",
+    "lat": -25.28328,
+    "lon": -57.623948
+  },
+  {
+    "id": "poi-463",
+    "name": "UCOM ( UNIV. COMUNEROS )",
+    "category": "Educación",
+    "lat": -25.282452,
+    "lon": -57.618561
+  },
+  {
+    "id": "poi-464",
+    "name": "ANGLO INGLISH (UNIV.)",
+    "category": "Educación",
+    "lat": -25.283845,
+    "lon": -57.620027
+  },
+  {
+    "id": "poi-465",
+    "name": "INST. CULT. PARAGUAYO ALEMAN",
+    "category": "Lugar de Interés",
+    "lat": -25.28494,
+    "lon": -57.62055
+  },
+  {
+    "id": "poi-466",
+    "name": "U.N.A ( INST. ANDRES BARBERO )",
+    "category": "Lugar de Interés",
+    "lat": -25.283719,
+    "lon": -57.622118
+  },
+  {
+    "id": "poi-467",
+    "name": "FAC. DE ODONTOLOGIA U.N.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.285348,
+    "lon": -57.621687
+  },
+  {
+    "id": "poi-468",
+    "name": "COL. SAN MIGUEL DE GARICOITS",
+    "category": "Educación",
+    "lat": -25.285765,
+    "lon": -57.620209
+  },
+  {
+    "id": "poi-469",
+    "name": "COL. APOST. SAN JOSE",
+    "category": "Educación",
+    "lat": -25.28622,
+    "lon": -57.619199
+  },
+  {
+    "id": "poi-470",
+    "name": "COL. STA. MARIA",
+    "category": "Educación",
+    "lat": -25.28482,
+    "lon": -57.618771
+  },
+  {
+    "id": "poi-471",
+    "name": "COL. DE LA ASUNCION",
+    "category": "Educación",
+    "lat": -25.285201,
+    "lon": -57.619226
+  },
+  {
+    "id": "poi-472",
+    "name": "COL. VICE PTE. SANCHEZ",
+    "category": "Educación",
+    "lat": -25.283018,
+    "lon": -57.618579
+  },
+  {
+    "id": "poi-473",
+    "name": "UNIV. UNINORTE",
+    "category": "Educación",
+    "lat": -25.290256,
+    "lon": -57.619413
+  },
+  {
+    "id": "poi-474",
+    "name": "COL. MANA",
+    "category": "Educación",
+    "lat": -25.289543,
+    "lon": -57.621177
+  },
+  {
+    "id": "poi-475",
+    "name": "COL. STA. ROSA",
+    "category": "Educación",
+    "lat": -25.297142,
+    "lon": -57.615578
+  },
+  {
+    "id": "poi-476",
+    "name": "UNIV. DEL NORTE",
+    "category": "Educación",
+    "lat": -25.295519,
+    "lon": -57.612379
+  },
+  {
+    "id": "poi-477",
+    "name": "C. EDUC. AMEI",
+    "category": "Lugar de Interés",
+    "lat": -25.292798,
+    "lon": -57.613929
+  },
+  {
+    "id": "poi-478",
+    "name": "CTRO. DE ESTUDIOS BRASILEROS",
+    "category": "Lugar de Interés",
+    "lat": -25.292746,
+    "lon": -57.616893
+  },
+  {
+    "id": "poi-479",
+    "name": "C. EDUC. YCUA",
+    "category": "Lugar de Interés",
+    "lat": -25.291872,
+    "lon": -57.617395
+  },
+  {
+    "id": "poi-480",
+    "name": "COL. INTERNACIONAL",
+    "category": "Educación",
+    "lat": -25.289516,
+    "lon": -57.616025
+  },
+  {
+    "id": "poi-481",
+    "name": "COL. SAN ANDRES",
+    "category": "Educación",
+    "lat": -25.286327,
+    "lon": -57.609908
+  },
+  {
+    "id": "poi-482",
+    "name": "UNIV. COLUMBIA",
+    "category": "Educación",
+    "lat": -25.286202,
+    "lon": -57.611654
+  },
+  {
+    "id": "poi-483",
+    "name": "ESC. N° 18 REP. DE CUBA",
+    "category": "Educación",
+    "lat": -25.275868,
+    "lon": -57.610664
+  },
+  {
+    "id": "poi-484",
+    "name": "COL. PRIV. SAN RAMON",
+    "category": "Educación",
+    "lat": -25.268005,
+    "lon": -57.602014
+  },
+  {
+    "id": "poi-485",
+    "name": "COL. MONTELINDO",
+    "category": "Educación",
+    "lat": -25.270852,
+    "lon": -57.600843
+  },
+  {
+    "id": "poi-486",
+    "name": "COL. NTRA. SRA. DEL HUERTO",
+    "category": "Educación",
+    "lat": -25.274922,
+    "lon": -57.600098
+  },
+  {
+    "id": "poi-487",
+    "name": "COL. FRANCES MARCEL PAGNOL",
+    "category": "Educación",
+    "lat": -25.278817,
+    "lon": -57.603716
+  },
+  {
+    "id": "poi-488",
+    "name": "COL. MCAL. FRANCISCO SOLANO LOPEZ",
+    "category": "Educación",
+    "lat": -25.279988,
+    "lon": -57.602558
+  },
+  {
+    "id": "poi-489",
+    "name": "COL. SAN CARLOS",
+    "category": "Educación",
+    "lat": -25.284687,
+    "lon": -57.603767
+  },
+  {
+    "id": "poi-490",
+    "name": "ESC. N° 9 ADELA SPERATTI",
+    "category": "Educación",
+    "lat": -25.288306,
+    "lon": -57.607698
+  },
+  {
+    "id": "poi-491",
+    "name": "COL. SAN PATRICIO",
+    "category": "Educación",
+    "lat": -25.289895,
+    "lon": -57.604979
+  },
+  {
+    "id": "poi-492",
+    "name": "COL. DEL NORTE",
+    "category": "Educación",
+    "lat": -25.289729,
+    "lon": -57.602348
+  },
+  {
+    "id": "poi-493",
+    "name": "J. DE INFANTE PINTURITA DE COLORES",
+    "category": "Lugar de Interés",
+    "lat": -25.290109,
+    "lon": -57.60304
+  },
+  {
+    "id": "poi-494",
+    "name": "J. INF. FRESKY",
+    "category": "Lugar de Interés",
+    "lat": -25.295747,
+    "lon": -57.607866
+  },
+  {
+    "id": "poi-495",
+    "name": "COL. NTRA. SRA. DEL ROSARIO",
+    "category": "Educación",
+    "lat": -25.297056,
+    "lon": -57.607242
+  },
+  {
+    "id": "poi-496",
+    "name": "COL. SAN JOSE Y POLIDEPORT.PADRE L.CONDOU",
+    "category": "Educación",
+    "lat": -25.286347,
+    "lon": -57.597432
+  },
+  {
+    "id": "poi-497",
+    "name": "UNIV. AMERICANA",
+    "category": "Educación",
+    "lat": -25.278874,
+    "lon": -57.599528
+  },
+  {
+    "id": "poi-498",
+    "name": "COL. PARROQ.VIRGEN DE FATIMA",
+    "category": "Educación",
+    "lat": -25.272026,
+    "lon": -57.598643
+  },
+  {
+    "id": "poi-499",
+    "name": "ESC.P.TCA.N°14321STA.CATALINA LABOURE",
+    "category": "Educación",
+    "lat": -25.26005,
+    "lon": -57.596475
+  },
+  {
+    "id": "poi-500",
+    "name": "COL. NAC.REP. DEL BRASIL",
+    "category": "Educación",
+    "lat": -25.283049,
+    "lon": -57.638045
+  },
+  {
+    "id": "poi-501",
+    "name": "ESC. GRAL. DIAZ",
+    "category": "Educación",
+    "lat": -25.292197,
+    "lon": -57.641778
+  },
+  {
+    "id": "poi-502",
+    "name": "E.C.S.A FAC. DE ESTUDIOS DE INFORMATICA",
+    "category": "Lugar de Interés",
+    "lat": -25.29279,
+    "lon": -57.629586
+  },
+  {
+    "id": "poi-503",
+    "name": "UNINORTE ( UNIV. DEL NORTE)",
+    "category": "Educación",
+    "lat": -25.286315,
+    "lon": -57.622563
+  },
+  {
+    "id": "poi-504",
+    "name": "COL. NAC. LUIS PAUSTER",
+    "category": "Educación",
+    "lat": -25.294429,
+    "lon": -57.617175
+  },
+  {
+    "id": "poi-505",
+    "name": "ADONAY BILINGUE COL.",
+    "category": "Educación",
+    "lat": -25.281754,
+    "lon": -57.611174
+  },
+  {
+    "id": "poi-506",
+    "name": "COL. BAUTISTA",
+    "category": "Educación",
+    "lat": -25.280392,
+    "lon": -57.60413
+  },
+  {
+    "id": "poi-507",
+    "name": "COL. MANANTIALES",
+    "category": "Educación",
+    "lat": -25.290816,
+    "lon": -57.596978
+  },
+  {
+    "id": "poi-508",
+    "name": "FAC. DE MEDICINA",
+    "category": "Lugar de Interés",
+    "lat": -25.279639,
+    "lon": -57.650501
+  },
+  {
+    "id": "poi-509",
+    "name": "COL. NUR",
+    "category": "Educación",
+    "lat": -25.291254,
+    "lon": -57.627354
+  },
+  {
+    "id": "poi-510",
+    "name": "UNIV. AMERICANA",
+    "category": "Educación",
+    "lat": -25.286647,
+    "lon": -57.615912
+  },
+  {
+    "id": "poi-511",
+    "name": "INST.DE ENGLISHIFAEL ORTIZ DE RUFINELL",
+    "category": "Lugar de Interés",
+    "lat": -25.285627,
+    "lon": -57.609196
+  },
+  {
+    "id": "poi-512",
+    "name": "ESC. DE PARVULOS NIÑITO JESUS",
+    "category": "Educación",
+    "lat": -25.280243,
+    "lon": -57.611623
+  },
+  {
+    "id": "poi-513",
+    "name": "ESC. N°1 REP. ARGENTINA",
+    "category": "Educación",
+    "lat": -25.289786,
+    "lon": -57.624155
+  },
+  {
+    "id": "poi-514",
+    "name": "ESC. N° 193 PTE. FEDERICO CHAVEZ",
+    "category": "Educación",
+    "lat": -25.302612,
+    "lon": -57.654727
+  },
+  {
+    "id": "poi-515",
+    "name": "ESC. N° 13673 STA. ROSA DE LIMA",
+    "category": "Educación",
+    "lat": -25.317532,
+    "lon": -57.651546
+  },
+  {
+    "id": "poi-516",
+    "name": "CAP. SAN CAYETANO",
+    "category": "Lugar de Interés",
+    "lat": -25.320426,
+    "lon": -57.648141
+  },
+  {
+    "id": "poi-517",
+    "name": "ESC. N° 1003 LIC. CLARA PIACENTINI",
+    "category": "Educación",
+    "lat": -25.317359,
+    "lon": -57.644051
+  },
+  {
+    "id": "poi-518",
+    "name": "ESC. N° 1044 PARROQ.SUBVENCIONADA STA. ANA",
+    "category": "Educación",
+    "lat": -25.314557,
+    "lon": -57.648403
+  },
+  {
+    "id": "poi-519",
+    "name": "ESC. N° 228 DELFIN CHAMORRO",
+    "category": "Educación",
+    "lat": -25.316272,
+    "lon": -57.641771
+  },
+  {
+    "id": "poi-520",
+    "name": "COL. NAC. E.M.D. NACIONES UNIDAS",
+    "category": "Educación",
+    "lat": -25.300439,
+    "lon": -57.643991
+  },
+  {
+    "id": "poi-521",
+    "name": "ESC. SAN JUAN BOSCO",
+    "category": "Educación",
+    "lat": -25.302327,
+    "lon": -57.63574
+  },
+  {
+    "id": "poi-522",
+    "name": "ESC. N° 370 Y COL. NAC. DR. JUAN M. FRUTOS",
+    "category": "Educación",
+    "lat": -25.306209,
+    "lon": -57.640008
+  },
+  {
+    "id": "poi-523",
+    "name": "ESC. STMO. REDENTOR",
+    "category": "Educación",
+    "lat": -25.308704,
+    "lon": -57.640512
+  },
+  {
+    "id": "poi-524",
+    "name": "ESC. N° 121 COL. IGNACIO ALBERTO PANE",
+    "category": "Educación",
+    "lat": -25.319208,
+    "lon": -57.640006
+  },
+  {
+    "id": "poi-525",
+    "name": "U. C. A.",
+    "category": "Lugar de Interés",
+    "lat": -25.323096,
+    "lon": -57.637012
+  },
+  {
+    "id": "poi-526",
+    "name": "COL. Y ESC. N° 210 DE HUNGRIA",
+    "category": "Educación",
+    "lat": -25.336995,
+    "lon": -57.638095
+  },
+  {
+    "id": "poi-527",
+    "name": "ESC. N° 617 ITA ENRAMADA",
+    "category": "Educación",
+    "lat": -25.361169,
+    "lon": -57.641742
+  },
+  {
+    "id": "poi-528",
+    "name": "ESC. JEISI J. INF.",
+    "category": "Educación",
+    "lat": -25.332103,
+    "lon": -57.628884
+  },
+  {
+    "id": "poi-529",
+    "name": "COL. SAN DIEGO SAINT CATHERINE",
+    "category": "Educación",
+    "lat": -25.327271,
+    "lon": -57.629209
+  },
+  {
+    "id": "poi-530",
+    "name": "ESC. N°1004 DR. LEANDRO PRIETO",
+    "category": "Educación",
+    "lat": -25.32642,
+    "lon": -57.631505
+  },
+  {
+    "id": "poi-531",
+    "name": "COL. SAN CLEMENTE MARIA",
+    "category": "Educación",
+    "lat": -25.300487,
+    "lon": -57.631076
+  },
+  {
+    "id": "poi-532",
+    "name": "ESC. N° 203 CLETO ROMERO",
+    "category": "Educación",
+    "lat": -25.299267,
+    "lon": -57.630239
+  },
+  {
+    "id": "poi-533",
+    "name": "ESC. PARROQ. N° 1017 Y PARROQ. S.MIGUEL",
+    "category": "Educación",
+    "lat": -25.298646,
+    "lon": -57.617383
+  },
+  {
+    "id": "poi-534",
+    "name": "COL. PRIV. MATER DEI",
+    "category": "Educación",
+    "lat": -25.304716,
+    "lon": -57.622601
+  },
+  {
+    "id": "poi-535",
+    "name": "1° ESC. PARAGUAYA DE SORDOS",
+    "category": "Educación",
+    "lat": -25.304968,
+    "lon": -57.620107
+  },
+  {
+    "id": "poi-536",
+    "name": "COL. NAC. RAMON IDALECIO CARDOZO",
+    "category": "Educación",
+    "lat": -25.305694,
+    "lon": -57.617223
+  },
+  {
+    "id": "poi-537",
+    "name": "ESC. N° 14370 BAUTISTA LA NUEVA JERUSALEN",
+    "category": "Educación",
+    "lat": -25.301893,
+    "lon": -57.618101
+  },
+  {
+    "id": "poi-538",
+    "name": "COL. NAC. DE LA CAPITAL",
+    "category": "Educación",
+    "lat": -25.302112,
+    "lon": -57.617401
+  },
+  {
+    "id": "poi-539",
+    "name": "ESC. DE BELLAS ARTES",
+    "category": "Educación",
+    "lat": -25.302407,
+    "lon": -57.620024
+  },
+  {
+    "id": "poi-540",
+    "name": "ESC. N° 206 RCA. DE HAITI",
+    "category": "Educación",
+    "lat": -25.308698,
+    "lon": -57.620658
+  },
+  {
+    "id": "poi-541",
+    "name": "ESC. DE LAS AMERICAS (J. INF.)",
+    "category": "Educación",
+    "lat": -25.309216,
+    "lon": -57.617619
+  },
+  {
+    "id": "poi-542",
+    "name": "C. EDUC. SAN VICENTE",
+    "category": "Lugar de Interés",
+    "lat": -25.31364,
+    "lon": -57.623289
+  },
+  {
+    "id": "poi-543",
+    "name": "C. EDUC. SAN GABRIEL",
+    "category": "Lugar de Interés",
+    "lat": -25.314832,
+    "lon": -57.61848
+  },
+  {
+    "id": "poi-544",
+    "name": "PRE-ESCOLAR N° RONDAY ALEGRIA",
+    "category": "Lugar de Interés",
+    "lat": -25.318971,
+    "lon": -57.621599
+  },
+  {
+    "id": "poi-545",
+    "name": "PRE-ESCOLAR EL J. DEL NIÑO JESUS",
+    "category": "Lugar de Interés",
+    "lat": -25.320456,
+    "lon": -57.622934
+  },
+  {
+    "id": "poi-546",
+    "name": "COL. NAC. STA. TERESITA DEL NIÑO JESUS",
+    "category": "Educación",
+    "lat": -25.322085,
+    "lon": -57.623749
+  },
+  {
+    "id": "poi-547",
+    "name": "C. EDUC. SOR EUSEBIA PALOMINO",
+    "category": "Lugar de Interés",
+    "lat": -25.324139,
+    "lon": -57.621989
+  },
+  {
+    "id": "poi-548",
+    "name": "ESC. N°4 ASOC. STA. LUCIA - RESID. DE CIEGOS",
+    "category": "Educación",
+    "lat": -25.307774,
+    "lon": -57.611573
+  },
+  {
+    "id": "poi-549",
+    "name": "ESC. N° 205 Y COL. NAC. REP. DE COLOMBIA",
+    "category": "Educación",
+    "lat": -25.299639,
+    "lon": -57.613627
+  },
+  {
+    "id": "poi-550",
+    "name": "COL. STA. ROSA",
+    "category": "Educación",
+    "lat": -25.297963,
+    "lon": -57.615375
+  },
+  {
+    "id": "poi-551",
+    "name": "ESC. CIENTIFICA BASICA",
+    "category": "Educación",
+    "lat": -25.297592,
+    "lon": -57.613604
+  },
+  {
+    "id": "poi-552",
+    "name": "COLLEGE DEL INMACULEE CONCEPCION",
+    "category": "Lugar de Interés",
+    "lat": -25.302725,
+    "lon": -57.605275
+  },
+  {
+    "id": "poi-553",
+    "name": "COL. Y ESC. N° 1056 PROF. CLOTILDE O. DE NUÑEZ",
+    "category": "Educación",
+    "lat": -25.30821,
+    "lon": -57.603376
+  },
+  {
+    "id": "poi-554",
+    "name": "C. EDUC. VISTA ALEGRE",
+    "category": "Lugar de Interés",
+    "lat": -25.310173,
+    "lon": -57.606548
+  },
+  {
+    "id": "poi-555",
+    "name": "COL. VERBO DIVINO",
+    "category": "Educación",
+    "lat": -25.312467,
+    "lon": -57.606794
+  },
+  {
+    "id": "poi-556",
+    "name": "MAGIS COL. PRIV.",
+    "category": "Educación",
+    "lat": -25.317983,
+    "lon": -57.602995
+  },
+  {
+    "id": "poi-557",
+    "name": "ESC. N° 221 Y COL. NAC. CHACO PARAGUAYO",
+    "category": "Educación",
+    "lat": -25.320561,
+    "lon": -57.608455
+  },
+  {
+    "id": "poi-558",
+    "name": "COL. CRISTIANO ELIM",
+    "category": "Educación",
+    "lat": -25.320276,
+    "lon": -57.603592
+  },
+  {
+    "id": "poi-559",
+    "name": "INST.FORMAC.DOCENTE MADRE Y MAESTRA",
+    "category": "Lugar de Interés",
+    "lat": -25.322192,
+    "lon": -57.60368
+  },
+  {
+    "id": "poi-560",
+    "name": "ESC. ESPECIAL N°2 DIF. JOHN F. KENNEDY",
+    "category": "Educación",
+    "lat": -25.324542,
+    "lon": -57.598992
+  },
+  {
+    "id": "poi-561",
+    "name": "COL. PARROQ. VIRGEN DE NAZARETH",
+    "category": "Educación",
+    "lat": -25.320195,
+    "lon": -57.597292
+  },
+  {
+    "id": "poi-562",
+    "name": "ESC. N° 343 MANUEL O. GUERRERO",
+    "category": "Educación",
+    "lat": -25.315738,
+    "lon": -57.59947
+  },
+  {
+    "id": "poi-563",
+    "name": "ESC. N° 57 COL. NAC. ROSA VIRGINIA PELLETIER",
+    "category": "Educación",
+    "lat": -25.301011,
+    "lon": -57.596378
+  },
+  {
+    "id": "poi-564",
+    "name": "ESC. PARROQ. N° 1048 SAN PEDRO",
+    "category": "Educación",
+    "lat": -25.302313,
+    "lon": -57.599143
+  },
+  {
+    "id": "poi-565",
+    "name": "J. DE INFANTE PIERROT Y COLOMBINA",
+    "category": "Lugar de Interés",
+    "lat": -25.306631,
+    "lon": -57.599394
+  },
+  {
+    "id": "poi-566",
+    "name": "C. EDUC. SAN GABRIEL",
+    "category": "Lugar de Interés",
+    "lat": -25.310995,
+    "lon": -57.631915
+  },
+  {
+    "id": "poi-567",
+    "name": "C. CULT. Y EDUC. DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.309815,
+    "lon": -57.630194
+  },
+  {
+    "id": "poi-568",
+    "name": "COL. 1° DE MARZO",
+    "category": "Educación",
+    "lat": -25.316611,
+    "lon": -57.63297
+  },
+  {
+    "id": "poi-569",
+    "name": "COL. TECNICO 1° DE MARZO",
+    "category": "Educación",
+    "lat": -25.317084,
+    "lon": -57.632789
+  },
+  {
+    "id": "poi-570",
+    "name": "J. INF. LA GRANJA",
+    "category": "Lugar de Interés",
+    "lat": -25.311609,
+    "lon": -57.607398
+  },
+  {
+    "id": "poi-571",
+    "name": "INST. SALESIANO PTORAL.EDUC. COMUNIDAD DON BOSCO",
+    "category": "Lugar de Interés",
+    "lat": -25.323375,
+    "lon": -57.625149
+  },
+  {
+    "id": "poi-572",
+    "name": "CTRO. EDUC. NUEVO MILENIO",
+    "category": "Lugar de Interés",
+    "lat": -25.343434,
+    "lon": -57.63852
+  },
+  {
+    "id": "poi-573",
+    "name": "ESC. PARROQ. SUBALTERNO N° 1058 LAS MERCEDES",
+    "category": "Educación",
+    "lat": -25.296865,
+    "lon": -57.591874
+  },
+  {
+    "id": "poi-574",
+    "name": "UNIV. TECNICA DE COMERCIALIZACION Y DESARROL",
+    "category": "Educación",
+    "lat": -25.290252,
+    "lon": -57.593808
+  },
+  {
+    "id": "poi-575",
+    "name": "COL. REP. DE CHILE",
+    "category": "Educación",
+    "lat": -25.287186,
+    "lon": -57.592463
+  },
+  {
+    "id": "poi-576",
+    "name": "ESC. COL. Y HOGAR NAC. NTRA. SRA. DE LA",
+    "category": "Educación",
+    "lat": -25.281527,
+    "lon": -57.592436
+  },
+  {
+    "id": "poi-577",
+    "name": "CTRO. EDUC. DE LOYOLA",
+    "category": "Lugar de Interés",
+    "lat": -25.267215,
+    "lon": -57.591529
+  },
+  {
+    "id": "poi-578",
+    "name": "ESC. N° 275 JUANA MARIA DE LARA",
+    "category": "Educación",
+    "lat": -25.265734,
+    "lon": -57.592971
+  },
+  {
+    "id": "poi-579",
+    "name": "COL. PRIV. SAGRADA FLIA",
+    "category": "Educación",
+    "lat": -25.262713,
+    "lon": -57.595695
+  },
+  {
+    "id": "poi-580",
+    "name": "ESC. N° 1787 SAN VICENTE DE PAUL",
+    "category": "Educación",
+    "lat": -25.261799,
+    "lon": -57.594875
+  },
+  {
+    "id": "poi-581",
+    "name": "ESC. PRIVADA N° 14715 JUAN WENSLEY",
+    "category": "Educación",
+    "lat": -25.256211,
+    "lon": -57.591888
+  },
+  {
+    "id": "poi-582",
+    "name": "ESC. N° 1071 JOSE MARIA BOGARIN",
+    "category": "Educación",
+    "lat": -25.25362,
+    "lon": -57.592806
+  },
+  {
+    "id": "poi-583",
+    "name": "ESC. KUNU'U RENDA",
+    "category": "Educación",
+    "lat": -25.245262,
+    "lon": -57.584416
+  },
+  {
+    "id": "poi-584",
+    "name": "ESC. N° 322 PROFESORA SILCIA MIRANDA CUETO",
+    "category": "Educación",
+    "lat": -25.253229,
+    "lon": -57.587645
+  },
+  {
+    "id": "poi-585",
+    "name": "CTRO. EDUC. SRA. DE BETHARRAM",
+    "category": "Lugar de Interés",
+    "lat": -25.262394,
+    "lon": -57.590787
+  },
+  {
+    "id": "poi-586",
+    "name": "COL. NAC. PROFESOR EMILIO FERREIRA",
+    "category": "Educación",
+    "lat": -25.264254,
+    "lon": -57.585278
+  },
+  {
+    "id": "poi-587",
+    "name": "COL. ALEMAN CONCORDIA",
+    "category": "Educación",
+    "lat": -25.272331,
+    "lon": -57.588189
+  },
+  {
+    "id": "poi-588",
+    "name": "COL. STA. MARIA Y FORMACION DOCENTE STA. MARI",
+    "category": "Educación",
+    "lat": -25.27575,
+    "lon": -57.585932
+  },
+  {
+    "id": "poi-589",
+    "name": "COL. STA. CLARA",
+    "category": "Educación",
+    "lat": -25.292354,
+    "lon": -57.585027
+  },
+  {
+    "id": "poi-590",
+    "name": "FAC. DE DERECHO Y NOTARIAL DE CIENCIAS SOCIALES",
+    "category": "Lugar de Interés",
+    "lat": -25.294242,
+    "lon": -57.584757
+  },
+  {
+    "id": "poi-591",
+    "name": "COL. NAC. REP. DE PANAMA",
+    "category": "Educación",
+    "lat": -25.292966,
+    "lon": -57.583208
+  },
+  {
+    "id": "poi-592",
+    "name": "COL. LAS ALMENAS",
+    "category": "Educación",
+    "lat": -25.296334,
+    "lon": -57.5876
+  },
+  {
+    "id": "poi-593",
+    "name": "ECO ESC.",
+    "category": "Educación",
+    "lat": -25.295357,
+    "lon": -57.58697
+  },
+  {
+    "id": "poi-594",
+    "name": "UNIV. CATOL. NTRA. SRA. DE LA ASUNCION",
+    "category": "Educación",
+    "lat": -25.291184,
+    "lon": -57.578239
+  },
+  {
+    "id": "poi-595",
+    "name": "UNIV. TECNICA DE COMERCIALIZACION Y DESARROL",
+    "category": "Educación",
+    "lat": -25.287565,
+    "lon": -57.582185
+  },
+  {
+    "id": "poi-596",
+    "name": "COL. AMERICANO",
+    "category": "Educación",
+    "lat": -25.28378,
+    "lon": -57.579281
+  },
+  {
+    "id": "poi-597",
+    "name": "J. INF. CAJITA MAGICA",
+    "category": "Lugar de Interés",
+    "lat": -25.267985,
+    "lon": -57.58043
+  },
+  {
+    "id": "poi-598",
+    "name": "COL. TECNICO JAVIER",
+    "category": "Educación",
+    "lat": -25.26523,
+    "lon": -57.579885
+  },
+  {
+    "id": "poi-599",
+    "name": "ASUNCION INTERNAC. SCHOOL OF TOMORROW",
+    "category": "Lugar de Interés",
+    "lat": -25.263998,
+    "lon": -57.582578
+  },
+  {
+    "id": "poi-600",
+    "name": "COL. TECNICO CERRO ROSA",
+    "category": "Educación",
+    "lat": -25.257373,
+    "lon": -57.582533
+  },
+  {
+    "id": "poi-601",
+    "name": "ESC. N° 19 REP. ORIENTAL DEL URUGUAY",
+    "category": "Educación",
+    "lat": -25.258319,
+    "lon": -57.581593
+  },
+  {
+    "id": "poi-602",
+    "name": "INST. PROFESIONAL JAIME PEÑA",
+    "category": "Lugar de Interés",
+    "lat": -25.25587,
+    "lon": -57.577327
+  },
+  {
+    "id": "poi-603",
+    "name": "ESC. SOLAR ARTIGAS",
+    "category": "Educación",
+    "lat": -25.251488,
+    "lon": -57.578463
+  },
+  {
+    "id": "poi-604",
+    "name": "ESC.N° 1809 FRAY BARTOLOME DE LAS CASAS",
+    "category": "Educación",
+    "lat": -25.243411,
+    "lon": -57.581509
+  },
+  {
+    "id": "poi-605",
+    "name": "ESC. MUNIC. MARANGATÚ RAPÉ",
+    "category": "Educación",
+    "lat": -25.239701,
+    "lon": -57.581093
+  },
+  {
+    "id": "poi-606",
+    "name": "ESC. GRAD. N° 660 SAN FRANCISCO",
+    "category": "Educación",
+    "lat": -25.232599,
+    "lon": -57.573096
+  },
+  {
+    "id": "poi-607",
+    "name": "S.O.S. COL. HERMANN GMEINER",
+    "category": "Educación",
+    "lat": -25.2337,
+    "lon": -57.569605
+  },
+  {
+    "id": "poi-608",
+    "name": "J. INF. CUENTO DE ADA",
+    "category": "Lugar de Interés",
+    "lat": -25.259618,
+    "lon": -57.574087
+  },
+  {
+    "id": "poi-609",
+    "name": "CAP. SAN PEDRO",
+    "category": "Lugar de Interés",
+    "lat": -25.263153,
+    "lon": -57.569809
+  },
+  {
+    "id": "poi-610",
+    "name": "COL. NAC. Y ESC. N° 962 FRANCISCA ELOISA",
+    "category": "Educación",
+    "lat": -25.263376,
+    "lon": -57.565356
+  },
+  {
+    "id": "poi-611",
+    "name": "ESC. N° 1007 CENTENARIO DE LA EPOPEYA NACION",
+    "category": "Educación",
+    "lat": -25.266932,
+    "lon": -57.571343
+  },
+  {
+    "id": "poi-612",
+    "name": "COL. DE LAS AMERICAS",
+    "category": "Educación",
+    "lat": -25.276846,
+    "lon": -57.566707
+  },
+  {
+    "id": "poi-613",
+    "name": "COL. TECNICO E INST. DE LAS AMERICAS",
+    "category": "Educación",
+    "lat": -25.279802,
+    "lon": -57.570113
+  },
+  {
+    "id": "poi-614",
+    "name": "COL. TECNICO SAN NICOLAS DE BARI",
+    "category": "Educación",
+    "lat": -25.280882,
+    "lon": -57.572259
+  },
+  {
+    "id": "poi-615",
+    "name": "COL. TECNICO SAN NICOLAS DE BARI",
+    "category": "Educación",
+    "lat": -25.281965,
+    "lon": -57.573541
+  },
+  {
+    "id": "poi-616",
+    "name": "ESC. DE ARTES SARAKI",
+    "category": "Educación",
+    "lat": -25.281074,
+    "lon": -57.572486
+  },
+  {
+    "id": "poi-617",
+    "name": "ESTUDIO DE MUSICA DIAPAZON",
+    "category": "Lugar de Interés",
+    "lat": -25.283759,
+    "lon": -57.572299
+  },
+  {
+    "id": "poi-618",
+    "name": "ESC. N° 226 ROBERTO SHAERR",
+    "category": "Educación",
+    "lat": -25.286962,
+    "lon": -57.569442
+  },
+  {
+    "id": "poi-619",
+    "name": "ESC. DE DANZA SUSI SACO",
+    "category": "Educación",
+    "lat": -25.286657,
+    "lon": -57.567179
+  },
+  {
+    "id": "poi-620",
+    "name": "INST. MUSICAL AMADEUS",
+    "category": "Lugar de Interés",
+    "lat": -25.288728,
+    "lon": -57.569237
+  },
+  {
+    "id": "poi-621",
+    "name": "G.E.M.A. GRUPO DE EMERGENCIA ASISTENCIAL",
+    "category": "Salud",
+    "lat": -25.290565,
+    "lon": -57.572637
+  },
+  {
+    "id": "poi-622",
+    "name": "J. DE INFANTES N° 339 CHOCOLATE",
+    "category": "Lugar de Interés",
+    "lat": -25.290753,
+    "lon": -57.570856
+  },
+  {
+    "id": "poi-623",
+    "name": "U.V. INTERNAC. Y UNICEF",
+    "category": "Lugar de Interés",
+    "lat": -25.295853,
+    "lon": -57.57463
+  },
+  {
+    "id": "poi-624",
+    "name": "CTRO. EDUC. STA. LUCIA",
+    "category": "Lugar de Interés",
+    "lat": -25.296185,
+    "lon": -57.573355
+  },
+  {
+    "id": "poi-625",
+    "name": "COL. SAN CRISTOBAL",
+    "category": "Educación",
+    "lat": -25.296339,
+    "lon": -57.564697
+  },
+  {
+    "id": "poi-626",
+    "name": "ESC.N° 281 LUIS ALBERTO DE HERRERA",
+    "category": "Educación",
+    "lat": -25.294011,
+    "lon": -57.560058
+  },
+  {
+    "id": "poi-627",
+    "name": "COL. STA. CAROLINA Y J. INF. CAPULLITO",
+    "category": "Educación",
+    "lat": -25.290679,
+    "lon": -57.561759
+  },
+  {
+    "id": "poi-628",
+    "name": "ESC. PARROQ.L N° 14596 NIÑO JESUS DE PRAGA",
+    "category": "Educación",
+    "lat": -25.288199,
+    "lon": -57.562319
+  },
+  {
+    "id": "poi-629",
+    "name": "ESC. PRIVADA DE NATACION",
+    "category": "Educación",
+    "lat": -25.280111,
+    "lon": -57.565074
+  },
+  {
+    "id": "poi-630",
+    "name": "ESC. N° 409 REP. FEDERAL DE ALEMANIA",
+    "category": "Educación",
+    "lat": -25.278776,
+    "lon": -57.563393
+  },
+  {
+    "id": "poi-631",
+    "name": "CTRO. EDUC. SAGRADOS CORAZONES",
+    "category": "Lugar de Interés",
+    "lat": -25.276504,
+    "lon": -57.559699
+  },
+  {
+    "id": "poi-632",
+    "name": "ESC. MATERNO, J. Y PRE-ESCOLAR ANTEOJITO",
+    "category": "Salud",
+    "lat": -25.273676,
+    "lon": -57.562638
+  },
+  {
+    "id": "poi-633",
+    "name": "CTRO. EDUC. LOS MANANTIALES",
+    "category": "Lugar de Interés",
+    "lat": -25.262349,
+    "lon": -57.565231
+  },
+  {
+    "id": "poi-634",
+    "name": "COL. LA RESIDENTA",
+    "category": "Educación",
+    "lat": -25.232768,
+    "lon": -57.563566
+  },
+  {
+    "id": "poi-635",
+    "name": "ESC. GRAD.N° 25 HIPOLITO SANCHES",
+    "category": "Educación",
+    "lat": -25.232928,
+    "lon": -57.562929
+  },
+  {
+    "id": "poi-636",
+    "name": "JARDÍN INTERNAC. PRÉ- ESCOLAR KUNUU-RENDA",
+    "category": "Lugar de Interés",
+    "lat": -25.232395,
+    "lon": -57.560068
+  },
+  {
+    "id": "poi-637",
+    "name": "ESC. GRAD.N° 14247 LAS COLINAS",
+    "category": "Educación",
+    "lat": -25.233609,
+    "lon": -57.55231
+  },
+  {
+    "id": "poi-638",
+    "name": "ESC. N° 3620 SAN PEDRO",
+    "category": "Educación",
+    "lat": -25.239304,
+    "lon": -57.552323
+  },
+  {
+    "id": "poi-639",
+    "name": "ESC. DUENDECITO",
+    "category": "Educación",
+    "lat": -25.245432,
+    "lon": -57.552922
+  },
+  {
+    "id": "poi-640",
+    "name": "COL. NAC. LAS MERCEDES",
+    "category": "Educación",
+    "lat": -25.251111,
+    "lon": -57.557043
+  },
+  {
+    "id": "poi-641",
+    "name": "ESC. N° 821 CORONEL FELIPE TOLEDO",
+    "category": "Educación",
+    "lat": -25.250905,
+    "lon": -57.557308
+  },
+  {
+    "id": "poi-642",
+    "name": "COL. DE LA TRINIDAD",
+    "category": "Educación",
+    "lat": -25.255827,
+    "lon": -57.556878
+  },
+  {
+    "id": "poi-643",
+    "name": "ESC. N ° 227 REPUBLICA DE VENEZUELA",
+    "category": "Educación",
+    "lat": -25.256984,
+    "lon": -57.554783
+  },
+  {
+    "id": "poi-644",
+    "name": "COL. STA. ANA",
+    "category": "Educación",
+    "lat": -25.260031,
+    "lon": -57.554836
+  },
+  {
+    "id": "poi-645",
+    "name": "ESC. CRISTIANA PRESBITERIANA CANAAN",
+    "category": "Educación",
+    "lat": -25.267297,
+    "lon": -57.551612
+  },
+  {
+    "id": "poi-646",
+    "name": "ESC. N° 664 Y COL. NAC. 1° PRESIDENTE",
+    "category": "Educación",
+    "lat": -25.268233,
+    "lon": -57.556882
+  },
+  {
+    "id": "poi-647",
+    "name": "J. INF. N° 352 PATITO DE LUZ",
+    "category": "Lugar de Interés",
+    "lat": -25.2739,
+    "lon": -57.551229
+  },
+  {
+    "id": "poi-648",
+    "name": "J. INF. CARAS Y CARITAS",
+    "category": "Lugar de Interés",
+    "lat": -25.276177,
+    "lon": -57.556692
+  },
+  {
+    "id": "poi-649",
+    "name": "INST. DE EDUC. FORMAL Y TECNICA MARIA AUXI",
+    "category": "Lugar de Interés",
+    "lat": -25.277178,
+    "lon": -57.550978
+  },
+  {
+    "id": "poi-650",
+    "name": "ESC. N° 162 Y COL. NAC. VICENTE I. ITURBE",
+    "category": "Educación",
+    "lat": -25.276967,
+    "lon": -57.552506
+  },
+  {
+    "id": "poi-651",
+    "name": "COL. GOETHE",
+    "category": "Educación",
+    "lat": -25.28301,
+    "lon": -57.556351
+  },
+  {
+    "id": "poi-652",
+    "name": "COL. JAPONES EN ASUNCION",
+    "category": "Educación",
+    "lat": -25.282427,
+    "lon": -57.553928
+  },
+  {
+    "id": "poi-653",
+    "name": "ESC. N° 1609 REP. DE BOLIVIA",
+    "category": "Educación",
+    "lat": -25.285047,
+    "lon": -57.549949
+  },
+  {
+    "id": "poi-654",
+    "name": "ESC. Y EJERCITO DEL ESTADO DE COMANDO MAYOR",
+    "category": "Educación",
+    "lat": -25.264209,
+    "lon": -57.547738
+  },
+  {
+    "id": "poi-655",
+    "name": "CTRO. EDUC. INF. FÉ Y ALEGRIA",
+    "category": "Lugar de Interés",
+    "lat": -25.245058,
+    "lon": -57.54606
+  },
+  {
+    "id": "poi-656",
+    "name": "COL. NAC. CORONEL VICENTE MONGELOS",
+    "category": "Educación",
+    "lat": -25.240509,
+    "lon": -57.543647
+  },
+  {
+    "id": "poi-657",
+    "name": "ESC. N° 167 CARLOS ANTONIO LOPEZ",
+    "category": "Educación",
+    "lat": -25.240184,
+    "lon": -57.543061
+  },
+  {
+    "id": "poi-658",
+    "name": "CTRO. EDUC. LA ESPERANZA",
+    "category": "Lugar de Interés",
+    "lat": -25.238163,
+    "lon": -57.537056
+  },
+  {
+    "id": "poi-659",
+    "name": "COL. LUZ Y VIDA",
+    "category": "Educación",
+    "lat": -25.243493,
+    "lon": -57.531031
+  },
+  {
+    "id": "poi-660",
+    "name": "ESC. NAC. MUNIC. OÑONDIVEPA",
+    "category": "Educación",
+    "lat": -25.245587,
+    "lon": -57.530349
+  },
+  {
+    "id": "poi-661",
+    "name": "ESC. N° 2061 MONSEÑOR JUAN SINFORIANO",
+    "category": "Educación",
+    "lat": -25.240855,
+    "lon": -57.531578
+  },
+  {
+    "id": "poi-662",
+    "name": "FAC. DE CIENCIAS MEDICAS",
+    "category": "Lugar de Interés",
+    "lat": -25.278815,
+    "lon": -57.592331
+  },
+  {
+    "id": "poi-663",
+    "name": "ESC. COL. Y HOGAR NAC. NTRA. SRA. DE LA",
+    "category": "Educación",
+    "lat": -25.280016,
+    "lon": -57.593782
+  },
+  {
+    "id": "poi-664",
+    "name": "INST. FISICO PEDAGOGICO DR. AGUSTIN CARRIZOSA DEN",
+    "category": "Lugar de Interés",
+    "lat": -25.271405,
+    "lon": -57.587223
+  },
+  {
+    "id": "poi-665",
+    "name": "ESC. DE DANZA KYGUA VERA",
+    "category": "Educación",
+    "lat": -25.263996,
+    "lon": -57.589571
+  },
+  {
+    "id": "poi-666",
+    "name": "UNIV. NAC. DE ASUNCION CIENCIAS GEOGRAFI",
+    "category": "Educación",
+    "lat": -25.261522,
+    "lon": -57.59152
+  },
+  {
+    "id": "poi-667",
+    "name": "CTRO. EDUC. STO. DOMINGO DE GUZMAN",
+    "category": "Lugar de Interés",
+    "lat": -25.243959,
+    "lon": -57.545161
+  },
+  {
+    "id": "poi-668",
+    "name": "JUSTICIA ELECTORAL",
+    "category": "Lugar de Interés",
+    "lat": -25.308572,
+    "lon": -57.593903
+  },
+  {
+    "id": "poi-669",
+    "name": "SENAD (SECRETARIA NACIONAL ANTIDROGA )",
+    "category": "Gobierno",
+    "lat": -25.334201,
+    "lon": -57.590865
+  },
+  {
+    "id": "poi-670",
+    "name": "C. DE ATENCION A LA INFANCIA Y A LA FLIA. KUNU'U",
+    "category": "Lugar de Interés",
+    "lat": -25.334841,
+    "lon": -57.585941
+  },
+  {
+    "id": "poi-671",
+    "name": "CONSEJO NACIONAL DE DEPORTES",
+    "category": "Lugar de Interés",
+    "lat": -25.317064,
+    "lon": -57.58061
+  },
+  {
+    "id": "poi-672",
+    "name": "A.N.D.E.",
+    "category": "Lugar de Interés",
+    "lat": -25.310543,
+    "lon": -57.567325
+  },
+  {
+    "id": "poi-673",
+    "name": "CEPAE M.I.C.",
+    "category": "Lugar de Interés",
+    "lat": -25.304464,
+    "lon": -57.561581
+  },
+  {
+    "id": "poi-674",
+    "name": "MUNICIPALIDAD DE ASUNCION",
+    "category": "Gobierno",
+    "lat": -25.304322,
+    "lon": -57.56013
+  },
+  {
+    "id": "poi-675",
+    "name": "HACIENDA I.P.U.",
+    "category": "Lugar de Interés",
+    "lat": -25.298672,
+    "lon": -57.593816
+  },
+  {
+    "id": "poi-676",
+    "name": "CORPOSANA CTRO.. DE DISTRIBUCION",
+    "category": "Lugar de Interés",
+    "lat": -25.319618,
+    "lon": -57.584518
+  },
+  {
+    "id": "poi-677",
+    "name": "DPTO. DE MATERIAL EDUC. DEL M.E.C.",
+    "category": "Lugar de Interés",
+    "lat": -25.326431,
+    "lon": -57.592744
+  },
+  {
+    "id": "poi-678",
+    "name": "ANDE SUB- ESTATICA SAJONIA",
+    "category": "Lugar de Interés",
+    "lat": -25.288354,
+    "lon": -57.667642
+  },
+  {
+    "id": "poi-679",
+    "name": "PALACIO DE JUSTICIA",
+    "category": "Lugar de Interés",
+    "lat": -25.287265,
+    "lon": -57.655008
+  },
+  {
+    "id": "poi-680",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.286024,
+    "lon": -57.655193
+  },
+  {
+    "id": "poi-681",
+    "name": "MINST- DE JUSTICIA Y TRABAJO",
+    "category": "Lugar de Interés",
+    "lat": -25.286517,
+    "lon": -57.643351
+  },
+  {
+    "id": "poi-682",
+    "name": "ANDE",
+    "category": "Lugar de Interés",
+    "lat": -25.282688,
+    "lon": -57.646304
+  },
+  {
+    "id": "poi-683",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.280217,
+    "lon": -57.643971
+  },
+  {
+    "id": "poi-684",
+    "name": "MINST. DE AGRICULTURA Y GANADERIA",
+    "category": "Lugar de Interés",
+    "lat": -25.281315,
+    "lon": -57.635638
+  },
+  {
+    "id": "poi-685",
+    "name": "MINST. DE HACIENDA",
+    "category": "Lugar de Interés",
+    "lat": -25.281443,
+    "lon": -57.635127
+  },
+  {
+    "id": "poi-686",
+    "name": "MINST. DE OBRAS PUBL.Y COMUNIC.",
+    "category": "Lugar de Interés",
+    "lat": -25.283061,
+    "lon": -57.637277
+  },
+  {
+    "id": "poi-687",
+    "name": "ANDE",
+    "category": "Lugar de Interés",
+    "lat": -25.283377,
+    "lon": -57.638268
+  },
+  {
+    "id": "poi-688",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.286237,
+    "lon": -57.635851
+  },
+  {
+    "id": "poi-689",
+    "name": "MINIST. DE HACIENDA",
+    "category": "Lugar de Interés",
+    "lat": -25.285333,
+    "lon": -57.635882
+  },
+  {
+    "id": "poi-690",
+    "name": "MINIST. DE JUSTICIA Y TRABAJO",
+    "category": "Lugar de Interés",
+    "lat": -25.287743,
+    "lon": -57.641063
+  },
+  {
+    "id": "poi-691",
+    "name": "MINIST. DE AGRICULTURA Y GANADERIA",
+    "category": "Lugar de Interés",
+    "lat": -25.286681,
+    "lon": -57.638053
+  },
+  {
+    "id": "poi-692",
+    "name": "MINIST. DE EDUC. Y CULTO",
+    "category": "Lugar de Interés",
+    "lat": -25.286182,
+    "lon": -57.637679
+  },
+  {
+    "id": "poi-693",
+    "name": "MINIST. DE HACIENDA",
+    "category": "Lugar de Interés",
+    "lat": -25.285262,
+    "lon": -57.639143
+  },
+  {
+    "id": "poi-694",
+    "name": "MINIST. DEL INTERIOR",
+    "category": "Lugar de Interés",
+    "lat": -25.287915,
+    "lon": -57.639402
+  },
+  {
+    "id": "poi-695",
+    "name": "MINIST. DE JUSTICIA Y TRABAJO",
+    "category": "Lugar de Interés",
+    "lat": -25.294787,
+    "lon": -57.631895
+  },
+  {
+    "id": "poi-696",
+    "name": "DIRECC. GRAL. DE REGIST.DEL ESTADO CIVIL",
+    "category": "Lugar de Interés",
+    "lat": -25.29449,
+    "lon": -57.63089
+  },
+  {
+    "id": "poi-697",
+    "name": "MINIST.D/SALUD PUBLIC. Y BIENEST.SOCIAL",
+    "category": "Salud",
+    "lat": -25.292176,
+    "lon": -57.626211
+  },
+  {
+    "id": "poi-698",
+    "name": "I.P.S. DPTO. DE CONSTRUCCION",
+    "category": "Lugar de Interés",
+    "lat": -25.291937,
+    "lon": -57.628944
+  },
+  {
+    "id": "poi-699",
+    "name": "I.P.S. CAJA DE RECAUDACIONES",
+    "category": "Lugar de Interés",
+    "lat": -25.29132,
+    "lon": -57.625558
+  },
+  {
+    "id": "poi-700",
+    "name": "MINIST. DE JUSTICIA Y TRABAJO",
+    "category": "Lugar de Interés",
+    "lat": -25.287538,
+    "lon": -57.631287
+  },
+  {
+    "id": "poi-701",
+    "name": "INST. DE BIENESTAR RURAL",
+    "category": "Lugar de Interés",
+    "lat": -25.2856,
+    "lon": -57.62843
+  },
+  {
+    "id": "poi-702",
+    "name": "ESTAC DE FERROCARRIL CARLOS. A. LOPEZ",
+    "category": "Lugar de Interés",
+    "lat": -25.283753,
+    "lon": -57.629615
+  },
+  {
+    "id": "poi-703",
+    "name": "CARLOS A. LOPEZ (SECC, CORREOS )",
+    "category": "Lugar de Interés",
+    "lat": -25.280369,
+    "lon": -57.616583
+  },
+  {
+    "id": "poi-704",
+    "name": "ANDE SUB ESTAC. BERNARDINO CABALLERO",
+    "category": "Lugar de Interés",
+    "lat": -25.284253,
+    "lon": -57.623539
+  },
+  {
+    "id": "poi-705",
+    "name": "MINIST. DE IND. Y COMERCIO",
+    "category": "Lugar de Interés",
+    "lat": -25.28422,
+    "lon": -57.62454
+  },
+  {
+    "id": "poi-706",
+    "name": "BIBLIOTECA MUNIC.",
+    "category": "Lugar de Interés",
+    "lat": -25.287642,
+    "lon": -57.616992
+  },
+  {
+    "id": "poi-707",
+    "name": "CORPOSANA",
+    "category": "Lugar de Interés",
+    "lat": -25.287111,
+    "lon": -57.621241
+  },
+  {
+    "id": "poi-708",
+    "name": "CORPOSANA",
+    "category": "Lugar de Interés",
+    "lat": -25.290048,
+    "lon": -57.623014
+  },
+  {
+    "id": "poi-709",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.291637,
+    "lon": -57.623097
+  },
+  {
+    "id": "poi-710",
+    "name": "MINIST. DE RELAC.EXT. ACAD. DIPLOMAT.",
+    "category": "Lugar de Interés",
+    "lat": -25.291481,
+    "lon": -57.618738
+  },
+  {
+    "id": "poi-711",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.297093,
+    "lon": -57.617763
+  },
+  {
+    "id": "poi-712",
+    "name": "CORPOSANA ESTAC. DE BOMBEO",
+    "category": "Lugar de Interés",
+    "lat": -25.295877,
+    "lon": -57.609566
+  },
+  {
+    "id": "poi-713",
+    "name": "MINIST. DE DEFENSA NACIONAL",
+    "category": "Lugar de Interés",
+    "lat": -25.293637,
+    "lon": -57.61259
+  },
+  {
+    "id": "poi-714",
+    "name": "M.O.P.C.",
+    "category": "Lugar de Interés",
+    "lat": -25.289896,
+    "lon": -57.610866
+  },
+  {
+    "id": "poi-715",
+    "name": "RECTORADO DE LA U.N.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.286997,
+    "lon": -57.613697
+  },
+  {
+    "id": "poi-716",
+    "name": "COMISION NAC. DE VALORES",
+    "category": "Lugar de Interés",
+    "lat": -25.281519,
+    "lon": -57.613082
+  },
+  {
+    "id": "poi-717",
+    "name": "CORREO PARAGUAYO",
+    "category": "Lugar de Interés",
+    "lat": -25.282309,
+    "lon": -57.612687
+  },
+  {
+    "id": "poi-718",
+    "name": "ANDE",
+    "category": "Lugar de Interés",
+    "lat": -25.275468,
+    "lon": -57.609462
+  },
+  {
+    "id": "poi-719",
+    "name": "M. J.T. REGISTRO CIVIL SECC. 5a.",
+    "category": "Lugar de Interés",
+    "lat": -25.282921,
+    "lon": -57.603671
+  },
+  {
+    "id": "poi-720",
+    "name": "PETROPAR",
+    "category": "Lugar de Interés",
+    "lat": -25.277981,
+    "lon": -57.660159
+  },
+  {
+    "id": "poi-721",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.297001,
+    "lon": -57.641779
+  },
+  {
+    "id": "poi-722",
+    "name": "M. E.C. SALON DE ACTOS",
+    "category": "Lugar de Interés",
+    "lat": -25.283005,
+    "lon": -57.632256
+  },
+  {
+    "id": "poi-723",
+    "name": "IMPUESTO INTERNO NACIONAL",
+    "category": "Lugar de Interés",
+    "lat": -25.282462,
+    "lon": -57.6319
+  },
+  {
+    "id": "poi-724",
+    "name": "ARZOBISPADO DE ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.282055,
+    "lon": -57.632567
+  },
+  {
+    "id": "poi-725",
+    "name": "MUNICIP. DE ASUNCION ( LIMPIEZA URBANA)",
+    "category": "Gobierno",
+    "lat": -25.281999,
+    "lon": -57.622332
+  },
+  {
+    "id": "poi-726",
+    "name": "MINIST. DE ASUNTOS EXTERIORES",
+    "category": "Lugar de Interés",
+    "lat": -25.295443,
+    "lon": -57.608488
+  },
+  {
+    "id": "poi-727",
+    "name": "ANDE",
+    "category": "Lugar de Interés",
+    "lat": -25.288613,
+    "lon": -57.612233
+  },
+  {
+    "id": "poi-728",
+    "name": "M.A.G. 0 F.A.P. FISCALIZACION",
+    "category": "Lugar de Interés",
+    "lat": -25.278527,
+    "lon": -57.614702
+  },
+  {
+    "id": "poi-729",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.285976,
+    "lon": -57.654523
+  },
+  {
+    "id": "poi-730",
+    "name": "CTRO. MCPAL. ITA YBATE",
+    "category": "Lugar de Interés",
+    "lat": -25.297826,
+    "lon": -57.641021
+  },
+  {
+    "id": "poi-731",
+    "name": "M. E.C.",
+    "category": "Lugar de Interés",
+    "lat": -25.297402,
+    "lon": -57.629638
+  },
+  {
+    "id": "poi-732",
+    "name": "TALLERES DE CORPOSANA MEDIDORES",
+    "category": "Lugar de Interés",
+    "lat": -25.319815,
+    "lon": -57.599808
+  },
+  {
+    "id": "poi-733",
+    "name": "ANTELCO",
+    "category": "Lugar de Interés",
+    "lat": -25.319371,
+    "lon": -57.59885
+  },
+  {
+    "id": "poi-734",
+    "name": "C. MCPAL JOPOI N°3",
+    "category": "Lugar de Interés",
+    "lat": -25.301313,
+    "lon": -57.623164
+  },
+  {
+    "id": "poi-735",
+    "name": "DIRECC. GRAL. DE INST. PENALES PENITENCIARIA NAC",
+    "category": "Lugar de Interés",
+    "lat": -25.309213,
+    "lon": -57.648093
+  },
+  {
+    "id": "poi-736",
+    "name": "DIRECC. DE APOYO TACTICO AGRUP. ESPECIALIZADA",
+    "category": "Lugar de Interés",
+    "lat": -25.310117,
+    "lon": -57.648884
+  },
+  {
+    "id": "poi-737",
+    "name": "INST. NAC. DE REABILITACION PANCHITO LOPEZ",
+    "category": "Lugar de Interés",
+    "lat": -25.307015,
+    "lon": -57.648474
+  },
+  {
+    "id": "poi-738",
+    "name": "M.J.T. REGISTRO CIVIL",
+    "category": "Lugar de Interés",
+    "lat": -25.233567,
+    "lon": -57.56239
+  },
+  {
+    "id": "poi-739",
+    "name": "CONTRALORIA GRAL. DE LA REPUBLICA (C.G.R.)",
+    "category": "Lugar de Interés",
+    "lat": -25.288222,
+    "lon": -57.569015
+  },
+  {
+    "id": "poi-740",
+    "name": "SUB-ESTACION DE A.N.D.E.",
+    "category": "Lugar de Interés",
+    "lat": -25.295358,
+    "lon": -57.568585
+  },
+  {
+    "id": "poi-741",
+    "name": "INSTITUO DE PREVISION SOCIAL (I.P.S.)",
+    "category": "Lugar de Interés",
+    "lat": -25.272542,
+    "lon": -57.580847
+  },
+  {
+    "id": "poi-742",
+    "name": "ANTELCO (ADMINISTRACION NAC. DE TELECOMUNICAC",
+    "category": "Lugar de Interés",
+    "lat": -25.260244,
+    "lon": -57.581164
+  },
+  {
+    "id": "poi-743",
+    "name": "A.N.D.E SUB-ESTACION J. BOTANICO",
+    "category": "Lugar de Interés",
+    "lat": -25.252172,
+    "lon": -57.579103
+  },
+  {
+    "id": "poi-744",
+    "name": "INTN INST. NAC. DE TECNOLOGIA Y NORMALIZ",
+    "category": "Lugar de Interés",
+    "lat": -25.253981,
+    "lon": -57.583576
+  },
+  {
+    "id": "poi-745",
+    "name": "A.N.D.E SUB-ESTACION DE ENERGIA PTO. BOTANICO",
+    "category": "Lugar de Interés",
+    "lat": -25.24821,
+    "lon": -57.584401
+  },
+  {
+    "id": "poi-746",
+    "name": "M.S.P. Y B.S. HOGAR DE ANCIANOS",
+    "category": "Lugar de Interés",
+    "lat": -25.269625,
+    "lon": -57.584258
+  },
+  {
+    "id": "poi-747",
+    "name": "JUZGADO DE PAZ P. J - RECOLETA",
+    "category": "Gobierno",
+    "lat": -25.289566,
+    "lon": -57.588241
+  },
+  {
+    "id": "poi-748",
+    "name": "CORPOSANA - SUPER INTEND. DE MANTEN.",
+    "category": "Comercial",
+    "lat": -25.256381,
+    "lon": -57.569606
+  },
+  {
+    "id": "poi-749",
+    "name": "REGISTRO CIVIL",
+    "category": "Lugar de Interés",
+    "lat": -25.280025,
+    "lon": -57.571109
+  },
+  {
+    "id": "poi-750",
+    "name": "ESC.DE FORMAC.DE SUB-OFIC.DE LA ARMADA",
+    "category": "Educación",
+    "lat": -25.289222,
+    "lon": -57.668936
+  },
+  {
+    "id": "poi-751",
+    "name": "AVIACION NAVAL",
+    "category": "Lugar de Interés",
+    "lat": -25.291938,
+    "lon": -57.669688
+  },
+  {
+    "id": "poi-752",
+    "name": "ARMADA PARAGUAYA",
+    "category": "Lugar de Interés",
+    "lat": -25.276679,
+    "lon": -57.645088
+  },
+  {
+    "id": "poi-753",
+    "name": "COMANDO DE LAS FUERZAS MILITARES",
+    "category": "Lugar de Interés",
+    "lat": -25.293319,
+    "lon": -57.610758
+  },
+  {
+    "id": "poi-754",
+    "name": "ESC. DE EDUC. FISICA DE LAS FF.AA",
+    "category": "Educación",
+    "lat": -25.291719,
+    "lon": -57.610039
+  },
+  {
+    "id": "poi-755",
+    "name": "SUB DIRECC.DESUBSISTENCIA DEL EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.276716,
+    "lon": -57.612001
+  },
+  {
+    "id": "poi-756",
+    "name": "DIRECC. DEL SERV. GEOGRAF. MILITAR",
+    "category": "Lugar de Interés",
+    "lat": -25.278892,
+    "lon": -57.613113
+  },
+  {
+    "id": "poi-757",
+    "name": "PREFECTURA NAVAL",
+    "category": "Lugar de Interés",
+    "lat": -25.276621,
+    "lon": -57.639625
+  },
+  {
+    "id": "poi-758",
+    "name": "CUARTEL GRAL. COMANDO EN JEFE-FF.AA.",
+    "category": "Lugar de Interés",
+    "lat": -25.294356,
+    "lon": -57.612151
+  },
+  {
+    "id": "poi-759",
+    "name": "CUARTEL MILITAR ESCOLTA PRESIDENCIAL",
+    "category": "Lugar de Interés",
+    "lat": -25.294954,
+    "lon": -57.610641
+  },
+  {
+    "id": "poi-760",
+    "name": "DIGETREN CUARTEL MILITAR",
+    "category": "Lugar de Interés",
+    "lat": -25.293087,
+    "lon": -57.59224
+  },
+  {
+    "id": "poi-761",
+    "name": "P. DE GUARDIA DESTAC. NAVAL- PTO. BOTANICO",
+    "category": "Lugar de Interés",
+    "lat": -25.24028,
+    "lon": -57.587878
+  },
+  {
+    "id": "poi-762",
+    "name": "DIGETREN CUARTEL MILITAR",
+    "category": "Lugar de Interés",
+    "lat": -25.293991,
+    "lon": -57.590671
+  },
+  {
+    "id": "poi-763",
+    "name": "REG. DE CABALL. RC4 ACÁ CARAYÁ",
+    "category": "Lugar de Interés",
+    "lat": -25.236147,
+    "lon": -57.576222
+  },
+  {
+    "id": "poi-764",
+    "name": "1° CUERPO DE EJERCITO GRUPO DE ARTILLERIA",
+    "category": "Lugar de Interés",
+    "lat": -25.235229,
+    "lon": -57.579806
+  },
+  {
+    "id": "poi-765",
+    "name": "REG. DE CABALL. - RC4 ACÁ CARAYÁ",
+    "category": "Lugar de Interés",
+    "lat": -25.235421,
+    "lon": -57.564558
+  },
+  {
+    "id": "poi-766",
+    "name": "REG. DE CABALL. RC4 ACÁ CARAYÁ",
+    "category": "Lugar de Interés",
+    "lat": -25.23956,
+    "lon": -57.560262
+  },
+  {
+    "id": "poi-767",
+    "name": "COMANDO DEL EJERCITO DE CIMEE",
+    "category": "Lugar de Interés",
+    "lat": -25.251958,
+    "lon": -57.549882
+  },
+  {
+    "id": "poi-768",
+    "name": "INST. DE ENSEÑANZAS MILITARES",
+    "category": "Lugar de Interés",
+    "lat": -25.252467,
+    "lon": -57.549399
+  },
+  {
+    "id": "poi-769",
+    "name": "REG. DE CABALL. RC4 ACÁ CARAYÁ",
+    "category": "Lugar de Interés",
+    "lat": -25.245515,
+    "lon": -57.556968
+  },
+  {
+    "id": "poi-770",
+    "name": "REG. DE CABALL. RC4 ACA CARAYA",
+    "category": "Lugar de Interés",
+    "lat": -25.237908,
+    "lon": -57.556946
+  },
+  {
+    "id": "poi-771",
+    "name": "CABALLERIA",
+    "category": "Lugar de Interés",
+    "lat": -25.263654,
+    "lon": -57.544066
+  },
+  {
+    "id": "poi-772",
+    "name": "1° CUERPO DE EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.255982,
+    "lon": -57.546917
+  },
+  {
+    "id": "poi-773",
+    "name": "1° CUERPO DE EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.243852,
+    "lon": -57.526292
+  },
+  {
+    "id": "poi-774",
+    "name": "1° CUERPO DE EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.248332,
+    "lon": -57.531476
+  },
+  {
+    "id": "poi-775",
+    "name": "REG. DE CABALL.- RC4 ACÁ CARAYÁ",
+    "category": "Lugar de Interés",
+    "lat": -25.238298,
+    "lon": -57.572562
+  },
+  {
+    "id": "poi-776",
+    "name": "DIVERMOV DIRECC. DEL SERV. DE RECLUTAMIENTO Y MOV.",
+    "category": "Lugar de Interés",
+    "lat": -25.30784,
+    "lon": -57.593197
+  },
+  {
+    "id": "poi-777",
+    "name": "2° CUERPO DE EJERCITO 1° DIVIS. DE INFANT.",
+    "category": "Lugar de Interés",
+    "lat": -25.299778,
+    "lon": -57.658763
+  },
+  {
+    "id": "poi-778",
+    "name": "R. 1.12 DE MAYO 1° DIVIS. DE INFANT.",
+    "category": "Lugar de Interés",
+    "lat": -25.299805,
+    "lon": -57.66125
+  },
+  {
+    "id": "poi-779",
+    "name": "INTENDENCIA DEL EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.301089,
+    "lon": -57.665598
+  },
+  {
+    "id": "poi-780",
+    "name": "COMANDO DE COMUNIC. DEL EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.304731,
+    "lon": -57.656541
+  },
+  {
+    "id": "poi-781",
+    "name": "FOPE ( FUERZA DE OPERAC. ESPEC.)",
+    "category": "Lugar de Interés",
+    "lat": -25.310769,
+    "lon": -57.651684
+  },
+  {
+    "id": "poi-782",
+    "name": "COMANDO DE ING. DEL EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.306169,
+    "lon": -57.652095
+  },
+  {
+    "id": "poi-783",
+    "name": "COMISARIA N° 2",
+    "category": "Gobierno",
+    "lat": -25.294371,
+    "lon": -57.653694
+  },
+  {
+    "id": "poi-784",
+    "name": "POLICIA NACIONAL DPTO. DE RR.PP.",
+    "category": "Gobierno",
+    "lat": -25.279368,
+    "lon": -57.637354
+  },
+  {
+    "id": "poi-785",
+    "name": "COMANDANCIA DE LA POLICIA NACIONAL",
+    "category": "Gobierno",
+    "lat": -25.281423,
+    "lon": -57.634214
+  },
+  {
+    "id": "poi-786",
+    "name": "POLICIA NACIONAL",
+    "category": "Gobierno",
+    "lat": -25.281609,
+    "lon": -57.6347
+  },
+  {
+    "id": "poi-787",
+    "name": "COMAND.DE LA POLICIA NACIONAL .",
+    "category": "Gobierno",
+    "lat": -25.281541,
+    "lon": -57.633338
+  },
+  {
+    "id": "poi-788",
+    "name": "PNA. INVESTIGACION DE DELITOS",
+    "category": "Lugar de Interés",
+    "lat": -25.288347,
+    "lon": -57.627728
+  },
+  {
+    "id": "poi-789",
+    "name": "COMISARIA N° 6",
+    "category": "Gobierno",
+    "lat": -25.292505,
+    "lon": -57.602567
+  },
+  {
+    "id": "poi-790",
+    "name": "COMISARIA N° 19",
+    "category": "Gobierno",
+    "lat": -25.281645,
+    "lon": -57.601533
+  },
+  {
+    "id": "poi-791",
+    "name": "COMISARIA N° 20",
+    "category": "Gobierno",
+    "lat": -25.265589,
+    "lon": -57.596909
+  },
+  {
+    "id": "poi-792",
+    "name": "COMISARIA N° 1",
+    "category": "Gobierno",
+    "lat": -25.280253,
+    "lon": -57.650208
+  },
+  {
+    "id": "poi-793",
+    "name": "AGRUP. DE BOMBEROS DE LA PNA.",
+    "category": "Lugar de Interés",
+    "lat": -25.286872,
+    "lon": -57.653705
+  },
+  {
+    "id": "poi-794",
+    "name": "COMISARIA N° 9",
+    "category": "Gobierno",
+    "lat": -25.278216,
+    "lon": -57.610099
+  },
+  {
+    "id": "poi-795",
+    "name": "COMISARIA N° 8",
+    "category": "Gobierno",
+    "lat": -25.314702,
+    "lon": -57.637274
+  },
+  {
+    "id": "poi-796",
+    "name": "COMISARIA N°4",
+    "category": "Gobierno",
+    "lat": -25.297569,
+    "lon": -57.644293
+  },
+  {
+    "id": "poi-797",
+    "name": "COMISARIA N° 18",
+    "category": "Gobierno",
+    "lat": -25.30757,
+    "lon": -57.632304
+  },
+  {
+    "id": "poi-798",
+    "name": "COMISARIA N° 14",
+    "category": "Gobierno",
+    "lat": -25.320173,
+    "lon": -57.621142
+  },
+  {
+    "id": "poi-799",
+    "name": "CRIA. N° 22 LOMA PYTA",
+    "category": "Lugar de Interés",
+    "lat": -25.242259,
+    "lon": -57.545474
+  },
+  {
+    "id": "poi-800",
+    "name": "COMISARIA. 10°",
+    "category": "Gobierno",
+    "lat": -25.278082,
+    "lon": -57.555714
+  },
+  {
+    "id": "poi-801",
+    "name": "COMISARIA. 23° ZEBALLOS - CUE",
+    "category": "Gobierno",
+    "lat": -25.230779,
+    "lon": -57.565176
+  },
+  {
+    "id": "poi-802",
+    "name": "COMISARIA. 12°",
+    "category": "Gobierno",
+    "lat": -25.260011,
+    "lon": -57.580154
+  },
+  {
+    "id": "poi-803",
+    "name": "COMISARIA N° 17",
+    "category": "Gobierno",
+    "lat": -25.30557,
+    "lon": -57.591149
+  },
+  {
+    "id": "poi-804",
+    "name": "COMISARIA N° 16",
+    "category": "Gobierno",
+    "lat": -25.324491,
+    "lon": -57.583996
+  },
+  {
+    "id": "poi-805",
+    "name": "COMISARIA N°15",
+    "category": "Gobierno",
+    "lat": -25.334285,
+    "lon": -57.589549
+  },
+  {
+    "id": "poi-806",
+    "name": "CRIA N°11",
+    "category": "Lugar de Interés",
+    "lat": -25.301702,
+    "lon": -57.56855
+  },
+  {
+    "id": "poi-807",
+    "name": "IDENTIFICACIONES POLICIA NACIONAL",
+    "category": "Gobierno",
+    "lat": -25.301812,
+    "lon": -57.565776
+  },
+  {
+    "id": "poi-808",
+    "name": "CEM. DEL ESTE",
+    "category": "Lugar de Interés",
+    "lat": -25.292377,
+    "lon": -57.548262
+  },
+  {
+    "id": "poi-809",
+    "name": "CEM. DE LA RECOLETA",
+    "category": "Lugar de Interés",
+    "lat": -25.292342,
+    "lon": -57.589633
+  },
+  {
+    "id": "poi-810",
+    "name": "JUZGADO DE PAZ ZEBALLOS- CUE",
+    "category": "Gobierno",
+    "lat": -25.230426,
+    "lon": -57.564964
+  },
+  {
+    "id": "poi-811",
+    "name": "1° CUERPO DE EJERCITO",
+    "category": "Lugar de Interés",
+    "lat": -25.25483,
+    "lon": -57.541796
+  },
+  {
+    "id": "poi-812",
+    "name": "B.C.P.",
+    "category": "Lugar de Interés",
+    "lat": -25.277063,
+    "lon": -57.575506
+  },
+  {
+    "id": "poi-813",
+    "name": "CLIN. ODONT. FLIAR",
+    "category": "Salud",
+    "lat": -25.28727,
+    "lon": -57.584088
+  },
+  {
+    "id": "poi-814",
+    "name": "ARMADA NAC. (C. DE INFANT. DE MARINA)",
+    "category": "Lugar de Interés",
+    "lat": -25.275465,
+    "lon": -57.649516
+  },
+  {
+    "id": "poi-815",
+    "name": "CLIN. STA. CLARA",
+    "category": "Salud",
+    "lat": -25.294939,
+    "lon": -57.632724
+  },
+  {
+    "id": "poi-816",
+    "name": "POLICLIN. MISION DE AMISTAD",
+    "category": "Salud",
+    "lat": -25.305802,
+    "lon": -57.615397
+  },
+  {
+    "id": "poi-817",
+    "name": "GUARD. INF.",
+    "category": "Lugar de Interés",
+    "lat": -25.287312,
+    "lon": -57.655581
+  },
+  {
+    "id": "poi-818",
+    "name": "COL. DR. EDUARDO ALBARIN ROMERO",
+    "category": "Educación",
+    "lat": -25.300138,
+    "lon": -57.583745
+  },
+  {
+    "id": "poi-819",
+    "name": "CAP. VIRGEN DE FATIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.298441,
+    "lon": -57.583086
+  },
+  {
+    "id": "poi-820",
+    "name": "CEM. MCPAL. DEL SUR",
+    "category": "Lugar de Interés",
+    "lat": -25.305085,
+    "lon": -57.646248
+  },
+  {
+    "id": "poi-821",
+    "name": "REGISTRO CIVIL SECCION CUARTA",
+    "category": "Lugar de Interés",
+    "lat": -25.299568,
+    "lon": -57.616538
+  },
+  {
+    "id": "poi-822",
+    "name": "COL. TECNICO RENACER",
+    "category": "Educación",
+    "lat": -25.282421,
+    "lon": -57.561362
+  },
+  {
+    "id": "poi-823",
+    "name": "LABORATORIO GAUTIER",
+    "category": "Lugar de Interés",
+    "lat": -25.277534,
+    "lon": -57.554328
+  },
+  {
+    "id": "poi-824",
+    "name": "BANCO CENTRAL DEL PARAGUAY",
+    "category": "Lugar de Interés",
+    "lat": -25.297135,
+    "lon": -57.59373
+  },
+  {
+    "id": "poi-825",
+    "name": "EX DIARIO NOTICIAS",
+    "category": "Lugar de Interés",
+    "lat": -25.267201,
+    "lon": -57.597833
+  },
+  {
+    "id": "poi-826",
+    "name": "CAPASA",
+    "category": "Lugar de Interés",
+    "lat": -25.278166,
+    "lon": -57.657773
+  },
+  {
+    "id": "poi-827",
+    "name": "ARMADA NACIONAL",
+    "category": "Lugar de Interés",
+    "lat": -25.276433,
+    "lon": -57.649278
+  },
+  {
+    "id": "poi-828",
+    "name": "DIR. DE LOS SERVICIOS DE INTENDENCIA DE LA ARMADA",
+    "category": "Lugar de Interés",
+    "lat": -25.277398,
+    "lon": -57.643901
+  },
+  {
+    "id": "poi-829",
+    "name": "IGLESIA DE JESUCRISTO DE LOS S. DE LOS U. D.",
+    "category": "Lugar de Interés",
+    "lat": -25.28787,
+    "lon": -57.602699
+  },
+  {
+    "id": "poi-830",
+    "name": "ORATORIO VIRGEN DE FATIMA",
+    "category": "Lugar de Interés",
+    "lat": -25.285886,
+    "lon": -57.602885
+  },
+  {
+    "id": "poi-831",
+    "name": "CENTRO MATERNO INFANTIL",
+    "category": "Salud",
+    "lat": -25.285414,
+    "lon": -57.601251
+  },
+  {
+    "id": "poi-832",
+    "name": "EDIFICIO FLEMING S.A.",
+    "category": "Lugar de Interés",
+    "lat": -25.286789,
+    "lon": -57.624493
+  },
+  {
+    "id": "poi-833",
+    "name": "LABORATORIO FARMACEUTICA",
+    "category": "Lugar de Interés",
+    "lat": -25.282075,
+    "lon": -57.646062
+  },
+  {
+    "id": "poi-834",
+    "name": "ESCUELA CIENTIFICA BASILIO",
+    "category": "Educación",
+    "lat": -25.280782,
+    "lon": -57.654959
+  },
+  {
+    "id": "poi-835",
+    "name": "DIRECCIÓN DE MATERIAL ARSENAL MARINA",
+    "category": "Lugar de Interés",
+    "lat": -25.290921,
+    "lon": -57.669563
+  },
+  {
+    "id": "poi-836",
+    "name": "DIRECCIÓN DE MATERIAL ARSENAL MARINA",
+    "category": "Lugar de Interés",
+    "lat": -25.291536,
+    "lon": -57.668352
+  },
+  {
+    "id": "poi-837",
+    "name": "COMANDO DE LA AVIACIÓN NAVAL",
+    "category": "Lugar de Interés",
+    "lat": -25.292479,
+    "lon": -57.669114
+  },
+  {
+    "id": "poi-838",
+    "name": "SANATORIO ESPAÑOL",
+    "category": "Salud",
+    "lat": -25.287091,
+    "lon": -57.661227
+  },
+  {
+    "id": "poi-839",
+    "name": "JARDIN DE INFANTES PINCELES MAGICOS",
+    "category": "Lugar de Interés",
+    "lat": -25.292819,
+    "lon": -57.64266
+  },
+  {
+    "id": "poi-840",
+    "name": "SANATORIO SAN BENIGNO",
+    "category": "Salud",
+    "lat": -25.294353,
+    "lon": -57.631398
+  },
+  {
+    "id": "poi-841",
+    "name": "INSTITUTO PRIVADO DEL NIÑO",
+    "category": "Educación",
+    "lat": -25.289434,
+    "lon": -57.626932
+  },
+  {
+    "id": "poi-842",
+    "name": "M. S. P. y B. S.",
+    "category": "Lugar de Interés",
+    "lat": -25.29152,
+    "lon": -57.626959
+  },
+  {
+    "id": "poi-843",
+    "name": "ESC. REP. DE MEXICO",
+    "category": "Educación",
+    "lat": -25.288168,
+    "lon": -57.633638
+  },
+  {
+    "id": "poi-844",
+    "name": "COMISARIA 13",
+    "category": "Gobierno",
+    "lat": -25.359541,
+    "lon": -57.644892
+  },
+  {
+    "id": "poi-845",
+    "name": "A.N.N.P",
+    "category": "Lugar de Interés",
+    "lat": -25.359835,
+    "lon": -57.645507
+  },
+  {
+    "id": "poi-846",
+    "name": "MERCADO MUNICIPAL Nº 5",
+    "category": "Comercial",
+    "lat": -25.297324,
+    "lon": -57.645134
+  },
+  {
+    "id": "poi-847",
+    "name": "BASE PMT",
+    "category": "Lugar de Interés",
+    "lat": -25.263643,
+    "lon": -57.548821
+  },
+  {
+    "id": "poi-848",
+    "name": "SEMINARIO METROPOLITANO",
+    "category": "Lugar de Interés",
+    "lat": -25.299325,
+    "lon": -57.603959
+  },
+  {
+    "id": "poi-849",
+    "name": "TUPY S.A",
+    "category": "Lugar de Interés",
+    "lat": -25.31664,
+    "lon": -57.565916
+  },
+  {
+    "id": "poi-850",
+    "name": "SHOPPING MULTIPLAZA",
+    "category": "Comercial",
+    "lat": -25.316742,
+    "lon": -57.571436
+  },
+  {
+    "id": "poi-851",
+    "name": "SHOPPING VILLA MORRA",
+    "category": "Comercial",
+    "lat": -25.294236,
+    "lon": -57.580487
+  },
+  {
+    "id": "poi-852",
+    "name": "SHOPPING MCAL. LOPEZ",
+    "category": "Comercial",
+    "lat": -25.295046,
+    "lon": -57.581095
+  },
+  {
+    "id": "poi-853",
+    "name": "SHOPPING DEL SOL",
+    "category": "Comercial",
+    "lat": -25.282872,
+    "lon": -57.567081
+  },
+  {
+    "id": "poi-854",
+    "name": "PIZZERIA DOMINOS",
+    "category": "Lugar de Interés",
+    "lat": -25.301945,
+    "lon": -57.563742
+  },
+  {
+    "id": "poi-855",
+    "name": "PADEL 3 CANCHA",
+    "category": "Deporte/Recreación",
+    "lat": -25.310207,
+    "lon": -57.564579
+  },
+  {
+    "id": "poi-856",
+    "name": "LA HORA DE LAS COMPRAS",
+    "category": "Lugar de Interés",
+    "lat": -25.310338,
+    "lon": -57.564995
+  },
+  {
+    "id": "poi-857",
+    "name": "PADEL COLONIAL",
+    "category": "Lugar de Interés",
+    "lat": -25.312156,
+    "lon": -57.565207
+  },
+  {
+    "id": "poi-858",
+    "name": "FANATICOS FUTBOL",
+    "category": "Lugar de Interés",
+    "lat": -25.306647,
+    "lon": -57.56456
+  },
+  {
+    "id": "poi-859",
+    "name": "RODEO GRIL",
+    "category": "Lugar de Interés",
+    "lat": -25.303691,
+    "lon": -57.564388
+  },
+  {
+    "id": "poi-860",
+    "name": "VOX",
+    "category": "Lugar de Interés",
+    "lat": -25.295366,
+    "lon": -57.577831
+  },
+  {
+    "id": "poi-861",
+    "name": "TIGO",
+    "category": "Lugar de Interés",
+    "lat": -25.295888,
+    "lon": -57.57685
+  },
+  {
+    "id": "poi-862",
+    "name": "MC DONALDS",
+    "category": "Lugar de Interés",
+    "lat": -25.302473,
+    "lon": -57.562892
+  },
+  {
+    "id": "poi-863",
+    "name": "BURGER KING",
+    "category": "Lugar de Interés",
+    "lat": -25.29856,
+    "lon": -57.570513
+  },
+  {
+    "id": "poi-864",
+    "name": "DON VITO",
+    "category": "Lugar de Interés",
+    "lat": -25.300168,
+    "lon": -57.566945
+  },
+  {
+    "id": "poi-865",
+    "name": "SHOPPING BRITANICO",
+    "category": "Comercial",
+    "lat": -25.29299,
+    "lon": -57.607266
+  },
+  {
+    "id": "poi-866",
+    "name": "SHOPPING EL PORTAL",
+    "category": "Comercial",
+    "lat": -25.238355,
+    "lon": -57.541957
+  },
+  {
+    "id": "poi-867",
+    "name": "CPJ",
+    "category": "Lugar de Interés",
+    "lat": -25.272941,
+    "lon": -57.564634
+  },
+  {
+    "id": "poi-868",
+    "name": "TERMINAL DE OMNIBUS",
+    "category": "Transporte",
+    "lat": -25.32593,
+    "lon": -57.596011
+  },
+  {
+    "id": "poi-869",
+    "name": "PUERTO DE ASUNCION",
+    "category": "Transporte",
+    "lat": -25.276232,
+    "lon": -57.640415
+  },
+  {
+    "id": "poi-870",
+    "name": "MANZANA DE LA RIVERA",
+    "category": "Lugar de Interés",
+    "lat": -25.278088,
+    "lon": -57.637842
+  },
+  {
+    "id": "poi-871",
+    "name": "PALACIO DE LOPEZ",
+    "category": "Lugar de Interés",
+    "lat": -25.277537,
+    "lon": -57.637445
+  },
+  {
+    "id": "poi-872",
+    "name": "CABILDO DE ASUNCION",
+    "category": "Lugar de Interés",
+    "lat": -25.279687,
+    "lon": -57.633456
+  },
+  {
+    "id": "poi-873",
+    "name": "PANTEON DE LOS HEROES",
+    "category": "Lugar de Interés",
+    "lat": -25.282443,
+    "lon": -57.634999
+  },
+  {
+    "id": "poi-874",
+    "name": "LA RECOVA",
+    "category": "Lugar de Interés",
+    "lat": -25.27727,
+    "lon": -57.640302
+  },
+  {
+    "id": "poi-875",
+    "name": "MUSEO JUAN SINFORIANO BOGARIN",
+    "category": "Lugar de Interés",
+    "lat": -25.281425,
+    "lon": -57.631937
+  },
+  {
+    "id": "poi-876",
+    "name": "DIR. DE CORREO",
+    "category": "Lugar de Interés",
+    "lat": -25.280357,
+    "lon": -57.635228
+  },
+  {
+    "id": "poi-877",
+    "name": "HOTEL GUARANI",
+    "category": "Lugar de Interés",
+    "lat": -25.283992,
+    "lon": -57.635156
+  },
+  {
+    "id": "poi-878",
+    "name": "CASA DE LA INDEPENDENCIA",
+    "category": "Lugar de Interés",
+    "lat": -25.280531,
+    "lon": -57.63633
+  },
+  {
+    "id": "poi-879",
+    "name": "EMBAJADA AMERICANA",
+    "category": "Lugar de Interés",
+    "lat": -25.29311,
+    "lon": -57.604082
+  },
+  {
+    "id": "poi-880",
+    "name": "ESC. BASICA Nº 13 FERNANDO DE LA MORA",
+    "category": "Educación",
+    "lat": -25.305944,
+    "lon": -57.616579
+  },
+  {
+    "id": "poi-881",
+    "name": "ESC. BASICA Nº 317 PEDRO P. PEÑA",
+    "category": "Educación",
+    "lat": -25.305885,
+    "lon": -57.627182
+  },
+  {
+    "id": "poi-882",
+    "name": "ESC. BASICA Nº 6 DR. RODRIGUEZ DE FRANCIA",
+    "category": "Educación",
+    "lat": -25.278222,
+    "lon": -57.644415
+  },
+  {
+    "id": "poi-883",
+    "name": "COL. MCAL. FRANCISCO S. LOPEZ",
+    "category": "Educación",
+    "lat": -25.312326,
+    "lon": -57.556018
+  },
+  {
+    "id": "poi-884",
+    "name": "COL. TECNICO NACIONAL",
+    "category": "Educación",
+    "lat": -25.301447,
+    "lon": -57.571213
+  },
+  {
+    "id": "poi-885",
+    "name": "COL. MARIAS PRESCHOOL",
+    "category": "Educación",
+    "lat": -25.299151,
+    "lon": -57.565532
+  },
+  {
+    "id": "poi-886",
+    "name": "COL. EXPERIMENTAL ESPERANZA",
+    "category": "Educación",
+    "lat": -25.299153,
+    "lon": -57.564554
+  },
+  {
+    "id": "poi-887",
+    "name": "ASIDOWN",
+    "category": "Lugar de Interés",
+    "lat": -25.299386,
+    "lon": -57.566176
+  },
+  {
+    "id": "poi-888",
+    "name": "ESC. BASICA Nº 4857 30 DE DICIEMBRE",
+    "category": "Educación",
+    "lat": -25.241804,
+    "lon": -57.531658
+  },
+  {
+    "id": "poi-889",
+    "name": "ESC. DON LUIS BRAILE",
+    "category": "Educación",
+    "lat": -25.314955,
+    "lon": -57.605257
+  },
+  {
+    "id": "poi-890",
+    "name": "COL. SAN MARTIN",
+    "category": "Educación",
+    "lat": -25.300803,
+    "lon": -57.570917
+  },
+  {
+    "id": "poi-891",
+    "name": "ESC. DE Nº6 FONOAUDIOLOGIA",
+    "category": "Educación",
+    "lat": -25.28562,
+    "lon": -57.622147
+  },
+  {
+    "id": "poi-892",
+    "name": "CAP. SAN JUAN",
+    "category": "Lugar de Interés",
+    "lat": -25.267612,
+    "lon": -57.60399
+  }
+]

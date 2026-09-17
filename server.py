@@ -58,6 +58,21 @@ TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
 FEEDBACK_DB_FILE = DATA_DIR / "feedback.sqlite3"
 feedback_store = FeedbackStore(FEEDBACK_DB_FILE)
 
+def _load_municipal_json(filename: str) -> list[dict]:
+    for directory in (DATA_DIR, BASE_DIR / "data"):
+        path = directory / filename
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error cargando {path}: {e}")
+    return []
+
+_asuncion_stops: list[dict] = _load_municipal_json("asuncion_stops.json")
+_asuncion_traffic_lights: list[dict] = _load_municipal_json("asuncion_traffic_lights.json")
+_asuncion_pois: list[dict] = _load_municipal_json("asuncion_pois.json")
+
 
 def _feedback_admin_password() -> str:
     return os.environ.get("FEEDBACK_ADMIN_PASSWORD", "")
@@ -988,6 +1003,8 @@ def plan_trip(olat: float, olon: float, dlat: float, dlon: float) -> list[dict]:
         walk_minutes = total_walk / PLANNER_WALKING_SPEED_M_PER_MIN
         bus_minutes = ride_distance / PLANNER_BUS_SPEED_M_PER_MIN
         estimated_minutes = max(1, int(round(walk_minutes + bus_minutes)))
+        board_stop = find_nearest_official_stop(origin["lat"], origin["lon"], 150.0)
+        alight_stop = find_nearest_official_stop(destination["lat"], destination["lon"], 150.0)
         options.append({
             "id": route["line_id"],
             "name": route["line_name"],
@@ -1003,6 +1020,8 @@ def plan_trip(olat: float, olon: float, dlat: float, dlon: float) -> list[dict]:
             "estimatedMinutes": estimated_minutes,
             "board": {"lat": origin["lat"], "lon": origin["lon"]},
             "alight": {"lat": destination["lat"], "lon": destination["lon"]},
+            "boardStop": board_stop,
+            "alightStop": alight_stop,
             "wraps": wraps,
         })
 
@@ -1094,6 +1113,52 @@ def haversine_km(lat1, lon1, lat2, lon2) -> float:
     dlambda = math.radians(lon2 - lon1)
     a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlambda / 2) ** 2
     return 2 * r * math.asin(min(1, math.sqrt(a)))
+
+
+def find_nearest_official_stop(lat: float, lon: float, max_meters: float = 120.0) -> dict | None:
+    best = None
+    best_dist = float("inf")
+    for stop in _asuncion_stops:
+        dist_m = haversine_km(lat, lon, stop["lat"], stop["lon"]) * 1000.0
+        if dist_m <= max_meters and dist_m < best_dist:
+            best_dist = dist_m
+            best = {
+                "id": stop["id"],
+                "name": stop["name"],
+                "type": stop.get("type", "refugio"),
+                "distanceMeters": int(round(dist_m)),
+                "lat": stop["lat"],
+                "lon": stop["lon"],
+            }
+    return best
+
+
+def search_pois(query: str, limit: int = 15) -> list[dict]:
+    if not isinstance(query, str) or len(query.strip()) < 2:
+        return []
+    normalized_q = unicodedata.normalize("NFKD", query.strip().lower())
+    normalized_q = "".join(c for c in normalized_q if not unicodedata.combining(c))
+    tokens = [t for t in normalized_q.split() if t]
+    if not tokens:
+        return []
+
+    results = []
+    for poi in _asuncion_pois:
+        name = poi.get("name", "")
+        norm_name = unicodedata.normalize("NFKD", name.lower())
+        norm_name = "".join(c for c in norm_name if not unicodedata.combining(c))
+        if all(token in norm_name for token in tokens):
+            results.append({
+                "id": poi.get("id"),
+                "name": name,
+                "category": poi.get("category", "Lugar de Interés"),
+                "lat": poi["lat"],
+                "lon": poi["lon"],
+                "display_name": f"{name} ({poi.get('category', 'Asunción')})"
+            })
+            if len(results) >= limit:
+                break
+    return results
 
 
 def send_push(push_subscription: dict, title: str, body_text: str,
@@ -1465,6 +1530,20 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/lines":
             all_lines = get_all_lines_combined()
             self._send_json_obj(200, {"success": True, "data": all_lines})
+            return
+
+        if parsed.path == "/api/stops":
+            self._send_json_obj(200, {"success": True, "count": len(_asuncion_stops), "data": _asuncion_stops})
+            return
+
+        if parsed.path == "/api/traffic-lights":
+            self._send_json_obj(200, {"success": True, "count": len(_asuncion_traffic_lights), "data": _asuncion_traffic_lights})
+            return
+
+        if parsed.path == "/api/pois":
+            q = qs.get("q", [""])[0]
+            items = search_pois(q, limit=20)
+            self._send_json_obj(200, {"success": True, "count": len(items), "data": items})
             return
 
         if parsed.path == "/api/observed-routes":

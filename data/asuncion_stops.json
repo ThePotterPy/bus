@@ -1,0 +1,1130 @@
+[
+  {
+    "id": "refugio-1",
+    "name": "Aviadores del Chaco y César López Moreira (Entrada Asunción)",
+    "raw_name": "1. Aviadores del Chaco y César López Moreira (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.285991,
+    "lon": -57.570986
+  },
+  {
+    "id": "refugio-2",
+    "name": "Aviadores del Chaco y César López Moreira (Salida Asunción)",
+    "raw_name": "2. Aviadores del Chaco y César López Moreira (Salida Asunción)",
+    "type": "refugio",
+    "lat": -25.285482,
+    "lon": -57.569486
+  },
+  {
+    "id": "refugio-3",
+    "name": "Aviadores del Chaco y Entrada Shopping del Sol (Entrada Asunción)",
+    "raw_name": "3. Aviadores del Chaco y Entrada Shopping del Sol (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.283897,
+    "lon": -57.567303
+  },
+  {
+    "id": "refugio-4",
+    "name": "Aviadores del Chaco y Entrada Shopping del Sol (Entrada Asunción)",
+    "raw_name": "4. Aviadores del Chaco y Entrada Shopping del Sol (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.283878,
+    "lon": -57.567249
+  },
+  {
+    "id": "refugio-5",
+    "name": "Aviadores del Chaco y Santa Teresa (Salida Asunción)",
+    "raw_name": "5. Aviadores del Chaco y Santa Teresa (Salida Asunción)",
+    "type": "refugio",
+    "lat": -25.28333,
+    "lon": -57.563359
+  },
+  {
+    "id": "refugio-6",
+    "name": "Aviadores del Chaco y San Blas (Entrada Asunción)",
+    "raw_name": "6. Aviadores del Chaco y San Blas (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.282427,
+    "lon": -57.562168
+  },
+  {
+    "id": "refugio-7",
+    "name": "Aviadores del Chaco y Cañada (Salida Asunción)",
+    "raw_name": "7. Aviadores del Chaco y Cañada (Salida Asunción)",
+    "type": "refugio",
+    "lat": -25.281449,
+    "lon": -57.560669
+  },
+  {
+    "id": "refugio-8",
+    "name": "Aviadores del Chaco y Molas López (Entrada Asunción)",
+    "raw_name": "8. Aviadores del Chaco y Molas López (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.280386,
+    "lon": -57.559562
+  },
+  {
+    "id": "refugio-9",
+    "name": "Aviadores del Chaco y Prócer Juan Manuel Iturbe",
+    "raw_name": "9. Aviadores del Chaco y Prócer Juan Manuel Iturbe",
+    "type": "refugio",
+    "lat": -25.279036,
+    "lon": -57.556456
+  },
+  {
+    "id": "refugio-10",
+    "name": "Aviadores del Chaco y Prócer Juan Manuel Iturbe (Entrada Asunción)",
+    "raw_name": "10. Aviadores del Chaco y Prócer Juan Manuel Iturbe (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.278322,
+    "lon": -57.555728
+  },
+  {
+    "id": "refugio-11",
+    "name": "Aviadores del Chaco y Cap. Martínez (Salida Asunción)",
+    "raw_name": "11. Aviadores del Chaco y Cap. Martínez (Salida Asunción)",
+    "type": "refugio",
+    "lat": -25.276762,
+    "lon": -57.549943
+  },
+  {
+    "id": "refugio-12",
+    "name": "Aviadores del Chaco y Dr. Gustavo González (Entrada Asunción)",
+    "raw_name": "12. Aviadores del Chaco y Dr. Gustavo González (Entrada Asunción)",
+    "type": "refugio",
+    "lat": -25.276193,
+    "lon": -57.548779
+  },
+  {
+    "id": "refugio-13",
+    "name": "Avda. Rca. Argentina y Kostianovsky",
+    "raw_name": "13. Avda. Rca. Argentina y Kostianovsky",
+    "type": "refugio",
+    "lat": -25.306881,
+    "lon": -57.583978
+  },
+  {
+    "id": "refugio-14",
+    "name": "Avda. España 959 c/Padre Pucheu",
+    "raw_name": "14. Avda. España 959 c/Padre Pucheu",
+    "type": "refugio",
+    "lat": -25.28649,
+    "lon": -57.615044
+  },
+  {
+    "id": "refugio-15",
+    "name": "Avda. España N°1514 y Tte. Federico Delgado",
+    "raw_name": "15. Avda. España N°1514 y Tte. Federico Delgado",
+    "type": "refugio",
+    "lat": -25.287788,
+    "lon": -57.608389
+  },
+  {
+    "id": "refugio-16",
+    "name": "Avda. España esq. Tte. Federico Delgado",
+    "raw_name": "16. Avda. España esq. Tte. Federico Delgado",
+    "type": "refugio",
+    "lat": -25.287657,
+    "lon": -57.608423
+  },
+  {
+    "id": "refugio-17",
+    "name": "Avda. España c/Pitiantuta",
+    "raw_name": "17. Avda. España c/Pitiantuta",
+    "type": "refugio",
+    "lat": -25.288146,
+    "lon": -57.60605
+  },
+  {
+    "id": "refugio-18",
+    "name": "Avda. España e/San Francisco y Brasilia",
+    "raw_name": "18. Avda. España e/San Francisco y Brasilia",
+    "type": "refugio",
+    "lat": -25.288289,
+    "lon": -57.602997
+  },
+  {
+    "id": "refugio-19",
+    "name": "Avda. España y Zanotti Cavazzoni",
+    "raw_name": "19. Avda. España y Zanotti Cavazzoni  ",
+    "type": "refugio",
+    "lat": -25.287362,
+    "lon": -57.597913
+  },
+  {
+    "id": "refugio-20",
+    "name": "Avda. España c/América",
+    "raw_name": "20. Avda. España c/América",
+    "type": "refugio",
+    "lat": -25.287377,
+    "lon": -57.59663
+  },
+  {
+    "id": "refugio-21",
+    "name": "Avda. España e/Santa Rosa y Tte. 1° Porfirio Saldivar",
+    "raw_name": "21. Avda. España e/Santa Rosa y Tte. 1° Porfirio Saldivar",
+    "type": "refugio",
+    "lat": -25.286801,
+    "lon": -57.592182
+  },
+  {
+    "id": "refugio-22",
+    "name": "Avda. España c/ Sacramento",
+    "raw_name": "22. Avda. España c/ Sacramento",
+    "type": "refugio",
+    "lat": -25.286355,
+    "lon": -57.587788
+  },
+  {
+    "id": "refugio-23",
+    "name": "Avda. España e/ Máximo Lira y 23 de Octubre",
+    "raw_name": "23. Avda. España e/ Máximo Lira y 23 de Octubre",
+    "type": "refugio",
+    "lat": -25.286453,
+    "lon": -57.587476
+  },
+  {
+    "id": "refugio-24",
+    "name": "Avda. España c/Dr. Bestard",
+    "raw_name": "24. Avda. España c/Dr. Bestard",
+    "type": "refugio",
+    "lat": -25.286042,
+    "lon": -57.584826
+  },
+  {
+    "id": "refugio-25",
+    "name": "Avda. esq. Dr. Bestard",
+    "raw_name": "25. Avda. esq. Dr. Bestard",
+    "type": "refugio",
+    "lat": -25.28629,
+    "lon": -57.585944
+  },
+  {
+    "id": "refugio-26",
+    "name": "Avda. España c/ Mayor Rivarola",
+    "raw_name": "26. Avda. España c/ Mayor Rivarola",
+    "type": "refugio",
+    "lat": -25.28557,
+    "lon": -57.582716
+  },
+  {
+    "id": "refugio-27",
+    "name": "Avda. España c/ esq. Soldado Desconocido",
+    "raw_name": "27. Avda. España c/ esq. Soldado Desconocido",
+    "type": "refugio",
+    "lat": -25.285301,
+    "lon": -57.582466
+  },
+  {
+    "id": "refugio-28",
+    "name": "Avda. España esq. Roa Bastos",
+    "raw_name": "28. Avda. España esq. Roa Bastos",
+    "type": "refugio",
+    "lat": -25.284971,
+    "lon": -57.579964
+  },
+  {
+    "id": "refugio-29",
+    "name": "Avda. España c/ Bulnes",
+    "raw_name": "29. Avda. España c/ Bulnes",
+    "type": "refugio",
+    "lat": -25.28507,
+    "lon": -57.579594
+  },
+  {
+    "id": "refugio-30",
+    "name": "Avda. España esq. Prof. Feliciangeli",
+    "raw_name": "30. Avda. España esq. Prof. Feliciangeli",
+    "type": "refugio",
+    "lat": -25.285199,
+    "lon": -57.577341
+  },
+  {
+    "id": "refugio-31",
+    "name": "Avda. España y Tte. Basilio Malutín",
+    "raw_name": "31. Avda. España y Tte. Basilio Malutín",
+    "type": "refugio",
+    "lat": -25.285388,
+    "lon": -57.577159
+  },
+  {
+    "id": "refugio-32",
+    "name": "Avda. España c/Santa Ana",
+    "raw_name": "32. Avda. España c/Santa Ana",
+    "type": "refugio",
+    "lat": -25.286108,
+    "lon": -57.5734
+  },
+  {
+    "id": "refugio-33",
+    "name": "Avda. España c/ O'Higgins",
+    "raw_name": "33. Avda. España c/ O'Higgins",
+    "type": "refugio",
+    "lat": -25.286326,
+    "lon": -57.573123
+  },
+  {
+    "id": "refugio-34",
+    "name": "Avda. España 491 c/Brasil",
+    "raw_name": "34. Avda. España 491 c/Brasil",
+    "type": "refugio",
+    "lat": -25.28524,
+    "lon": -57.620929
+  },
+  {
+    "id": "refugio-35",
+    "name": "Avda. España e/Brasil y San José",
+    "raw_name": "35. Avda. España e/Brasil y San José",
+    "type": "refugio",
+    "lat": -25.285331,
+    "lon": -57.621099
+  },
+  {
+    "id": "refugio-36",
+    "name": "Pizarro c/Dr. José Gaspar Estigarribia",
+    "raw_name": "36. Pizarro c/Dr. José Gaspar Estigarribia",
+    "type": "refugio",
+    "lat": -25.324617,
+    "lon": -57.63353
+  },
+  {
+    "id": "refugio-37",
+    "name": "Avda. Pizarro y Dr. José Gaspar Estigarribia",
+    "raw_name": "37. Avda. Pizarro y Dr. José Gaspar Estigarribia",
+    "type": "refugio",
+    "lat": -25.324476,
+    "lon": -57.633414
+  },
+  {
+    "id": "refugio-38",
+    "name": "Félix Trujilllo c/Tte. 2do. Acosta",
+    "raw_name": "38. Félix Trujilllo c/Tte. 2do. Acosta",
+    "type": "refugio",
+    "lat": -25.23191,
+    "lon": -57.563415
+  },
+  {
+    "id": "refugio-39",
+    "name": "Félix Trujillo y Tte. 2do. Claudio Acosta",
+    "raw_name": "39. Félix Trujillo y Tte. 2do. Claudio Acosta",
+    "type": "refugio",
+    "lat": -25.231927,
+    "lon": -57.563621
+  },
+  {
+    "id": "refugio-40",
+    "name": "Avda. Venezuela c/ Tte. 1ro. Horacio Gini",
+    "raw_name": "40. Avda. Venezuela c/ Tte. 1ro. Horacio Gini",
+    "type": "refugio",
+    "lat": -25.284738,
+    "lon": -57.594652
+  },
+  {
+    "id": "refugio-41",
+    "name": "Avda. Venezuela c/Sgto. Gauto",
+    "raw_name": "41. Avda. Venezuela c/Sgto. Gauto",
+    "type": "refugio",
+    "lat": -25.280881,
+    "lon": -57.594284
+  },
+  {
+    "id": "refugio-42",
+    "name": "Avda. Venezuela e/Nicasio Insaurralde y Tte. Francisco Escurra",
+    "raw_name": "42. Avda. Venezuela e/Nicasio Insaurralde y Tte. Francisco Escurra",
+    "type": "refugio",
+    "lat": -25.27684,
+    "lon": -57.59401
+  },
+  {
+    "id": "refugio-43",
+    "name": "Avda. Venezuela c/ Avda. Artigas",
+    "raw_name": "43. Avda. Venezuela c/ Avda. Artigas",
+    "type": "refugio",
+    "lat": -25.264355,
+    "lon": -57.593415
+  },
+  {
+    "id": "refugio-44",
+    "name": "Avda. Venezuela e/Tte. Villamayor y Tte. Vicente Jara",
+    "raw_name": "44. Avda. Venezuela e/Tte. Villamayor y Tte. Vicente Jara",
+    "type": "refugio",
+    "lat": -25.279221,
+    "lon": -57.59425
+  },
+  {
+    "id": "refugio-45",
+    "name": "Avda. Venezuela entre Sgto. Gauto y Fray de Granada",
+    "raw_name": "45. Avda. Venezuela entre Sgto. Gauto y Fray de Granada",
+    "type": "refugio",
+    "lat": -25.283388,
+    "lon": -57.594646
+  },
+  {
+    "id": "refugio-46",
+    "name": "Avda. Venezuela e/Tte. Benigno Villamayor y Tte. Escurra",
+    "raw_name": "46. Avda. Venezuela e/Tte. Benigno Villamayor y Tte. Escurra",
+    "type": "refugio",
+    "lat": -25.277984,
+    "lon": -57.593972
+  },
+  {
+    "id": "refugio-47",
+    "name": "Avda. Artigas y Molas López",
+    "raw_name": "47. Avda. Artigas y Molas López",
+    "type": "refugio",
+    "lat": -25.257188,
+    "lon": -57.585014
+  },
+  {
+    "id": "refugio-48",
+    "name": "Mariscal López y José Rodó",
+    "raw_name": "48. Mariscal López y José Rodó",
+    "type": "refugio",
+    "lat": -25.293499,
+    "lon": -57.608303
+  },
+  {
+    "id": "refugio-49",
+    "name": "Mariscal López y Bernardino Caballero",
+    "raw_name": "49. Mariscal López y Bernardino Caballero",
+    "type": "refugio",
+    "lat": -25.302149,
+    "lon": -57.562652
+  },
+  {
+    "id": "refugio-50",
+    "name": "Mariscal López y Brasilia (Entrada)",
+    "raw_name": "50. Mariscal López y Brasilia (Entrada)",
+    "type": "refugio",
+    "lat": -25.292787,
+    "lon": -57.604453
+  },
+  {
+    "id": "refugio-51",
+    "name": "Mariscal López y Aca Carayá",
+    "raw_name": "51. Mariscal López y Aca Carayá",
+    "type": "refugio",
+    "lat": -25.291714,
+    "lon": -57.598636
+  },
+  {
+    "id": "refugio-52",
+    "name": "Mariscal López y Choferes del Chaco",
+    "raw_name": "52. Mariscal López y Choferes del Chaco",
+    "type": "refugio",
+    "lat": -25.290312,
+    "lon": -57.592502
+  },
+  {
+    "id": "refugio-53",
+    "name": "Mariscal López y L. Fragnaud",
+    "raw_name": "53. Mariscal López y L. Fragnaud",
+    "type": "refugio",
+    "lat": -25.290586,
+    "lon": -57.58821
+  },
+  {
+    "id": "refugio-54",
+    "name": "Mariscal López y Guillermo Saravi",
+    "raw_name": "54. Mariscal López y Guillermo Saravi",
+    "type": "refugio",
+    "lat": -25.291694,
+    "lon": -57.585616
+  },
+  {
+    "id": "refugio-55",
+    "name": "Mariscal López y Juan S. Bogarín",
+    "raw_name": "55. Mariscal López y Juan S. Bogarín",
+    "type": "refugio",
+    "lat": -25.292964,
+    "lon": -57.582746
+  },
+  {
+    "id": "refugio-56",
+    "name": "Mariscal López y Rodolfo Zotti",
+    "raw_name": "56. Mariscal López y Rodolfo Zotti",
+    "type": "refugio",
+    "lat": -25.293682,
+    "lon": -57.581199
+  },
+  {
+    "id": "refugio-57",
+    "name": "Mariscal López y Cruz del Defensor",
+    "raw_name": "57. Mariscal López y Cruz del Defensor",
+    "type": "refugio",
+    "lat": -25.294853,
+    "lon": -57.578436
+  },
+  {
+    "id": "refugio-58",
+    "name": "Mariscal López y Natalicio González",
+    "raw_name": "58. Mariscal López y Natalicio González",
+    "type": "refugio",
+    "lat": -25.29755,
+    "lon": -57.572159
+  },
+  {
+    "id": "refugio-59",
+    "name": "Mariscal López y Tte. Casco",
+    "raw_name": "59. Mariscal López y Tte. Casco",
+    "type": "refugio",
+    "lat": -25.301743,
+    "lon": -57.563796
+  },
+  {
+    "id": "refugio-60",
+    "name": "Mariscal López y Dr. Benítez",
+    "raw_name": "60. Mariscal López y Dr. Benítez",
+    "type": "refugio",
+    "lat": -25.305984,
+    "lon": -57.556002
+  },
+  {
+    "id": "refugio-61",
+    "name": "Mariscal López y Rogelio Benítez",
+    "raw_name": "61. Mariscal López y Rogelio Benítez",
+    "type": "refugio",
+    "lat": -25.303453,
+    "lon": -57.56025
+  },
+  {
+    "id": "refugio-62",
+    "name": "Mariscal López y Calle sin nombre",
+    "raw_name": "62. Mariscal López y Calle sin nombre",
+    "type": "refugio",
+    "lat": -25.306224,
+    "lon": -57.55523
+  },
+  {
+    "id": "refugio-63",
+    "name": "Mariscal López y Herminio Maldonado",
+    "raw_name": "63. Mariscal López y Herminio Maldonado",
+    "type": "refugio",
+    "lat": -25.298976,
+    "lon": -57.568507
+  },
+  {
+    "id": "refugio-64",
+    "name": "Mariscal López y Dr. Morra",
+    "raw_name": "64. Mariscal López y Dr. Morra",
+    "type": "refugio",
+    "lat": -25.294535,
+    "lon": -57.57872
+  },
+  {
+    "id": "refugio-65",
+    "name": "Mariscal López y Salaskin",
+    "raw_name": "65. Mariscal López y Salaskin",
+    "type": "refugio",
+    "lat": -25.292558,
+    "lon": -57.583206
+  },
+  {
+    "id": "refugio-66",
+    "name": "Mariscal López y 23 de Octubre",
+    "raw_name": "66. Mariscal López y 23 de Octubre",
+    "type": "refugio",
+    "lat": -25.290243,
+    "lon": -57.588466
+  },
+  {
+    "id": "refugio-67",
+    "name": "Mariscal López y Santa Rosa",
+    "raw_name": "67. Mariscal López y Santa Rosa",
+    "type": "refugio",
+    "lat": -25.289902,
+    "lon": -57.591608
+  },
+  {
+    "id": "refugio-68",
+    "name": "Mariscal López y Venezuela",
+    "raw_name": "68. Mariscal López y Venezuela",
+    "type": "refugio",
+    "lat": -25.290951,
+    "lon": -57.595432
+  },
+  {
+    "id": "refugio-69",
+    "name": "Mariscal López y Brasilia",
+    "raw_name": "69. Mariscal López y Brasilia",
+    "type": "refugio",
+    "lat": -25.292317,
+    "lon": -57.60287
+  },
+  {
+    "id": "refugio-70",
+    "name": "Mariscal López y Marco de Brix",
+    "raw_name": "70. Mariscal López y Marco de Brix",
+    "type": "refugio",
+    "lat": -25.293449,
+    "lon": -57.609105
+  },
+  {
+    "id": "refugio-71",
+    "name": "Mariscal López y Gral. Bruguez",
+    "raw_name": "71. Mariscal López y Gral. Bruguez",
+    "type": "refugio",
+    "lat": -25.291942,
+    "lon": -57.615071
+  },
+  {
+    "id": "refugio-72",
+    "name": "Avda. Itá Ybate y Caballero",
+    "raw_name": "72. Avda. Itá Ybate y Caballero",
+    "type": "refugio",
+    "lat": -25.305862,
+    "lon": -57.646122
+  },
+  {
+    "id": "refugio-73",
+    "name": "Avda. Itá Ybate c/Yegros",
+    "raw_name": "73. Avda. Itá Ybate c/Yegros",
+    "type": "refugio",
+    "lat": -25.305253,
+    "lon": -57.647191
+  },
+  {
+    "id": "refugio-74",
+    "name": "Avda. Itá Ybaté c/Yegros",
+    "raw_name": "74. Avda. Itá Ybaté c/Yegros",
+    "type": "refugio",
+    "lat": -25.305472,
+    "lon": -57.647625
+  },
+  {
+    "id": "refugio-75",
+    "name": "Avda. Itá Ybate c/ Caballero",
+    "raw_name": "75. Avda. Itá Ybate c/ Caballero",
+    "type": "refugio",
+    "lat": -25.306084,
+    "lon": -57.646491
+  },
+  {
+    "id": "refugio-76",
+    "name": "Avda. San Martín y Agustín Pio Barrios",
+    "raw_name": "76. Avda. San Martín y Agustín Pio Barrios",
+    "type": "refugio",
+    "lat": -25.284274,
+    "lon": -57.571469
+  },
+  {
+    "id": "refugio-77",
+    "name": "Avda. San Martín y Avda. Mcal. López",
+    "raw_name": "77. Avda. San Martín y Avda. Mcal. López",
+    "type": "refugio",
+    "lat": -25.294854,
+    "lon": -57.576982
+  },
+  {
+    "id": "refugio-78",
+    "name": "Avda. San Martín y Sucre (Salida)",
+    "raw_name": "78. Avda. San Martín y Sucre (Salida)",
+    "type": "refugio",
+    "lat": -25.290608,
+    "lon": -57.574362
+  },
+  {
+    "id": "refugio-79",
+    "name": "Avda. San Martín y Bruselas",
+    "raw_name": "79. Avda. San Martín y Bruselas",
+    "type": "refugio",
+    "lat": -25.28745,
+    "lon": -57.572234
+  },
+  {
+    "id": "refugio-80",
+    "name": "Avda. San Martín casi Molas López",
+    "raw_name": "80. Avda. San Martín casi Molas López",
+    "type": "refugio",
+    "lat": -25.275985,
+    "lon": -57.567408
+  },
+  {
+    "id": "refugio-81",
+    "name": "Azara y Pa'i Pérez",
+    "raw_name": "Azara y Pa'i Pérez",
+    "type": "refugio",
+    "lat": -25.291792,
+    "lon": -57.622236
+  },
+  {
+    "id": "refugio-82",
+    "name": "Azara y Brasil",
+    "raw_name": "Azara y Brasil ",
+    "type": "refugio",
+    "lat": -25.289997,
+    "lon": -57.625386
+  },
+  {
+    "id": "refugio-83",
+    "name": "Azara casi Tacuary",
+    "raw_name": "Azara casi Tacuary",
+    "type": "refugio",
+    "lat": -25.288092,
+    "lon": -57.628762
+  },
+  {
+    "id": "refugio-84",
+    "name": "Azara casi Independencia Nacional",
+    "raw_name": "Azara casi Independencia Nacional",
+    "type": "refugio",
+    "lat": -25.28475,
+    "lon": -57.634613
+  },
+  {
+    "id": "refugio-85",
+    "name": "Avda. Artigas y Cañadón Chaqueño",
+    "raw_name": "Avda. Artigas y Cañadón Chaqueño",
+    "type": "refugio",
+    "lat": -25.25654,
+    "lon": -57.584459
+  },
+  {
+    "id": "refugio-86",
+    "name": "Stma. Trinidad casi Dr. Zubizarreta",
+    "raw_name": "Stma. Trinidad casi Dr. Zubizarreta",
+    "type": "refugio",
+    "lat": -25.270164,
+    "lon": -57.562898
+  },
+  {
+    "id": "refugio-87",
+    "name": "Stma. Trinidad casi Julio Correa",
+    "raw_name": "Stma. Trinidad casi Julio Correa",
+    "type": "refugio",
+    "lat": -25.270233,
+    "lon": -57.562452
+  },
+  {
+    "id": "refugio-88",
+    "name": "Stma. Trinidad y Congreso de Colombia 70",
+    "raw_name": "Stma. Trinidad y Congreso de Colombia 70",
+    "type": "refugio",
+    "lat": -25.263947,
+    "lon": -57.572373
+  },
+  {
+    "id": "refugio-89",
+    "name": "Stma. Trinidad entre Itapúa y Congreso de Colombia",
+    "raw_name": "Stma. Trinidad entre Itapúa y Congreso de Colombia",
+    "type": "refugio",
+    "lat": -25.264031,
+    "lon": -57.57188
+  },
+  {
+    "id": "refugio-90",
+    "name": "Stma. Trinidad casi Calle Tapuá",
+    "raw_name": "Stma. Trinidad casi Calle Tapuá",
+    "type": "refugio",
+    "lat": -25.261206,
+    "lon": -57.576209
+  },
+  {
+    "id": "refugio-91",
+    "name": "Avda. Brasilia y Rio de Janeiro",
+    "raw_name": "Avda. Brasilia y Rio de Janeiro",
+    "type": "refugio",
+    "lat": -25.291898,
+    "lon": -57.603044
+  },
+  {
+    "id": "refugio-92",
+    "name": "Avda. Brasilia y Tte. Benigno Villamayor",
+    "raw_name": "Avda. Brasilia y Tte. Benigno Villamayor",
+    "type": "refugio",
+    "lat": -25.278458,
+    "lon": -57.599797
+  },
+  {
+    "id": "refugio-93",
+    "name": "Avda. Brasilia y Tte. Francisco Cowlan",
+    "raw_name": "Avda. Brasilia y Tte. Francisco Cowlan",
+    "type": "refugio",
+    "lat": -25.276343,
+    "lon": -57.599273
+  },
+  {
+    "id": "refugio-94",
+    "name": "Avda. Brasilia y Cmdte. Atilio Peña",
+    "raw_name": "Avda. Brasilia y Cmdte. Atilio Peña",
+    "type": "refugio",
+    "lat": -25.278482,
+    "lon": -57.600013
+  },
+  {
+    "id": "refugio-95",
+    "name": "Avda. Brasilia y Cmdte. Molas",
+    "raw_name": "Avda. Brasilia y Cmdte. Molas",
+    "type": "refugio",
+    "lat": -25.275453,
+    "lon": -57.599293
+  },
+  {
+    "id": "refugio-96",
+    "name": "Avda. Brasilia casi Mcal. López",
+    "raw_name": "Avda. Brasilia casi Mcal. López",
+    "type": "refugio",
+    "lat": -25.291798,
+    "lon": -57.603265
+  },
+  {
+    "id": "refugio-97",
+    "name": "Mariscal López y San Roque González",
+    "raw_name": "Mariscal López y San Roque González",
+    "type": "refugio",
+    "lat": -25.293753,
+    "lon": -57.580993
+  },
+  {
+    "id": "refugio-98",
+    "name": "Mariscal López y Pitiantuta",
+    "raw_name": "Mariscal López y Pitiantuta",
+    "type": "refugio",
+    "lat": -25.293164,
+    "lon": -57.607455
+  },
+  {
+    "id": "refugio-99",
+    "name": "Mariscal López y Cruz del Chaco",
+    "raw_name": "Mariscal López y Cruz del Chaco",
+    "type": "refugio",
+    "lat": -25.294719,
+    "lon": -57.578752
+  },
+  {
+    "id": "refugio-100",
+    "name": "O' Higgins casi Avda. Mariscal López",
+    "raw_name": "O' Higgins casi Avda. Mariscal López",
+    "type": "refugio",
+    "lat": -25.294752,
+    "lon": -57.577852
+  },
+  {
+    "id": "refugio-101",
+    "name": "Mariscal López y R.I. 5 Gral. Díaz",
+    "raw_name": "Mariscal López y R.I. 5 Gral. Díaz",
+    "type": "refugio",
+    "lat": -25.299179,
+    "lon": -57.568519
+  },
+  {
+    "id": "refugio-102",
+    "name": "Mariscal López y San Martín",
+    "raw_name": "Mariscal López y San Martín",
+    "type": "refugio",
+    "lat": -25.295748,
+    "lon": -57.575881
+  },
+  {
+    "id": "refugio-103",
+    "name": "Mariscal López y Zanotti Cavazzoni",
+    "raw_name": "Mariscal López y Zanotti Cavazzoni",
+    "type": "refugio",
+    "lat": -25.291523,
+    "lon": -57.598629
+  },
+  {
+    "id": "refugio-104",
+    "name": "Mariscal López y Bélgica",
+    "raw_name": "Mariscal López y Bélgica",
+    "type": "refugio",
+    "lat": -25.297398,
+    "lon": -57.57207
+  },
+  {
+    "id": "refugio-105",
+    "name": "Mariscal López y Emiliano R. Fernández",
+    "raw_name": "Mariscal López y Emiliano R. Fernández",
+    "type": "refugio",
+    "lat": -25.307632,
+    "lon": -57.552716
+  },
+  {
+    "id": "refugio-106",
+    "name": "Mariscal López y Cap. Urbieta",
+    "raw_name": "Mariscal López y Cap. Urbieta",
+    "type": "refugio",
+    "lat": -25.290235,
+    "lon": -57.617666
+  },
+  {
+    "id": "refugio-107",
+    "name": "Mariscal López y 22 de setiembre",
+    "raw_name": "Mariscal López y 22 de setiembre",
+    "type": "refugio",
+    "lat": -25.292976,
+    "lon": -57.613262
+  },
+  {
+    "id": "refugio-108",
+    "name": "Mariscal López e/ Pedro García y Mary Lions",
+    "raw_name": "Mariscal López e/ Pedro García y Mary Lions",
+    "type": "refugio",
+    "lat": -25.291478,
+    "lon": -57.615528
+  },
+  {
+    "id": "refugio-109",
+    "name": "Avda. Rca. Argentina y Mac Mahon",
+    "raw_name": "Avda. Rca. Argentina y Mac Mahon",
+    "type": "refugio",
+    "lat": -25.302311,
+    "lon": -57.581416
+  },
+  {
+    "id": "refugio-110",
+    "name": "Avda. Rca. Argentina y Hassler",
+    "raw_name": "Avda. Rca. Argentina y Hassler",
+    "type": "refugio",
+    "lat": -25.297325,
+    "lon": -57.578464
+  },
+  {
+    "id": "refugio-111",
+    "name": "Avda. Rca. Argentina y Andrés Campos Cervera",
+    "raw_name": "Avda. Rca. Argentina y Andrés Campos Cervera",
+    "type": "refugio",
+    "lat": -25.2992,
+    "lon": -57.579328
+  },
+  {
+    "id": "refugio-112",
+    "name": "Avda. Rca. Argentina y Dr. Osvaldo Chávez",
+    "raw_name": "Avda. Rca. Argentina y Dr. Osvaldo Chávez",
+    "type": "refugio",
+    "lat": -25.314006,
+    "lon": -57.588712
+  },
+  {
+    "id": "refugio-113",
+    "name": "Avda. Rca. Argentina y Facundo Machain",
+    "raw_name": "Avda. Rca. Argentina y Facundo Machain",
+    "type": "refugio",
+    "lat": -25.304901,
+    "lon": -57.583028
+  },
+  {
+    "id": "refugio-114",
+    "name": "Avda. San Martín y Sucre",
+    "raw_name": "Avda. San Martín y Sucre",
+    "type": "refugio",
+    "lat": -25.291042,
+    "lon": -57.574382
+  },
+  {
+    "id": "refugio-115",
+    "name": "Avda. Rca. Argentina N°1851 e/ Eusebio Ayala y Manuel Blinder",
+    "raw_name": "Avda. Rca. Argentina N°1851 e/ Eusebio Ayala y Manuel Blinder",
+    "type": "refugio",
+    "lat": -25.309776,
+    "lon": -57.585748
+  },
+  {
+    "id": "refugio-116",
+    "name": "Avda. San Martín y Molas López",
+    "raw_name": "Avda. San Martín y Molas López",
+    "type": "refugio",
+    "lat": -25.276268,
+    "lon": -57.567407
+  },
+  {
+    "id": "refugio-117",
+    "name": "Avda. San Martín y Roque Centurión Miranda",
+    "raw_name": "Avda. San Martín y Roque Centurión Miranda",
+    "type": "refugio",
+    "lat": -25.284611,
+    "lon": -57.571743
+  },
+  {
+    "id": "refugio-118",
+    "name": "Sacramento c/ Stma. Trinidad",
+    "raw_name": "Sacramento c/ Stma. Trinidad",
+    "type": "refugio",
+    "lat": -25.259454,
+    "lon": -57.580306
+  },
+  {
+    "id": "refugio-119",
+    "name": "Sacramento y Dr. Peña (Entrada)",
+    "raw_name": "Sacramento y Dr. Peña (Entrada)",
+    "type": "refugio",
+    "lat": -25.272318,
+    "lon": -57.584548
+  },
+  {
+    "id": "refugio-120",
+    "name": "Sacramento c/ Dr. Sosa",
+    "raw_name": "Sacramento c/ Dr. Sosa",
+    "type": "refugio",
+    "lat": -25.259478,
+    "lon": -57.580597
+  },
+  {
+    "id": "refugio-121",
+    "name": "Chiang Kai-Shek e/ José Segundo Decoud y Alberdi",
+    "raw_name": "Chiang Kai-Shek e/ José Segundo Decoud y Alberdi",
+    "type": "refugio",
+    "lat": -25.299927,
+    "lon": -57.648238
+  },
+  {
+    "id": "refugio-122",
+    "name": "Avda. José Falcón esq. 14 de mayo",
+    "raw_name": "Avda. José Falcón esq. 14 de mayo",
+    "type": "refugio",
+    "lat": -25.302801,
+    "lon": -57.651433
+  },
+  {
+    "id": "refugio-123",
+    "name": "Avda. España esq. Pitiantuta",
+    "raw_name": "Avda. España esq. Pitiantuta",
+    "type": "refugio",
+    "lat": -25.288134,
+    "lon": -57.605414
+  },
+  {
+    "id": "refugio-124",
+    "name": "Avda. España casi Padre Cardozo",
+    "raw_name": "Avda. España casi Padre Cardozo",
+    "type": "refugio",
+    "lat": -25.287104,
+    "lon": -57.611756
+  },
+  {
+    "id": "refugio-125",
+    "name": "Avda. España 1369 y San Rafael",
+    "raw_name": "Avda. España 1369 y San Rafael",
+    "type": "refugio",
+    "lat": -25.28559,
+    "lon": -57.575801
+  },
+  {
+    "id": "refugio-126",
+    "name": "Avda. Cacique Lambaré entre Procer Iturbe y Avda. Fernando de la Mora",
+    "raw_name": "Avda. Cacique Lambaré entre Procer Iturbe y Avda. Fernando de la Mora",
+    "type": "refugio",
+    "lat": -25.338757,
+    "lon": -57.589944
+  },
+  {
+    "id": "refugio-127",
+    "name": "Herrera esq. Paraguarí",
+    "raw_name": "Herrera esq. Paraguarí",
+    "type": "refugio",
+    "lat": -25.287451,
+    "lon": -57.631994
+  },
+  {
+    "id": "refugio-128",
+    "name": "Herrera e/ Antequera y Tacuarí",
+    "raw_name": "Herrera e/ Antequera y Tacuarí",
+    "type": "refugio",
+    "lat": -25.288295,
+    "lon": -57.630509
+  },
+  {
+    "id": "refugio-129",
+    "name": "Herrera casi Constitución",
+    "raw_name": "Herrera casi Constitución",
+    "type": "refugio",
+    "lat": -25.291226,
+    "lon": -57.625284
+  },
+  {
+    "id": "terminal-1",
+    "name": "Parada Linea 1- Ysapy",
+    "raw_name": "Parada Linea 1- Ysapy",
+    "type": "terminal",
+    "lat": -25.299597,
+    "lon": -57.552182
+  },
+  {
+    "id": "terminal-2",
+    "name": "Parada Linea 1 - Santa Maria",
+    "raw_name": "Parada Linea 1 - Santa Maria",
+    "type": "terminal",
+    "lat": -25.303583,
+    "lon": -57.550396
+  },
+  {
+    "id": "terminal-3",
+    "name": "Parada Linea 6 - Po'a Renda",
+    "raw_name": "Parada Linea 6 - Po'a Renda",
+    "type": "terminal",
+    "lat": -25.31985,
+    "lon": -57.645739
+  },
+  {
+    "id": "terminal-4",
+    "name": "Parada Linea 6 - Po'a Renda",
+    "raw_name": "Parada Linea 6 - Po'a Renda",
+    "type": "terminal",
+    "lat": -25.24115,
+    "lon": -57.550487
+  },
+  {
+    "id": "terminal-5",
+    "name": "Parada Linea 9",
+    "raw_name": "Parada Linea 9",
+    "type": "terminal",
+    "lat": -25.359183,
+    "lon": -57.644706
+  },
+  {
+    "id": "terminal-6",
+    "name": "Parada Linea 13-1A - De La Conquista",
+    "raw_name": "Parada Linea 13-1A - De La Conquista",
+    "type": "terminal",
+    "lat": -25.23547,
+    "lon": -57.532
+  },
+  {
+    "id": "terminal-7",
+    "name": "Parada Linea 13-1B - De La Conquista",
+    "raw_name": "Parada Linea 13-1B - De La Conquista",
+    "type": "terminal",
+    "lat": -25.32775,
+    "lon": -57.634506
+  },
+  {
+    "id": "terminal-8",
+    "name": "Parada Linea 13-2",
+    "raw_name": "Parada Linea 13-2",
+    "type": "terminal",
+    "lat": -25.233183,
+    "lon": -57.554591
+  },
+  {
+    "id": "terminal-9",
+    "name": "Parada Linea 16 - La Unión S.A.",
+    "raw_name": "Parada Linea 16 - La Unión S.A.",
+    "type": "terminal",
+    "lat": -25.241315,
+    "lon": -57.537508
+  },
+  {
+    "id": "terminal-10",
+    "name": "Parada Linea 37-B - El Bus S.A.",
+    "raw_name": "Parada Linea 37-B - El Bus S.A.",
+    "type": "terminal",
+    "lat": -25.240793,
+    "lon": -57.530792
+  },
+  {
+    "id": "terminal-11",
+    "name": "Parada Linea 37-C - ADUSA",
+    "raw_name": "Parada Linea 37-C - ADUSA",
+    "type": "terminal",
+    "lat": -25.239933,
+    "lon": -57.532082
+  },
+  {
+    "id": "terminal-12",
+    "name": "Terminal de Omnibus de Asunción (TOA)",
+    "raw_name": "Terminal de Omnibus de Asunción (TOA)",
+    "type": "terminal",
+    "lat": -25.325933,
+    "lon": -57.596217
+  }
+]

@@ -1,0 +1,2306 @@
+[
+  {
+    "id": "tl-atms-1",
+    "name": "Perú y Ana Díaz",
+    "code": "TSCS-070",
+    "type": "atms",
+    "lat": -25.299499,
+    "lon": -57.626722
+  },
+  {
+    "id": "tl-atms-2",
+    "name": "España y Brasil",
+    "code": "LTSCS-023",
+    "type": "atms",
+    "lat": -25.285052,
+    "lon": -57.622069
+  },
+  {
+    "id": "tl-atms-3",
+    "name": "Fdo. de la Mora y Gral. Santos",
+    "code": "TSCS-054",
+    "type": "atms",
+    "lat": -25.308793,
+    "lon": -57.615733
+  },
+  {
+    "id": "tl-atms-4",
+    "name": "Próceres de Mayo y Europa",
+    "code": "TSCS-055",
+    "type": "atms",
+    "lat": -25.305418,
+    "lon": -57.619461
+  },
+  {
+    "id": "tl-atms-5",
+    "name": "Próceres de Mayo y Ana Díaz",
+    "code": "TSCS-056",
+    "type": "atms",
+    "lat": -25.302931,
+    "lon": -57.620273
+  },
+  {
+    "id": "tl-atms-6",
+    "name": "Felix Bogado y Gral. Santos",
+    "code": "TSCS-057",
+    "type": "atms",
+    "lat": -25.327917,
+    "lon": -57.627008
+  },
+  {
+    "id": "tl-atms-7",
+    "name": "Félix Bogado y 18 de Julio",
+    "code": "TSCS-058",
+    "type": "atms",
+    "lat": -25.324337,
+    "lon": -57.627893
+  },
+  {
+    "id": "tl-atms-8",
+    "name": "Félix Bogado y Japón",
+    "code": "TSCS-059",
+    "type": "atms",
+    "lat": -25.317665,
+    "lon": -57.629667
+  },
+  {
+    "id": "tl-atms-9",
+    "name": "Félix Bogado y Cap. Bado",
+    "code": "TSCS-060",
+    "type": "atms",
+    "lat": -25.315577,
+    "lon": -57.630193
+  },
+  {
+    "id": "tl-atms-10",
+    "name": "Félix Bogado y Cassanello",
+    "code": "TSCS-061",
+    "type": "atms",
+    "lat": -25.3084,
+    "lon": -57.631666
+  },
+  {
+    "id": "tl-atms-11",
+    "name": "Félix Bogado y 5ta",
+    "code": "TSCS-062",
+    "type": "atms",
+    "lat": -25.299323,
+    "lon": -57.632115
+  },
+  {
+    "id": "tl-atms-12",
+    "name": "Félix Bogado y Lomas Valentinas/Brasil",
+    "code": "TSCS-063",
+    "type": "atms",
+    "lat": -25.298141,
+    "lon": -57.631841
+  },
+  {
+    "id": "tl-atms-13",
+    "name": "Perú y 25 de Mayo",
+    "code": "TSCS-064",
+    "type": "atms",
+    "lat": -25.291164,
+    "lon": -57.620402
+  },
+  {
+    "id": "tl-atms-14",
+    "name": "Perú y Cerro Cora",
+    "code": "TSCS-065",
+    "type": "atms",
+    "lat": -25.291821,
+    "lon": -57.620912
+  },
+  {
+    "id": "tl-atms-15",
+    "name": "Perú y Azara",
+    "code": "TSCS-066",
+    "type": "atms",
+    "lat": -25.292388,
+    "lon": -57.621342
+  },
+  {
+    "id": "tl-atms-16",
+    "name": "Perú y Herrera",
+    "code": "TSCS-067",
+    "type": "atms",
+    "lat": -25.293117,
+    "lon": -57.621902
+  },
+  {
+    "id": "tl-atms-17",
+    "name": "Perú y Pettirossi",
+    "code": "TSCS-068",
+    "type": "atms",
+    "lat": -25.295791,
+    "lon": -57.623942
+  },
+  {
+    "id": "tl-atms-18",
+    "name": "Perú y Rodríguez de Francia",
+    "code": "TSCS-069",
+    "type": "atms",
+    "lat": -25.298437,
+    "lon": -57.625932
+  },
+  {
+    "id": "tl-atms-19",
+    "name": "Trasnchaco y Doña Máxima Lugo",
+    "code": "TSCS-071",
+    "type": "atms",
+    "lat": -25.238214,
+    "lon": -57.541001
+  },
+  {
+    "id": "tl-atms-20",
+    "name": "Trasnchaco y Cap. Lombardo",
+    "code": "TSCS-072",
+    "type": "atms",
+    "lat": -25.240861,
+    "lon": -57.543157
+  },
+  {
+    "id": "tl-atms-21",
+    "name": "Trasnchaco y O´Higgins",
+    "code": "TSCS-073",
+    "type": "atms",
+    "lat": -25.243128,
+    "lon": -57.54562
+  },
+  {
+    "id": "tl-atms-22",
+    "name": "Trasnchaco y Semidei",
+    "code": "TSCS-074",
+    "type": "atms",
+    "lat": -25.24669,
+    "lon": -57.549448
+  },
+  {
+    "id": "tl-atms-23",
+    "name": "Artigas y Stma. Trinidad",
+    "code": "TSCS-075",
+    "type": "atms",
+    "lat": -25.256176,
+    "lon": -57.58382
+  },
+  {
+    "id": "tl-atms-24",
+    "name": "Artigas y Cap. Lombardo",
+    "code": "TSCS-076",
+    "type": "atms",
+    "lat": -25.261259,
+    "lon": -57.590786
+  },
+  {
+    "id": "tl-atms-25",
+    "name": "Artigas y Venezuela",
+    "code": "TSCS-077",
+    "type": "atms",
+    "lat": -25.263595,
+    "lon": -57.593736
+  },
+  {
+    "id": "tl-atms-26",
+    "name": "Artigas y Gral. Santos",
+    "code": "TSCS-078",
+    "type": "atms",
+    "lat": -25.275459,
+    "lon": -57.609745
+  },
+  {
+    "id": "tl-atms-27",
+    "name": "Mcal. López y Denis Roa",
+    "code": "TSCS-004",
+    "type": "atms",
+    "lat": -25.30075,
+    "lon": -57.565298
+  },
+  {
+    "id": "tl-atms-28",
+    "name": "Mcal. López y Gómez de Castro",
+    "code": "TSCS-012",
+    "type": "atms",
+    "lat": -25.29093,
+    "lon": -57.587006
+  },
+  {
+    "id": "tl-atms-29",
+    "name": "Mcal López y choferes del chaco",
+    "code": "TSCS-013",
+    "type": "atms",
+    "lat": -25.289995,
+    "lon": -57.590657
+  },
+  {
+    "id": "tl-atms-30",
+    "name": "Mcal. López y Venezuela",
+    "code": "TSCS-014",
+    "type": "atms",
+    "lat": -25.291288,
+    "lon": -57.59695
+  },
+  {
+    "id": "tl-atms-31",
+    "name": "Mcal. López y Brasilia",
+    "code": "TSCS-015",
+    "type": "atms",
+    "lat": -25.29249,
+    "lon": -57.603284
+  },
+  {
+    "id": "tl-atms-32",
+    "name": "Mcal. López y B. Caballero",
+    "code": "TSCS-016",
+    "type": "atms",
+    "lat": -25.293012,
+    "lon": -57.605978
+  },
+  {
+    "id": "tl-atms-33",
+    "name": "Mcal. López y Gral. Santos",
+    "code": "TSCS-017",
+    "type": "atms",
+    "lat": -25.29383,
+    "lon": -57.611207
+  },
+  {
+    "id": "tl-atms-34",
+    "name": "Mcal. López y Perú",
+    "code": "TSCS-018",
+    "type": "atms",
+    "lat": -25.289517,
+    "lon": -57.619132
+  },
+  {
+    "id": "tl-atms-35",
+    "name": "Mcal. López y EE.UU",
+    "code": "TSCS-020",
+    "type": "atms",
+    "lat": -25.285924,
+    "lon": -57.625272
+  },
+  {
+    "id": "tl-atms-36",
+    "name": "Mcal. López y Tacuary",
+    "code": "TSCS-021",
+    "type": "atms",
+    "lat": -25.284632,
+    "lon": -57.62756
+  },
+  {
+    "id": "tl-atms-37",
+    "name": "España y EE.UU",
+    "code": "TSCS-022",
+    "type": "atms",
+    "lat": -25.284546,
+    "lon": -57.624351
+  },
+  {
+    "id": "tl-atms-38",
+    "name": "Mcal. López y Brasil",
+    "code": "TSCS-019",
+    "type": "atms",
+    "lat": -25.287006,
+    "lon": -57.623509
+  },
+  {
+    "id": "tl-atms-39",
+    "name": "España y Perú",
+    "code": "TSCS-024",
+    "type": "atms",
+    "lat": -25.286222,
+    "lon": -57.616692
+  },
+  {
+    "id": "tl-atms-40",
+    "name": "España y Gral. Santos",
+    "code": "TSCS-025",
+    "type": "atms",
+    "lat": -25.287479,
+    "lon": -57.609566
+  },
+  {
+    "id": "tl-atms-41",
+    "name": "España y Pitinatuta",
+    "code": "TSCS-026",
+    "type": "atms",
+    "lat": -25.288164,
+    "lon": -57.605616
+  },
+  {
+    "id": "tl-atms-42",
+    "name": "España y Rca. Dominicana",
+    "code": "TSCS-027",
+    "type": "atms",
+    "lat": -25.288358,
+    "lon": -57.604495
+  },
+  {
+    "id": "tl-atms-43",
+    "name": "España y Brasilia",
+    "code": "TSCS-028",
+    "type": "atms",
+    "lat": -25.288105,
+    "lon": -57.602309
+  },
+  {
+    "id": "tl-atms-44",
+    "name": "España y Venezuela",
+    "code": "TSCS-029",
+    "type": "atms",
+    "lat": -25.28716,
+    "lon": -57.594983
+  },
+  {
+    "id": "tl-atms-45",
+    "name": "España y Sacramento",
+    "code": "TSCS-030",
+    "type": "atms",
+    "lat": -25.286517,
+    "lon": -57.588733
+  },
+  {
+    "id": "tl-atms-46",
+    "name": "España y Cabo Marecos",
+    "code": "TSCS-031",
+    "type": "atms",
+    "lat": -25.285015,
+    "lon": -57.580203
+  },
+  {
+    "id": "tl-atms-47",
+    "name": "España y San Martín",
+    "code": "TSCS-032",
+    "type": "atms",
+    "lat": -25.286501,
+    "lon": -57.571907
+  },
+  {
+    "id": "tl-atms-48",
+    "name": "Entrada al Shopping del Sol",
+    "code": "TSCS-033",
+    "type": "atms",
+    "lat": -25.283678,
+    "lon": -57.56647
+  },
+  {
+    "id": "tl-atms-49",
+    "name": "Aviadores del Chaco y Delia González",
+    "code": "TSCS-034",
+    "type": "atms",
+    "lat": -25.283537,
+    "lon": -57.565605
+  },
+  {
+    "id": "tl-atms-50",
+    "name": "Aviadores del Chaco y Santa Teresa",
+    "code": "TSCS-035",
+    "type": "atms",
+    "lat": -25.283469,
+    "lon": -57.564294
+  },
+  {
+    "id": "tl-atms-51",
+    "name": "Aviadores del Chaco y Molas López",
+    "code": "TSCS-036",
+    "type": "atms",
+    "lat": -25.280759,
+    "lon": -57.559971
+  },
+  {
+    "id": "tl-atms-52",
+    "name": "Aviadores del chaco y Stma. Trinidad",
+    "code": "TSCS-037",
+    "type": "atms",
+    "lat": -25.277096,
+    "lon": -57.55186
+  },
+  {
+    "id": "tl-atms-53",
+    "name": "Eusebio Ayala y De la Victoria",
+    "code": "TSCS-039",
+    "type": "atms",
+    "lat": -25.31642,
+    "lon": -57.574074
+  },
+  {
+    "id": "tl-atms-54",
+    "name": "Eusebio Ayala y R.I. 6 Boquerón",
+    "code": "TSCS-040",
+    "type": "atms",
+    "lat": -25.314676,
+    "lon": -57.579043
+  },
+  {
+    "id": "tl-atms-55",
+    "name": "Eusebio Ayala y Charle de Gaulle",
+    "code": "TSCS-041",
+    "type": "atms",
+    "lat": -25.310811,
+    "lon": -57.59039
+  },
+  {
+    "id": "tl-atms-56",
+    "name": "Eusebio Ayala y Bartolomé de la Casas",
+    "code": "TSCS-042",
+    "type": "atms",
+    "lat": -25.3066,
+    "lon": -57.602291
+  },
+  {
+    "id": "tl-atms-57",
+    "name": "Eusebio Ayala y Choferes del Chaco",
+    "code": "TSCS-043",
+    "type": "atms",
+    "lat": -25.308674,
+    "lon": -57.59634
+  },
+  {
+    "id": "tl-atms-58",
+    "name": "Eusebio Ayala y Kubitcheck",
+    "code": "TSCS-044",
+    "type": "atms",
+    "lat": -25.304916,
+    "lon": -57.607627
+  },
+  {
+    "id": "tl-atms-59",
+    "name": "Eusebio Ayala y 22 de Setiembre",
+    "code": "TSCS-045",
+    "type": "atms",
+    "lat": -25.301122,
+    "lon": -57.618694
+  },
+  {
+    "id": "tl-atms-60",
+    "name": "Fdo. de la Mora y Cacique Lambaré",
+    "code": "TSCS-046",
+    "type": "atms",
+    "lat": -25.337194,
+    "lon": -57.586672
+  },
+  {
+    "id": "tl-atms-61",
+    "name": "Fdo. de la Mora y De la Victoria",
+    "code": "TSCS-047",
+    "type": "atms",
+    "lat": -25.334255,
+    "lon": -57.589987
+  },
+  {
+    "id": "tl-atms-62",
+    "name": "Fdo. de la Mora e Yvapovó",
+    "code": "TSCS-048",
+    "type": "atms",
+    "lat": -25.331547,
+    "lon": -57.59205
+  },
+  {
+    "id": "tl-atms-63",
+    "name": "Entrada a la Terminal de Ómnibus",
+    "code": "TSCS-049",
+    "type": "atms",
+    "lat": -25.326842,
+    "lon": -57.596429
+  },
+  {
+    "id": "tl-atms-64",
+    "name": "Fdo. de la Mora y Rca. De Argentina",
+    "code": "TSCS-050",
+    "type": "atms",
+    "lat": -25.326234,
+    "lon": -57.59738
+  },
+  {
+    "id": "tl-atms-65",
+    "name": "Fdo. de la Mora y Médicos del Chaco",
+    "code": "TSCS-051",
+    "type": "atms",
+    "lat": -25.323934,
+    "lon": -57.600926
+  },
+  {
+    "id": "tl-atms-66",
+    "name": "Fdo. de la Mora y Bartolomé",
+    "code": "TSCS-052",
+    "type": "atms",
+    "lat": -25.317035,
+    "lon": -57.607608
+  },
+  {
+    "id": "tl-atms-67",
+    "name": "Fdo. de la Mora y Bruno Guggiari",
+    "code": "TSCS-053",
+    "type": "atms",
+    "lat": -25.313136,
+    "lon": -57.611413
+  },
+  {
+    "id": "tl-atms-68",
+    "name": "Mcal. López y Tte. López",
+    "code": "TSCS-001",
+    "type": "atms",
+    "lat": -25.304805,
+    "lon": -57.557946
+  },
+  {
+    "id": "tl-atms-69",
+    "name": "Mcal. López y Cap. Bueno",
+    "code": "TSCS-002",
+    "type": "atms",
+    "lat": -25.304177,
+    "lon": -57.559224
+  },
+  {
+    "id": "tl-atms-70",
+    "name": "Mcal. López y Cap. Villamayor",
+    "code": "TSCS-003",
+    "type": "atms",
+    "lat": -25.303496,
+    "lon": -57.560423
+  },
+  {
+    "id": "tl-atms-71",
+    "name": "Mcal. López y Emeterio Miranda",
+    "code": "TSCS-005",
+    "type": "atms",
+    "lat": -25.30014,
+    "lon": -57.566467
+  },
+  {
+    "id": "tl-atms-72",
+    "name": "Mcal. López y Nudelman",
+    "code": "TSCS-006",
+    "type": "atms",
+    "lat": -25.296716,
+    "lon": -57.573971
+  },
+  {
+    "id": "tl-atms-73",
+    "name": "Mcal. López y Ceferino Vega",
+    "code": "TSCS-007",
+    "type": "atms",
+    "lat": -25.296179,
+    "lon": -57.574932
+  },
+  {
+    "id": "tl-atms-74",
+    "name": "Mcal. López y San Martin",
+    "code": "TSCS-008",
+    "type": "atms",
+    "lat": -25.295425,
+    "lon": -57.577094
+  },
+  {
+    "id": "tl-atms-75",
+    "name": "Mcal. López y Senador Long",
+    "code": "TSCS-009",
+    "type": "atms",
+    "lat": -25.294101,
+    "lon": -57.57978
+  },
+  {
+    "id": "tl-atms-76",
+    "name": "Mcal. López y San Roque González",
+    "code": "TSCS-010",
+    "type": "atms",
+    "lat": -25.293754,
+    "lon": -57.580771
+  },
+  {
+    "id": "tl-atms-77",
+    "name": "Mcal. López y L. C. Extranjera",
+    "code": "TSCS-011",
+    "type": "atms",
+    "lat": -25.292214,
+    "lon": -57.58434
+  },
+  {
+    "id": "tl-atms-78",
+    "name": "Av. Transchaco y Soldado Robustiano Quintana",
+    "code": "",
+    "type": "atms",
+    "lat": -25.236205,
+    "lon": -57.53986
+  },
+  {
+    "id": "tl-atms-79",
+    "name": "Av. España y San Jose",
+    "code": "",
+    "type": "atms",
+    "lat": -25.285641,
+    "lon": -57.619579
+  },
+  {
+    "id": "tl-atms-80",
+    "name": "Av. España y Senador Long",
+    "code": "",
+    "type": "atms",
+    "lat": -25.285445,
+    "lon": -57.57654
+  },
+  {
+    "id": "tl-atms-81",
+    "name": "Av. Madame Lynch y Alejo Silva",
+    "code": "",
+    "type": "atms",
+    "lat": -25.283948,
+    "lon": -57.547441
+  },
+  {
+    "id": "tl-atms-82",
+    "name": "Av. Madame Lynch y Av. Primer Presidente",
+    "code": "",
+    "type": "atms",
+    "lat": -25.269865,
+    "lon": -57.546226
+  },
+  {
+    "id": "tl-atms-83",
+    "name": "Av. San Martin y Bertoni",
+    "code": "",
+    "type": "atms",
+    "lat": -25.292178,
+    "lon": -57.575211
+  },
+  {
+    "id": "tl-atms-84",
+    "name": "Av. San Martin y Tte. Vera",
+    "code": "",
+    "type": "atms",
+    "lat": -25.288592,
+    "lon": -57.573089
+  },
+  {
+    "id": "tl-atms-85",
+    "name": "Av. Boggiani y R.I.4 Curupayty",
+    "code": "",
+    "type": "atms",
+    "lat": -25.300621,
+    "lon": -57.566774
+  },
+  {
+    "id": "tl-atms-86",
+    "name": "Av. Artigas y Molas Lopez",
+    "code": "",
+    "type": "atms",
+    "lat": -25.256993,
+    "lon": -57.584886
+  },
+  {
+    "id": "tl-atms-87",
+    "name": "Av. Artigas y Brasilia 1",
+    "code": "",
+    "type": "atms",
+    "lat": -25.266236,
+    "lon": -57.597285
+  },
+  {
+    "id": "tl-atms-88",
+    "name": "Av. España y Washington",
+    "code": "",
+    "type": "atms",
+    "lat": -25.28668,
+    "lon": -57.614431
+  },
+  {
+    "id": "tl-atms-89",
+    "name": "Ruta Transchaco y Tte. Gregorio Villalba",
+    "code": "",
+    "type": "atms",
+    "lat": -25.250224,
+    "lon": -57.553446
+  },
+  {
+    "id": "tl-atms-90",
+    "name": "Av. Mcal. Lopez y Rca. Francesa",
+    "code": "",
+    "type": "atms",
+    "lat": -25.290517,
+    "lon": -57.617399
+  },
+  {
+    "id": "tl-atms-91",
+    "name": "Av. Mcal. Lopez y Pitiantuta",
+    "code": "",
+    "type": "atms",
+    "lat": -25.293352,
+    "lon": -57.607916
+  },
+  {
+    "id": "tl-atms-92",
+    "name": "Av. Felix Bogado y Tte. Aguirre | Av. Ita Ybate",
+    "code": "",
+    "type": "atms",
+    "lat": -25.312566,
+    "lon": -57.630932
+  },
+  {
+    "id": "tl-atms-93",
+    "name": "Av. Fdo. de la Mora y Pariri",
+    "code": "",
+    "type": "atms",
+    "lat": -25.316201,
+    "lon": -57.608498
+  },
+  {
+    "id": "tl-atms-94",
+    "name": "Av. Eusebio - Alas Paraguayas",
+    "code": "",
+    "type": "atms",
+    "lat": -25.314255,
+    "lon": -57.580492
+  },
+  {
+    "id": "tl-atms-95",
+    "name": "Av. Rca. Argentina y Souza",
+    "code": "",
+    "type": "atms",
+    "lat": -25.300953,
+    "lon": -57.580458
+  },
+  {
+    "id": "tl-atms-96",
+    "name": "Av. Aviadores y Merlo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.277615,
+    "lon": -57.553183
+  },
+  {
+    "id": "tl-atms-97",
+    "name": "Av. Aviadores y Rocholl",
+    "code": "",
+    "type": "atms",
+    "lat": -25.279872,
+    "lon": -57.55805
+  },
+  {
+    "id": "tl-atms-98",
+    "name": "Av. Fdo. de la Mora y Dr. Carlos Centurion",
+    "code": "",
+    "type": "atms",
+    "lat": -25.319056,
+    "lon": -57.606195
+  },
+  {
+    "id": "tl-atms-99",
+    "name": "Av. Kubitschek y 25 de mayo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.297974,
+    "lon": -57.604761
+  },
+  {
+    "id": "tl-atms-100",
+    "name": "Av. Kubitschek y Cerro Cora",
+    "code": "",
+    "type": "atms",
+    "lat": -25.298897,
+    "lon": -57.605167
+  },
+  {
+    "id": "tl-atms-101",
+    "name": "Av. Kubitschek y Herminio Gimenez",
+    "code": "",
+    "type": "atms",
+    "lat": -25.302213,
+    "lon": -57.606482
+  },
+  {
+    "id": "tl-atms-102",
+    "name": "Av. Gral. Santos y Azara",
+    "code": "",
+    "type": "atms",
+    "lat": -25.297537,
+    "lon": -57.612259
+  },
+  {
+    "id": "tl-atms-103",
+    "name": "Av. Gral Santos y Herminio Giménez",
+    "code": "",
+    "type": "atms",
+    "lat": -25.299706,
+    "lon": -57.61297
+  },
+  {
+    "id": "tl-atms-104",
+    "name": "Av. Gral. Santos y Teodoro S. Mongelós",
+    "code": "",
+    "type": "atms",
+    "lat": -25.300969,
+    "lon": -57.61336
+  },
+  {
+    "id": "tl-atms-105",
+    "name": "Av. Gral. Santos y Cerro Corá",
+    "code": "",
+    "type": "atms",
+    "lat": -25.296825,
+    "lon": -57.611977
+  },
+  {
+    "id": "tl-atms-106",
+    "name": "Av. Gral. Santos y San Rafael",
+    "code": "",
+    "type": "atms",
+    "lat": -25.321034,
+    "lon": -57.62225
+  },
+  {
+    "id": "tl-atms-107",
+    "name": "Av. Gral. Santos y Pirizal",
+    "code": "",
+    "type": "atms",
+    "lat": -25.315713,
+    "lon": -57.619255
+  },
+  {
+    "id": "tl-atms-108",
+    "name": "Av. Sacramento y Lombardo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.27093,
+    "lon": -57.584079
+  },
+  {
+    "id": "tl-atms-109",
+    "name": "Av. Sacramento y Prof. Chávez",
+    "code": "",
+    "type": "atms",
+    "lat": -25.284695,
+    "lon": -57.588148
+  },
+  {
+    "id": "tl-atms-110",
+    "name": "Av. Sacramento y Manuel Peña",
+    "code": "",
+    "type": "atms",
+    "lat": -25.272653,
+    "lon": -57.584544
+  },
+  {
+    "id": "tl-atms-111",
+    "name": "Av. Sacramento y Av. Stma. Trinidad",
+    "code": "",
+    "type": "atms",
+    "lat": -25.258828,
+    "lon": -57.57992
+  },
+  {
+    "id": "tl-atms-112",
+    "name": "Av. Rca. Argentina y Pacheco",
+    "code": "",
+    "type": "atms",
+    "lat": -25.300152,
+    "lon": -57.579994
+  },
+  {
+    "id": "tl-atms-113",
+    "name": "Av. Rca. Argentina y Pilar",
+    "code": "",
+    "type": "atms",
+    "lat": -25.321722,
+    "lon": -57.594169
+  },
+  {
+    "id": "tl-atms-114",
+    "name": "Av. Rca. Argentina y Campos Cervera",
+    "code": "",
+    "type": "atms",
+    "lat": -25.298533,
+    "lon": -57.579038
+  },
+  {
+    "id": "tl-atms-115",
+    "name": "Av. Rca. Argentina y Machain",
+    "code": "",
+    "type": "atms",
+    "lat": -25.30525,
+    "lon": -57.583091
+  },
+  {
+    "id": "tl-atms-116",
+    "name": "Av. Rca. Argentina y De Las Palmeras",
+    "code": "",
+    "type": "atms",
+    "lat": -25.304106,
+    "lon": -57.58248
+  },
+  {
+    "id": "tl-atms-117",
+    "name": "Av. Rca. Argentina y Boggiani",
+    "code": "",
+    "type": "atms",
+    "lat": -25.297025,
+    "lon": -57.578145
+  },
+  {
+    "id": "tl-atms-118",
+    "name": "Av. Santa Teresa y Emeterio",
+    "code": "",
+    "type": "atms",
+    "lat": -25.285445,
+    "lon": -57.559656
+  },
+  {
+    "id": "tl-atms-119",
+    "name": "Av. Santa Teresa y Denis Roa",
+    "code": "",
+    "type": "atms",
+    "lat": -25.286385,
+    "lon": -57.558185
+  },
+  {
+    "id": "tl-atms-120",
+    "name": "Av. Santa Teresa y B. Caballero",
+    "code": "",
+    "type": "atms",
+    "lat": -25.288137,
+    "lon": -57.555564
+  },
+  {
+    "id": "tl-atms-121",
+    "name": "Av. Choferes del Chaco y 25 de Mayo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.301359,
+    "lon": -57.594198
+  },
+  {
+    "id": "tl-atms-122",
+    "name": "Av. Choferes del Chaco y Chaco Boreal",
+    "code": "",
+    "type": "atms",
+    "lat": -25.294576,
+    "lon": -57.592238
+  },
+  {
+    "id": "tl-atms-123",
+    "name": "Av. Choferes del Chaco y Las Perlas",
+    "code": "",
+    "type": "atms",
+    "lat": -25.29914,
+    "lon": -57.593532
+  },
+  {
+    "id": "tl-atms-124",
+    "name": "Av. Choferes del Chaco y Carmen Soler",
+    "code": "",
+    "type": "atms",
+    "lat": -25.300159,
+    "lon": -57.593825
+  },
+  {
+    "id": "tl-atms-125",
+    "name": "Av. Choferes del Chaco y Alfredo Seiferheld",
+    "code": "",
+    "type": "atms",
+    "lat": -25.303019,
+    "lon": -57.594624
+  },
+  {
+    "id": "tl-atms-126",
+    "name": "Av. Boggiani y Machain",
+    "code": "",
+    "type": "atms",
+    "lat": -25.312612,
+    "lon": -57.565605
+  },
+  {
+    "id": "tl-atms-127",
+    "name": "Av. Boggiani y Rivarola",
+    "code": "",
+    "type": "atms",
+    "lat": -25.314511,
+    "lon": -57.565875
+  },
+  {
+    "id": "tl-atms-128",
+    "name": "Av. Boggiani y R.I 18 Pitiantuta",
+    "code": "",
+    "type": "atms",
+    "lat": -25.305177,
+    "lon": -57.564712
+  },
+  {
+    "id": "tl-atms-129",
+    "name": "Av. San Martín y Federación Rusa",
+    "code": "",
+    "type": "atms",
+    "lat": -25.279967,
+    "lon": -57.570743
+  },
+  {
+    "id": "tl-atms-130",
+    "name": "Av. San Martin y Lillo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.289655,
+    "lon": -57.573719
+  },
+  {
+    "id": "tl-atms-131",
+    "name": "Av. San Martín y Ntra. Sra. del Carmen",
+    "code": "",
+    "type": "atms",
+    "lat": -25.282087,
+    "lon": -57.571139
+  },
+  {
+    "id": "tl-atms-132",
+    "name": "Av. Defensores y F. Candia",
+    "code": "",
+    "type": "atms",
+    "lat": -25.322345,
+    "lon": -57.563118
+  },
+  {
+    "id": "tl-atms-133",
+    "name": "Av. Defensores del Chaco Entrada al Mercado de Abasto",
+    "code": "",
+    "type": "atms",
+    "lat": -25.329215,
+    "lon": -57.572077
+  },
+  {
+    "id": "tl-atms-134",
+    "name": "Av. Defensores y Nva.Asuncion",
+    "code": "",
+    "type": "atms",
+    "lat": -25.334067,
+    "lon": -57.578231
+  },
+  {
+    "id": "tl-atms-135",
+    "name": "Av. Defensores y Cerro Cora",
+    "code": "",
+    "type": "atms",
+    "lat": -25.330914,
+    "lon": -57.574112
+  },
+  {
+    "id": "tl-atms-136",
+    "name": "Av. Defensores y A. Sosa",
+    "code": "",
+    "type": "atms",
+    "lat": -25.324129,
+    "lon": -57.565406
+  },
+  {
+    "id": "tl-atms-137",
+    "name": "Av. Madame Lynch y Antolin Irala",
+    "code": "",
+    "type": "atms",
+    "lat": -25.298778,
+    "lon": -57.551572
+  },
+  {
+    "id": "tl-atms-138",
+    "name": "Av. Madame Lynch y Sinforiano Buzó",
+    "code": "",
+    "type": "atms",
+    "lat": -25.285551,
+    "lon": -57.54787
+  },
+  {
+    "id": "tl-atms-139",
+    "name": "Av. Madame Lynch y Arturo Alsina",
+    "code": "",
+    "type": "atms",
+    "lat": -25.313574,
+    "lon": -57.555792
+  },
+  {
+    "id": "tl-atms-140",
+    "name": "Av. Mcal. López y Reclus",
+    "code": "",
+    "type": "atms",
+    "lat": -25.290661,
+    "lon": -57.587902
+  },
+  {
+    "id": "tl-atms-141",
+    "name": "Av. Mcal. López y Cruz del Defensor",
+    "code": "",
+    "type": "atms",
+    "lat": -25.295063,
+    "lon": -57.578076
+  },
+  {
+    "id": "tl-atms-142",
+    "name": "Av. San Martín y Guido Spano",
+    "code": "",
+    "type": "atms",
+    "lat": -25.294635,
+    "lon": -57.576602
+  },
+  {
+    "id": "tl-atms-143",
+    "name": "Gaudioso Nuñez y Jose Asuncion Flores",
+    "code": "",
+    "type": "atms",
+    "lat": -25.305662,
+    "lon": -57.601899
+  },
+  {
+    "id": "tl-atms-144",
+    "name": "Gaudioso Nuñez y Teodoro S.Mongelos",
+    "code": "",
+    "type": "atms",
+    "lat": -25.304715,
+    "lon": -57.601556
+  },
+  {
+    "id": "tl-atms-145",
+    "name": "Av. Kubitscheck y Jose Asuncion Flores",
+    "code": "",
+    "type": "atms",
+    "lat": -25.304141,
+    "lon": -57.607285
+  },
+  {
+    "id": "tl-atms-146",
+    "name": "Av. Kubitscheck y Teodoro s. Mongelos",
+    "code": "",
+    "type": "atms",
+    "lat": -25.303158,
+    "lon": -57.606873
+  },
+  {
+    "id": "tl-atms-147",
+    "name": "Av. Boggiani y R.I.2 Ytororo",
+    "code": "",
+    "type": "atms",
+    "lat": -25.301471,
+    "lon": -57.5658
+  },
+  {
+    "id": "tl-atms-148",
+    "name": "Av. Choferes y José Asuncion Flores",
+    "code": "",
+    "type": "atms",
+    "lat": -25.307333,
+    "lon": -57.595938
+  },
+  {
+    "id": "tl-desc-1",
+    "name": "Semáforo Descentralizado 1.0",
+    "code": "1.0",
+    "type": "descentralizado",
+    "lat": -25.289479,
+    "lon": -57.630879
+  },
+  {
+    "id": "tl-desc-2",
+    "name": "Semáforo Descentralizado 2.0",
+    "code": "2.0",
+    "type": "descentralizado",
+    "lat": -25.29077,
+    "lon": -57.628615
+  },
+  {
+    "id": "tl-desc-3",
+    "name": "Semáforo Descentralizado 3.0",
+    "code": "3.0",
+    "type": "descentralizado",
+    "lat": -25.288451,
+    "lon": -57.63014
+  },
+  {
+    "id": "tl-desc-4",
+    "name": "Semáforo Descentralizado 4.0",
+    "code": "4.0",
+    "type": "descentralizado",
+    "lat": -25.289729,
+    "lon": -57.627877
+  },
+  {
+    "id": "tl-desc-5",
+    "name": "Semáforo Descentralizado 5.0",
+    "code": "5.0",
+    "type": "descentralizado",
+    "lat": -25.290734,
+    "lon": -57.626093
+  },
+  {
+    "id": "tl-desc-6",
+    "name": "Semáforo Descentralizado 6.0",
+    "code": "6.0",
+    "type": "descentralizado",
+    "lat": -25.297127,
+    "lon": -57.630922
+  },
+  {
+    "id": "tl-desc-7",
+    "name": "Semáforo Descentralizado 7.0",
+    "code": "7.0",
+    "type": "descentralizado",
+    "lat": -25.288983,
+    "lon": -57.627348
+  },
+  {
+    "id": "tl-desc-8",
+    "name": "Semáforo Descentralizado 8.0",
+    "code": "8.0",
+    "type": "descentralizado",
+    "lat": -25.289946,
+    "lon": -57.625584
+  },
+  {
+    "id": "tl-desc-9",
+    "name": "Semáforo Descentralizado 9.0",
+    "code": "9.0",
+    "type": "descentralizado",
+    "lat": -25.286162,
+    "lon": -57.630866
+  },
+  {
+    "id": "tl-desc-10",
+    "name": "Semáforo Descentralizado 10.0",
+    "code": "10.0",
+    "type": "descentralizado",
+    "lat": -25.28659,
+    "lon": -57.630087
+  },
+  {
+    "id": "tl-desc-11",
+    "name": "Semáforo Descentralizado 11.0",
+    "code": "11.0",
+    "type": "descentralizado",
+    "lat": -25.287085,
+    "lon": -57.629244
+  },
+  {
+    "id": "tl-desc-12",
+    "name": "Semáforo Descentralizado 12.0",
+    "code": "12.0",
+    "type": "descentralizado",
+    "lat": -25.28838,
+    "lon": -57.626948
+  },
+  {
+    "id": "tl-desc-13",
+    "name": "Semáforo Descentralizado 13.0",
+    "code": "13.0",
+    "type": "descentralizado",
+    "lat": -25.289381,
+    "lon": -57.625173
+  },
+  {
+    "id": "tl-desc-14",
+    "name": "Semáforo Descentralizado 14.0",
+    "code": "14.0",
+    "type": "descentralizado",
+    "lat": -25.285857,
+    "lon": -57.629624
+  },
+  {
+    "id": "tl-desc-15",
+    "name": "Semáforo Descentralizado 15.0",
+    "code": "15.0",
+    "type": "descentralizado",
+    "lat": -25.285454,
+    "lon": -57.630376
+  },
+  {
+    "id": "tl-desc-16",
+    "name": "Semáforo Descentralizado 16.0",
+    "code": "16.0",
+    "type": "descentralizado",
+    "lat": -25.287696,
+    "lon": -57.626499
+  },
+  {
+    "id": "tl-desc-17",
+    "name": "Semáforo Descentralizado 17.0",
+    "code": "17.0",
+    "type": "descentralizado",
+    "lat": -25.288729,
+    "lon": -57.624717
+  },
+  {
+    "id": "tl-desc-18",
+    "name": "Semáforo Descentralizado 18.0",
+    "code": "18.0",
+    "type": "descentralizado",
+    "lat": -25.285856,
+    "lon": -57.628358
+  },
+  {
+    "id": "tl-desc-19",
+    "name": "Semáforo Descentralizado 19.0",
+    "code": "19.0",
+    "type": "descentralizado",
+    "lat": -25.288138,
+    "lon": -57.624308
+  },
+  {
+    "id": "tl-desc-21",
+    "name": "Semáforo Descentralizado 21.0",
+    "code": "21.0",
+    "type": "descentralizado",
+    "lat": -25.29267,
+    "lon": -57.616411
+  },
+  {
+    "id": "tl-desc-22",
+    "name": "Semáforo Descentralizado 22.0",
+    "code": "22.0",
+    "type": "descentralizado",
+    "lat": -25.283036,
+    "lon": -57.631664
+  },
+  {
+    "id": "tl-desc-23",
+    "name": "Semáforo Descentralizado 23.0",
+    "code": "23.0",
+    "type": "descentralizado",
+    "lat": -25.283427,
+    "lon": -57.630992
+  },
+  {
+    "id": "tl-desc-24",
+    "name": "Semáforo Descentralizado 24.0",
+    "code": "24.0",
+    "type": "descentralizado",
+    "lat": -25.283819,
+    "lon": -57.630337
+  },
+  {
+    "id": "tl-desc-25",
+    "name": "Semáforo Descentralizado 25.0",
+    "code": "25.0",
+    "type": "descentralizado",
+    "lat": -25.284673,
+    "lon": -57.62879
+  },
+  {
+    "id": "tl-desc-26",
+    "name": "Semáforo Descentralizado 26.0",
+    "code": "26.0",
+    "type": "descentralizado",
+    "lat": -25.285175,
+    "lon": -57.627893
+  },
+  {
+    "id": "tl-desc-27",
+    "name": "Semáforo Descentralizado 27.0",
+    "code": "27.0",
+    "type": "descentralizado",
+    "lat": -25.286465,
+    "lon": -57.625642
+  },
+  {
+    "id": "tl-desc-28",
+    "name": "Semáforo Descentralizado 28.0",
+    "code": "28.0",
+    "type": "descentralizado",
+    "lat": -25.287488,
+    "lon": -57.623832
+  },
+  {
+    "id": "tl-desc-29",
+    "name": "Semáforo Descentralizado 29.0",
+    "code": "29.0",
+    "type": "descentralizado",
+    "lat": -25.297046,
+    "lon": -57.578076
+  },
+  {
+    "id": "tl-desc-30",
+    "name": "Semáforo Descentralizado 30.0",
+    "code": "30.0",
+    "type": "descentralizado",
+    "lat": -25.304131,
+    "lon": -57.582405
+  },
+  {
+    "id": "tl-desc-32",
+    "name": "Semáforo Descentralizado 32.0",
+    "code": "32.0",
+    "type": "descentralizado",
+    "lat": -25.305253,
+    "lon": -57.583081
+  },
+  {
+    "id": "tl-desc-33",
+    "name": "Semáforo Descentralizado 33.0",
+    "code": "33.0",
+    "type": "descentralizado",
+    "lat": -25.321718,
+    "lon": -57.594197
+  },
+  {
+    "id": "tl-desc-34",
+    "name": "Semáforo Descentralizado 34.0",
+    "code": "34.0",
+    "type": "descentralizado",
+    "lat": -25.28495,
+    "lon": -57.632979
+  },
+  {
+    "id": "tl-desc-35",
+    "name": "Semáforo Descentralizado 35.0",
+    "code": "35.0",
+    "type": "descentralizado",
+    "lat": -25.285338,
+    "lon": -57.63231
+  },
+  {
+    "id": "tl-desc-36",
+    "name": "Semáforo Descentralizado 36.0",
+    "code": "36.0",
+    "type": "descentralizado",
+    "lat": -25.285712,
+    "lon": -57.631635
+  },
+  {
+    "id": "tl-desc-37",
+    "name": "Semáforo Descentralizado 37.0",
+    "code": "37.0",
+    "type": "descentralizado",
+    "lat": -25.293911,
+    "lon": -57.61727
+  },
+  {
+    "id": "tl-desc-38",
+    "name": "Semáforo Descentralizado 38.0",
+    "code": "38.0",
+    "type": "descentralizado",
+    "lat": -25.296869,
+    "lon": -57.612056
+  },
+  {
+    "id": "tl-desc-39",
+    "name": "Semáforo Descentralizado 39.0",
+    "code": "39.0",
+    "type": "descentralizado",
+    "lat": -25.289305,
+    "lon": -57.62069
+  },
+  {
+    "id": "tl-desc-40",
+    "name": "Semáforo Descentralizado 40.0",
+    "code": "40.0",
+    "type": "descentralizado",
+    "lat": -25.296911,
+    "lon": -57.636003
+  },
+  {
+    "id": "tl-desc-41",
+    "name": "Semáforo Descentralizado 41.0",
+    "code": "41.0",
+    "type": "descentralizado",
+    "lat": -25.296753,
+    "lon": -57.626391
+  },
+  {
+    "id": "tl-desc-42",
+    "name": "Semáforo Descentralizado 42.0",
+    "code": "42.0",
+    "type": "descentralizado",
+    "lat": -25.29287,
+    "lon": -57.633256
+  },
+  {
+    "id": "tl-desc-43",
+    "name": "Semáforo Descentralizado 43.0",
+    "code": "43.0",
+    "type": "descentralizado",
+    "lat": -25.294162,
+    "lon": -57.630972
+  },
+  {
+    "id": "tl-desc-44",
+    "name": "Semáforo Descentralizado 44.0",
+    "code": "44.0",
+    "type": "descentralizado",
+    "lat": -25.295074,
+    "lon": -57.629366
+  },
+  {
+    "id": "tl-desc-45",
+    "name": "Semáforo Descentralizado 45.0",
+    "code": "45.0",
+    "type": "descentralizado",
+    "lat": -25.295675,
+    "lon": -57.625561
+  },
+  {
+    "id": "tl-desc-46",
+    "name": "Semáforo Descentralizado 46.0",
+    "code": "46.0",
+    "type": "descentralizado",
+    "lat": -25.291709,
+    "lon": -57.632448
+  },
+  {
+    "id": "tl-desc-47",
+    "name": "Semáforo Descentralizado 47.0",
+    "code": "47.0",
+    "type": "descentralizado",
+    "lat": -25.293019,
+    "lon": -57.63019
+  },
+  {
+    "id": "tl-desc-48",
+    "name": "Semáforo Descentralizado 48.0",
+    "code": "48.0",
+    "type": "descentralizado",
+    "lat": -25.29397,
+    "lon": -57.628506
+  },
+  {
+    "id": "tl-desc-49",
+    "name": "Semáforo Descentralizado 49.0",
+    "code": "49.0",
+    "type": "descentralizado",
+    "lat": -25.298999,
+    "lon": -57.634444
+  },
+  {
+    "id": "tl-desc-50",
+    "name": "Semáforo Descentralizado 50.0",
+    "code": "50.0",
+    "type": "descentralizado",
+    "lat": -25.296093,
+    "lon": -57.630127
+  },
+  {
+    "id": "tl-desc-51",
+    "name": "Semáforo Descentralizado 51.0",
+    "code": "51.0",
+    "type": "descentralizado",
+    "lat": -25.295225,
+    "lon": -57.631668
+  },
+  {
+    "id": "tl-desc-52",
+    "name": "Semáforo Descentralizado 52.0",
+    "code": "52.0",
+    "type": "descentralizado",
+    "lat": -25.301483,
+    "lon": -57.565783
+  },
+  {
+    "id": "tl-desc-53",
+    "name": "Semáforo Descentralizado 53.0",
+    "code": "53.0",
+    "type": "descentralizado",
+    "lat": -25.305098,
+    "lon": -57.564695
+  },
+  {
+    "id": "tl-desc-54",
+    "name": "Semáforo Descentralizado 54.0",
+    "code": "54.0",
+    "type": "descentralizado",
+    "lat": -25.291037,
+    "lon": -57.648302
+  },
+  {
+    "id": "tl-desc-55",
+    "name": "Semáforo Descentralizado 55.0",
+    "code": "55.0",
+    "type": "descentralizado",
+    "lat": -25.290202,
+    "lon": -57.647739
+  },
+  {
+    "id": "tl-desc-56",
+    "name": "Semáforo Descentralizado 56.0",
+    "code": "56.0",
+    "type": "descentralizado",
+    "lat": -25.28875,
+    "lon": -57.646742
+  },
+  {
+    "id": "tl-desc-57",
+    "name": "Semáforo Descentralizado 57.0",
+    "code": "57.0",
+    "type": "descentralizado",
+    "lat": -25.287259,
+    "lon": -57.645599
+  },
+  {
+    "id": "tl-desc-58",
+    "name": "Semáforo Descentralizado 58.0",
+    "code": "58.0",
+    "type": "descentralizado",
+    "lat": -25.286157,
+    "lon": -57.644822
+  },
+  {
+    "id": "tl-desc-59",
+    "name": "Semáforo Descentralizado 59.0",
+    "code": "59.0",
+    "type": "descentralizado",
+    "lat": -25.285059,
+    "lon": -57.644073
+  },
+  {
+    "id": "tl-desc-60",
+    "name": "Semáforo Descentralizado 60.0",
+    "code": "60.0",
+    "type": "descentralizado",
+    "lat": -25.283979,
+    "lon": -57.643333
+  },
+  {
+    "id": "tl-desc-61",
+    "name": "Semáforo Descentralizado 61.0",
+    "code": "61.0",
+    "type": "descentralizado",
+    "lat": -25.282842,
+    "lon": -57.642521
+  },
+  {
+    "id": "tl-desc-62",
+    "name": "Semáforo Descentralizado 62.0",
+    "code": "62.0",
+    "type": "descentralizado",
+    "lat": -25.281807,
+    "lon": -57.641809
+  },
+  {
+    "id": "tl-desc-63",
+    "name": "Semáforo Descentralizado 63.0",
+    "code": "63.0",
+    "type": "descentralizado",
+    "lat": -25.281034,
+    "lon": -57.641318
+  },
+  {
+    "id": "tl-desc-64",
+    "name": "Semáforo Descentralizado 64.0",
+    "code": "64.0",
+    "type": "descentralizado",
+    "lat": -25.280438,
+    "lon": -57.640935
+  },
+  {
+    "id": "tl-desc-65",
+    "name": "Semáforo Descentralizado 65.0",
+    "code": "65.0",
+    "type": "descentralizado",
+    "lat": -25.286455,
+    "lon": -57.647012
+  },
+  {
+    "id": "tl-desc-66",
+    "name": "Semáforo Descentralizado 66.0",
+    "code": "66.0",
+    "type": "descentralizado",
+    "lat": -25.279682,
+    "lon": -57.64226
+  },
+  {
+    "id": "tl-desc-67",
+    "name": "Semáforo Descentralizado 67.0",
+    "code": "67.0",
+    "type": "descentralizado",
+    "lat": -25.290109,
+    "lon": -57.640583
+  },
+  {
+    "id": "tl-desc-68",
+    "name": "Semáforo Descentralizado 68.0",
+    "code": "68.0",
+    "type": "descentralizado",
+    "lat": -25.279575,
+    "lon": -57.643843
+  },
+  {
+    "id": "tl-desc-69",
+    "name": "Semáforo Descentralizado 69.0",
+    "code": "69.0",
+    "type": "descentralizado",
+    "lat": -25.280268,
+    "lon": -57.642668
+  },
+  {
+    "id": "tl-desc-70",
+    "name": "Semáforo Descentralizado 70.0",
+    "code": "70.0",
+    "type": "descentralizado",
+    "lat": -25.281422,
+    "lon": -57.640637
+  },
+  {
+    "id": "tl-desc-71",
+    "name": "Semáforo Descentralizado 71.0",
+    "code": "71.0",
+    "type": "descentralizado",
+    "lat": -25.281868,
+    "lon": -57.639859
+  },
+  {
+    "id": "tl-desc-72",
+    "name": "Semáforo Descentralizado 72.0",
+    "code": "72.0",
+    "type": "descentralizado",
+    "lat": -25.288591,
+    "lon": -57.653101
+  },
+  {
+    "id": "tl-desc-73",
+    "name": "Semáforo Descentralizado 73.0",
+    "code": "73.0",
+    "type": "descentralizado",
+    "lat": -25.282512,
+    "lon": -57.645943
+  },
+  {
+    "id": "tl-desc-74",
+    "name": "Semáforo Descentralizado 74.0",
+    "code": "74.0",
+    "type": "descentralizado",
+    "lat": -25.295255,
+    "lon": -57.618201
+  },
+  {
+    "id": "tl-desc-75",
+    "name": "Semáforo Descentralizado 75.0",
+    "code": "75.0",
+    "type": "descentralizado",
+    "lat": -25.296732,
+    "lon": -57.615611
+  },
+  {
+    "id": "tl-desc-76",
+    "name": "Semáforo Descentralizado 76.0",
+    "code": "76.0",
+    "type": "descentralizado",
+    "lat": -25.28768,
+    "lon": -57.629628
+  },
+  {
+    "id": "tl-desc-77",
+    "name": "Semáforo Descentralizado 77.0",
+    "code": "77.0",
+    "type": "descentralizado",
+    "lat": -25.294494,
+    "lon": -57.617682
+  },
+  {
+    "id": "tl-desc-78",
+    "name": "Semáforo Descentralizado 78.0",
+    "code": "78.0",
+    "type": "descentralizado",
+    "lat": -25.295977,
+    "lon": -57.615069
+  },
+  {
+    "id": "tl-desc-79",
+    "name": "Semáforo Descentralizado 79.0",
+    "code": "79.0",
+    "type": "descentralizado",
+    "lat": -25.297572,
+    "lon": -57.612251
+  },
+  {
+    "id": "tl-desc-80",
+    "name": "Semáforo Descentralizado 80.0",
+    "code": "80.0",
+    "type": "descentralizado",
+    "lat": -25.29801,
+    "lon": -57.604791
+  },
+  {
+    "id": "tl-desc-81",
+    "name": "Semáforo Descentralizado 81.0",
+    "code": "81.0",
+    "type": "descentralizado",
+    "lat": -25.293245,
+    "lon": -57.616793
+  },
+  {
+    "id": "tl-desc-82",
+    "name": "Semáforo Descentralizado 82.0",
+    "code": "82.0",
+    "type": "descentralizado",
+    "lat": -25.298717,
+    "lon": -57.616995
+  },
+  {
+    "id": "tl-desc-83",
+    "name": "Semáforo Descentralizado 83.0",
+    "code": "83.0",
+    "type": "descentralizado",
+    "lat": -25.303139,
+    "lon": -57.606905
+  },
+  {
+    "id": "tl-desc-84",
+    "name": "Semáforo Descentralizado 84.0",
+    "code": "84.0",
+    "type": "descentralizado",
+    "lat": -25.304163,
+    "lon": -57.607316
+  },
+  {
+    "id": "tl-desc-85",
+    "name": "Semáforo Descentralizado 85.0",
+    "code": "85.0",
+    "type": "descentralizado",
+    "lat": -25.305694,
+    "lon": -57.60189
+  },
+  {
+    "id": "tl-desc-86",
+    "name": "Semáforo Descentralizado 86.0",
+    "code": "86.0",
+    "type": "descentralizado",
+    "lat": -25.288245,
+    "lon": -57.638454
+  },
+  {
+    "id": "tl-desc-87",
+    "name": "Semáforo Descentralizado 87.0",
+    "code": "87.0",
+    "type": "descentralizado",
+    "lat": -25.287862,
+    "lon": -57.639131
+  },
+  {
+    "id": "tl-desc-88",
+    "name": "Semáforo Descentralizado 88.0",
+    "code": "88.0",
+    "type": "descentralizado",
+    "lat": -25.29424,
+    "lon": -57.642516
+  },
+  {
+    "id": "tl-desc-89",
+    "name": "Semáforo Descentralizado 89.0",
+    "code": "89.0",
+    "type": "descentralizado",
+    "lat": -25.295109,
+    "lon": -57.641051
+  },
+  {
+    "id": "tl-desc-90",
+    "name": "Semáforo Descentralizado 90.0",
+    "code": "90.0",
+    "type": "descentralizado",
+    "lat": -25.293123,
+    "lon": -57.642606
+  },
+  {
+    "id": "tl-desc-91",
+    "name": "Semáforo Descentralizado 91.0",
+    "code": "91.0",
+    "type": "descentralizado",
+    "lat": -25.293477,
+    "lon": -57.641983
+  },
+  {
+    "id": "tl-desc-92",
+    "name": "Semáforo Descentralizado 92.0",
+    "code": "92.0",
+    "type": "descentralizado",
+    "lat": -25.301375,
+    "lon": -57.594205
+  },
+  {
+    "id": "tl-desc-93",
+    "name": "Semáforo Descentralizado 93.0",
+    "code": "93.0",
+    "type": "descentralizado",
+    "lat": -25.294624,
+    "lon": -57.592244
+  },
+  {
+    "id": "tl-desc-94",
+    "name": "Semáforo Descentralizado 94.0",
+    "code": "94.0",
+    "type": "descentralizado",
+    "lat": -25.299162,
+    "lon": -57.593564
+  },
+  {
+    "id": "tl-desc-95",
+    "name": "Semáforo Descentralizado 95.0",
+    "code": "95.0",
+    "type": "descentralizado",
+    "lat": -25.300173,
+    "lon": -57.593863
+  },
+  {
+    "id": "tl-desc-96",
+    "name": "Semáforo Descentralizado 96.0",
+    "code": "96.0",
+    "type": "descentralizado",
+    "lat": -25.303055,
+    "lon": -57.594698
+  },
+  {
+    "id": "tl-desc-97",
+    "name": "Semáforo Descentralizado 97.0",
+    "code": "97.0",
+    "type": "descentralizado",
+    "lat": -25.296939,
+    "lon": -57.587372
+  },
+  {
+    "id": "tl-desc-98",
+    "name": "Semáforo Descentralizado 98.0",
+    "code": "98.0",
+    "type": "descentralizado",
+    "lat": -25.29893,
+    "lon": -57.582794
+  },
+  {
+    "id": "tl-desc-99",
+    "name": "Semáforo Descentralizado 99.0",
+    "code": "99.0",
+    "type": "descentralizado",
+    "lat": -25.298518,
+    "lon": -57.583684
+  },
+  {
+    "id": "tl-desc-100",
+    "name": "Semáforo Descentralizado 100.0",
+    "code": "100.0",
+    "type": "descentralizado",
+    "lat": -25.292862,
+    "lon": -57.560194
+  },
+  {
+    "id": "tl-desc-101",
+    "name": "Semáforo Descentralizado 101.0",
+    "code": "101.0",
+    "type": "descentralizado",
+    "lat": -25.289711,
+    "lon": -57.573707
+  },
+  {
+    "id": "tl-desc-102",
+    "name": "Semáforo Descentralizado 102.0",
+    "code": "102.0",
+    "type": "descentralizado",
+    "lat": -25.285544,
+    "lon": -57.547906
+  },
+  {
+    "id": "tl-desc-103",
+    "name": "Semáforo Descentralizado 103.0",
+    "code": "103.0",
+    "type": "descentralizado",
+    "lat": -25.325647,
+    "lon": -57.582207
+  },
+  {
+    "id": "tl-desc-104",
+    "name": "Semáforo Descentralizado 104.0",
+    "code": "104.0",
+    "type": "descentralizado",
+    "lat": -25.330836,
+    "lon": -57.57408
+  },
+  {
+    "id": "tl-desc-105",
+    "name": "Semáforo Descentralizado 105.0",
+    "code": "105.0",
+    "type": "descentralizado",
+    "lat": -25.324153,
+    "lon": -57.565407
+  },
+  {
+    "id": "tl-desc-106",
+    "name": "Semáforo Descentralizado 107.0",
+    "code": "107.0",
+    "type": "descentralizado",
+    "lat": -25.329202,
+    "lon": -57.571939
+  },
+  {
+    "id": "tl-desc-107",
+    "name": "Semáforo Descentralizado 108.0",
+    "code": "108.0",
+    "type": "descentralizado",
+    "lat": -25.284758,
+    "lon": -57.588162
+  },
+  {
+    "id": "tl-desc-108",
+    "name": "Semáforo Descentralizado 109.0",
+    "code": "109.0",
+    "type": "descentralizado",
+    "lat": -25.270986,
+    "lon": -57.58404
+  },
+  {
+    "id": "tl-desc-109",
+    "name": "Semáforo Descentralizado 110.0",
+    "code": "110.0",
+    "type": "descentralizado",
+    "lat": -25.272687,
+    "lon": -57.584547
+  },
+  {
+    "id": "tl-desc-110",
+    "name": "Semáforo Descentralizado 111.0",
+    "code": "111.0",
+    "type": "descentralizado",
+    "lat": -25.258827,
+    "lon": -57.579949
+  },
+  {
+    "id": "tl-desc-111",
+    "name": "Semáforo Descentralizado 112.0",
+    "code": "112.0",
+    "type": "descentralizado",
+    "lat": -25.26962,
+    "lon": -57.56356
+  },
+  {
+    "id": "tl-desc-112",
+    "name": "Semáforo Descentralizado 113.0",
+    "code": "113.0",
+    "type": "descentralizado",
+    "lat": -25.270722,
+    "lon": -57.561913
+  },
+  {
+    "id": "tl-desc-113",
+    "name": "Semáforo Descentralizado 114.0",
+    "code": "114.0",
+    "type": "descentralizado",
+    "lat": -25.260839,
+    "lon": -57.57695
+  },
+  {
+    "id": "tl-desc-114",
+    "name": "Semáforo Descentralizado 117.0",
+    "code": "117.0",
+    "type": "descentralizado",
+    "lat": -25.288163,
+    "lon": -57.555593
+  },
+  {
+    "id": "tl-desc-115",
+    "name": "Semáforo Descentralizado 118.0",
+    "code": "118.0",
+    "type": "descentralizado",
+    "lat": -25.28639,
+    "lon": -57.558285
+  },
+  {
+    "id": "tl-desc-118",
+    "name": "Semáforo Descentralizado 121.0",
+    "code": "121.0",
+    "type": "descentralizado",
+    "lat": -25.29977,
+    "lon": -57.599769
+  },
+  {
+    "id": "tl-desc-119",
+    "name": "Semáforo Descentralizado 122.0",
+    "code": "122.0",
+    "type": "descentralizado",
+    "lat": -25.298862,
+    "lon": -57.605162
+  },
+  {
+    "id": "tl-desc-120",
+    "name": "Semáforo Descentralizado 123.0",
+    "code": "123.0",
+    "type": "descentralizado",
+    "lat": -25.299728,
+    "lon": -57.612942
+  },
+  {
+    "id": "tl-desc-121",
+    "name": "Semáforo Descentralizado 124.0",
+    "code": "124.0",
+    "type": "descentralizado",
+    "lat": -25.321034,
+    "lon": -57.622259
+  },
+  {
+    "id": "tl-desc-123",
+    "name": "Semáforo Descentralizado 126.0",
+    "code": "126.0",
+    "type": "descentralizado",
+    "lat": -25.315718,
+    "lon": -57.619235
+  },
+  {
+    "id": "tl-desc-124",
+    "name": "Semáforo Descentralizado 127.0",
+    "code": "127.0",
+    "type": "descentralizado",
+    "lat": -25.29061,
+    "lon": -57.587917
+  },
+  {
+    "id": "tl-desc-125",
+    "name": "Semáforo Descentralizado 128.0",
+    "code": "128.0",
+    "type": "descentralizado",
+    "lat": -25.294936,
+    "lon": -57.578045
+  },
+  {
+    "id": "tl-desc-126",
+    "name": "Semáforo Descentralizado 129.0",
+    "code": "129.0",
+    "type": "descentralizado",
+    "lat": -25.294559,
+    "lon": -57.576617
+  },
+  {
+    "id": "tl-desc-127",
+    "name": "Semáforo Descentralizado 130.0",
+    "code": "130.0",
+    "type": "descentralizado",
+    "lat": -25.307355,
+    "lon": -57.595939
+  },
+  {
+    "id": "tl-desc-128",
+    "name": "Semáforo Descentralizado 131.0",
+    "code": "131.0",
+    "type": "descentralizado",
+    "lat": -25.281507,
+    "lon": -57.600643
+  },
+  {
+    "id": "tl-desc-129",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.304655,
+    "lon": -57.601598
+  },
+  {
+    "id": "tl-desc-130",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.312936,
+    "lon": -57.571158
+  },
+  {
+    "id": "tl-desc-131",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.314467,
+    "lon": -57.565928
+  },
+  {
+    "id": "tl-desc-132",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.312498,
+    "lon": -57.565562
+  },
+  {
+    "id": "tl-desc-133",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.311298,
+    "lon": -57.569788
+  },
+  {
+    "id": "tl-desc-134",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.319043,
+    "lon": -57.576401
+  },
+  {
+    "id": "tl-desc-135",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.334111,
+    "lon": -57.578254
+  },
+  {
+    "id": "tl-desc-137",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.25481,
+    "lon": -57.582007
+  },
+  {
+    "id": "tl-desc-138",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.254087,
+    "lon": -57.580968
+  },
+  {
+    "id": "tl-desc-139",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.257571,
+    "lon": -57.578878
+  },
+  {
+    "id": "tl-desc-141",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.313636,
+    "lon": -57.623588
+  },
+  {
+    "id": "tl-desc-142",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.312047,
+    "lon": -57.622276
+  },
+  {
+    "id": "tl-desc-143",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.283406,
+    "lon": -57.601086
+  },
+  {
+    "id": "tl-desc-144",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.286402,
+    "lon": -57.628753
+  },
+  {
+    "id": "tl-desc-147",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.301009,
+    "lon": -57.613344
+  },
+  {
+    "id": "tl-desc-148",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.293888,
+    "lon": -57.643129
+  },
+  {
+    "id": "tl-desc-149",
+    "name": "Semáforo Descentralizado 0.0",
+    "code": "0.0",
+    "type": "descentralizado",
+    "lat": -25.279748,
+    "lon": -57.640458
+  }
+]
