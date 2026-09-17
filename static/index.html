@@ -1156,8 +1156,39 @@
       <span class="layer-pill-badge" id="menuTlBadge">OFF</span>
     </button>
     <button type="button" class="layer-menu-config" id="openSettingsFromLayers">
-      ⚙️ Configurar filtros y radios
+      ⚙️ Configurar filtros y radios ▾
     </button>
+    <div id="layersConfigSection" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--panel-border);">
+      <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">🚏 Modo Paradas</div>
+      <select id="menuStopsModeSelect" style="width:100%; padding:6px 8px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--panel-border); font-size:12px; margin-bottom:6px; cursor:pointer;">
+        <option value="route">🚌 Recorrido del bus elegido</option>
+        <option value="nearby">📍 Cerca de mi ubicación</option>
+        <option value="all">🗺️ Todas en pantalla</option>
+      </select>
+      <div id="menuStopsRadiusRow" style="display:none; margin-bottom:6px;">
+        <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Radio de paradas</div>
+        <select id="menuStopsRadiusSelect" style="width:100%; padding:6px 8px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--panel-border); font-size:12px; cursor:pointer;">
+          <option value="500">500 m</option>
+          <option value="1000" selected>1 km</option>
+          <option value="2000">2 km</option>
+        </select>
+      </div>
+
+      <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px; margin-top:6px;">🚦 Modo Semáforos</div>
+      <select id="menuTlModeSelect" style="width:100%; padding:6px 8px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--panel-border); font-size:12px; margin-bottom:6px; cursor:pointer;">
+        <option value="route">🚌 Recorrido del bus elegido</option>
+        <option value="nearby">📍 Cerca de mi ubicación</option>
+        <option value="all">🗺️ Todos en pantalla</option>
+      </select>
+      <div id="menuTlRadiusRow" style="display:none;">
+        <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Radio de semáforos</div>
+        <select id="menuTlRadiusSelect" style="width:100%; padding:6px 8px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--panel-border); font-size:12px; cursor:pointer;">
+          <option value="500">500 m</option>
+          <option value="1000" selected>1 km</option>
+          <option value="2000">2 km</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <button class="icon-btn locate-btn" id="locateBtn" aria-label="Mi ubicacion" title="Mi ubicacion">
@@ -3512,6 +3543,13 @@ const trafficLightsRadiusSelect = document.getElementById('trafficLightsRadiusSe
 const menuTlBtn = document.getElementById('menuTlBtn');
 const menuTlBadge = document.getElementById('menuTlBadge');
 const openSettingsFromLayers = document.getElementById('openSettingsFromLayers');
+const layersConfigSection = document.getElementById('layersConfigSection');
+const menuStopsModeSelect = document.getElementById('menuStopsModeSelect');
+const menuStopsRadiusRow = document.getElementById('menuStopsRadiusRow');
+const menuStopsRadiusSelect = document.getElementById('menuStopsRadiusSelect');
+const menuTlModeSelect = document.getElementById('menuTlModeSelect');
+const menuTlRadiusRow = document.getElementById('menuTlRadiusRow');
+const menuTlRadiusSelect = document.getElementById('menuTlRadiusSelect');
 
 // Sincronizar inputs iniciales
 if (showStopsCheck) showStopsCheck.checked = stopsActive;
@@ -3523,6 +3561,14 @@ if (showTrafficLightsCheck) showTrafficLightsCheck.checked = trafficLightsActive
 if (trafficLightsFilterModeSelect) trafficLightsFilterModeSelect.value = trafficLightsFilterMode;
 if (trafficLightsRadiusSelect) trafficLightsRadiusSelect.value = String(trafficLightsRadius);
 if (tlRadiusRow) tlRadiusRow.style.display = trafficLightsFilterMode === 'nearby' ? 'flex' : 'none';
+
+if (menuStopsModeSelect) menuStopsModeSelect.value = stopsFilterMode;
+if (menuStopsRadiusSelect) menuStopsRadiusSelect.value = String(stopsRadius);
+if (menuStopsRadiusRow) menuStopsRadiusRow.style.display = stopsFilterMode === 'nearby' ? 'block' : 'none';
+
+if (menuTlModeSelect) menuTlModeSelect.value = trafficLightsFilterMode;
+if (menuTlRadiusSelect) menuTlRadiusSelect.value = String(trafficLightsRadius);
+if (menuTlRadiusRow) menuTlRadiusRow.style.display = trafficLightsFilterMode === 'nearby' ? 'block' : 'none';
 
 // Bounding box cache de la ruta activa para descarte rápido
 let currentRouteBbox = null;
@@ -3879,10 +3925,50 @@ if (menuTlBtn) {
   });
 }
 
-if (openSettingsFromLayers) {
-  openSettingsFromLayers.addEventListener('click', () => {
-    layersMenu.classList.remove('open');
-    if (typeof toggleSettings === 'function') toggleSettings();
+if (openSettingsFromLayers && layersConfigSection) {
+  openSettingsFromLayers.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = layersConfigSection.style.display === 'none';
+    layersConfigSection.style.display = isHidden ? 'block' : 'none';
+    openSettingsFromLayers.textContent = isHidden ? '⚙️ Ocultar filtros ▴' : '⚙️ Configurar filtros y radios ▾';
+  });
+}
+
+// Sincronización de controles de capas en el menú flotante
+if (menuStopsModeSelect) {
+  menuStopsModeSelect.addEventListener('change', () => {
+    stopsFilterMode = menuStopsModeSelect.value;
+    localStorage.setItem('municipal_stops_mode', stopsFilterMode);
+    if (stopsFilterModeSelect) stopsFilterModeSelect.value = stopsFilterMode;
+    if (menuStopsRadiusRow) menuStopsRadiusRow.style.display = stopsFilterMode === 'nearby' ? 'block' : 'none';
+    if (stopsRadiusRow) stopsRadiusRow.style.display = stopsFilterMode === 'nearby' ? 'flex' : 'none';
+    updateMunicipalLayers();
+  });
+}
+if (menuStopsRadiusSelect) {
+  menuStopsRadiusSelect.addEventListener('change', () => {
+    stopsRadius = parseInt(menuStopsRadiusSelect.value, 10) || 1000;
+    localStorage.setItem('municipal_stops_radius', String(stopsRadius));
+    if (stopsRadiusSelect) stopsRadiusSelect.value = String(stopsRadius);
+    updateMunicipalLayers();
+  });
+}
+if (menuTlModeSelect) {
+  menuTlModeSelect.addEventListener('change', () => {
+    trafficLightsFilterMode = menuTlModeSelect.value;
+    localStorage.setItem('municipal_tl_mode', trafficLightsFilterMode);
+    if (trafficLightsFilterModeSelect) trafficLightsFilterModeSelect.value = trafficLightsFilterMode;
+    if (menuTlRadiusRow) menuTlRadiusRow.style.display = trafficLightsFilterMode === 'nearby' ? 'block' : 'none';
+    if (tlRadiusRow) tlRadiusRow.style.display = trafficLightsFilterMode === 'nearby' ? 'flex' : 'none';
+    updateMunicipalLayers();
+  });
+}
+if (menuTlRadiusSelect) {
+  menuTlRadiusSelect.addEventListener('change', () => {
+    trafficLightsRadius = parseInt(menuTlRadiusSelect.value, 10) || 1000;
+    localStorage.setItem('municipal_tl_radius', String(trafficLightsRadius));
+    if (trafficLightsRadiusSelect) trafficLightsRadiusSelect.value = String(trafficLightsRadius);
+    updateMunicipalLayers();
   });
 }
 
