@@ -379,6 +379,15 @@ class ObservedRoutes:
             ''')
             db.execute("UPDATE observed_jobs SET status='pending' WHERE status='processing' AND next_try<=?",
                        (time.time(),))
+            if self.match_provider == 'tomtom':
+                # Give recent jobs exhausted by the previous OSRM provider one
+                # fresh chance. TomTom failures already have an audit row and
+                # are deliberately not reset on every restart.
+                db.execute('''UPDATE observed_jobs SET status='pending',attempts=0,next_try=0,error=''
+                              WHERE status='failed' AND seen>=? AND NOT EXISTS (
+                                SELECT 1 FROM observed_match_audit a WHERE a.job=observed_jobs.id)''',
+                           (time.time()-self.raw_retention,))
+                self._trim_pending(db)
             for row in db.execute('SELECT line, data FROM observed_official'):
                 self.indexes[row['line']] = OfficialIndex(json.loads(row['data']))
 

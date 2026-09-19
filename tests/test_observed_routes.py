@@ -253,6 +253,17 @@ class ObservedTests(unittest.TestCase):
         self.assertFalse(self.store._reserve_match_request(NOW+1))
         self.assertEqual(self.store.health(NOW)['monthly_requests'], 1)
 
+    def test_tomtom_requeues_recent_legacy_provider_failures_once(self):
+        self.travel()
+        with self.store.connect() as db:
+            db.execute("UPDATE observed_jobs SET status='failed',attempts=8,error='legacy OSRM'")
+        replacement = ObservedRoutes(self.db, match_provider='tomtom', tomtom_api_key='secret')
+        with patch('observed_routes.time.time', return_value=NOW+300):
+            replacement.init()
+        with replacement.connect() as db:
+            job = db.execute('SELECT status,attempts,error FROM observed_jobs').fetchone()
+        self.assertEqual((job['status'], job['attempts'], job['error']), ('pending', 0, ''))
+
     def test_shadow_mode_validates_but_does_not_publish(self):
         self.travel()
         self.store.shadow_mode = True
