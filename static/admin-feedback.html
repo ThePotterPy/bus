@@ -31,13 +31,23 @@
     .diagnostics { font-size:12px; color:#b9c5d7; background:#121925; border-radius:8px; padding:10px; white-space:pre-wrap; overflow-wrap:anywhere; }
     .error { color:#ff9fb2; }
     .success { color:#7bf0ae; }
-    [hidden] { display:none !important; }
+    .nav-tabs { display:flex; gap:8px; margin: 16px 0 20px; border-bottom:1px solid #353c4b; padding-bottom:12px; }
+    .tab-btn { background:transparent; border:1px solid transparent; color:#a6afc1; font-weight:600; padding:8px 16px; border-radius:8px; }
+    .tab-btn.active { background:#252d3d; border-color:#00d3ec; color:#00d3ec; }
+    textarea { width:100%; background:#111722; color:#fff; border:1px solid #4c586d; border-radius:8px; padding:11px; font:inherit; resize:vertical; min-height:100px; }
+    .news-tag { display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:6px; letter-spacing:0.5px; }
+    .tag-novedad { background:rgba(0,211,236,0.18); color:#00d3ec; border:1px solid rgba(0,211,236,0.4); }
+    .tag-mejora { background:rgba(123,240,174,0.18); color:#7bf0ae; border:1px solid rgba(123,240,174,0.4); }
+    .tag-aviso { background:rgba(255,180,75,0.18); color:#ffb44b; border:1px solid rgba(255,180,75,0.4); }
+    .tag-recorrido { background:rgba(192,132,252,0.18); color:#c084fc; border:1px solid rgba(192,132,252,0.4); }
+    .news-form-grid { display:grid; grid-template-columns: 2fr 1fr; gap:12px; }
+    @media (max-width:600px) { .news-form-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <main>
-  <h1>Comentarios recibidos</h1>
-  <p>Panel privado. Los mensajes no son visibles para otros usuarios.</p>
+  <h1>Administración · Colectivos</h1>
+  <p>Panel privado. Gestión de comentarios y publicación de novedades para usuarios.</p>
   <section id="loginPanel" class="card login">
     <form id="loginForm">
       <label for="password">Contraseña de administración</label>
@@ -47,19 +57,59 @@
     <p id="loginStatus" role="status"></p>
   </section>
   <section id="adminPanel" hidden>
-    <div class="toolbar">
-      <label for="filter" style="margin:0">Ver</label>
-      <select id="filter">
-        <option value="todos">Todos</option>
-        <option value="nuevo">Nuevos</option>
-        <option value="revisado">Revisados</option>
-      </select>
-      <button id="refresh" type="button">Actualizar</button>
-      <button id="logout" type="button">Salir</button>
+    <nav class="nav-tabs">
+      <button id="tabComments" class="tab-btn active" type="button">✉ Comentarios</button>
+      <button id="tabNews" class="tab-btn" type="button">📢 Publicar Novedades</button>
+      <button id="logout" type="button" style="margin-left:auto;">Salir</button>
+    </nav>
+
+    <!-- Pestaña de Comentarios -->
+    <div id="sectionComments">
+      <div class="toolbar">
+        <label for="filter" style="margin:0">Ver</label>
+        <select id="filter">
+          <option value="todos">Todos</option>
+          <option value="nuevo">Nuevos</option>
+          <option value="revisado">Revisados</option>
+        </select>
+        <button id="refresh" type="button">Actualizar</button>
+      </div>
+      <p id="adminStatus" role="status"></p>
+      <div id="comments"></div>
+      <button id="more" type="button" hidden>Ver más</button>
     </div>
-    <p id="adminStatus" role="status"></p>
-    <div id="comments"></div>
-    <button id="more" type="button" hidden>Ver más</button>
+
+    <!-- Pestaña de Novedades -->
+    <div id="sectionNews" hidden>
+      <div class="card">
+        <h2 style="font-size:18px; margin:0 0 12px;">Nueva publicación</h2>
+        <form id="newsForm">
+          <div class="news-form-grid">
+            <div>
+              <label for="newsTitle">Título</label>
+              <input id="newsTitle" type="text" placeholder="Ej: Nueva función de paradas en el mapa" required maxlength="120">
+            </div>
+            <div>
+              <label for="newsTag">Etiqueta</label>
+              <select id="newsTag">
+                <option value="novedad">Novedad</option>
+                <option value="mejora">Mejora</option>
+                <option value="aviso">Aviso</option>
+                <option value="recorrido">Recorrido</option>
+              </select>
+            </div>
+          </div>
+          <label for="newsContent">Mensaje / Detalle</label>
+          <textarea id="newsContent" placeholder="Escribí aquí el comunicado o descripción de la actualización..." required maxlength="5000"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+            <button class="primary" type="submit">Publicar novedad</button>
+            <span id="newsPublishStatus" role="status"></span>
+          </div>
+        </form>
+      </div>
+      <h2 style="font-size:18px; margin:24px 0 10px;">Novedades publicadas actualmente</h2>
+      <div id="newsList"></div>
+    </div>
   </section>
 </main>
 <script>
@@ -175,6 +225,111 @@
     }
   }
 
+  const tabComments = document.getElementById('tabComments');
+  const tabNews = document.getElementById('tabNews');
+  const sectionComments = document.getElementById('sectionComments');
+  const sectionNews = document.getElementById('sectionNews');
+  const newsForm = document.getElementById('newsForm');
+  const newsTitle = document.getElementById('newsTitle');
+  const newsTag = document.getElementById('newsTag');
+  const newsContent = document.getElementById('newsContent');
+  const newsPublishStatus = document.getElementById('newsPublishStatus');
+  const newsList = document.getElementById('newsList');
+
+  let activeTab = 'comments';
+
+  function switchTab(tab) {
+    activeTab = tab;
+    tabComments.classList.toggle('active', tab === 'comments');
+    tabNews.classList.toggle('active', tab === 'news');
+    sectionComments.hidden = tab !== 'comments';
+    sectionNews.hidden = tab !== 'news';
+    if (tab === 'news') {
+      loadNews();
+    }
+  }
+
+  tabComments.addEventListener('click', () => switchTab('comments'));
+  tabNews.addEventListener('click', () => switchTab('news'));
+
+  async function loadNews() {
+    newsList.replaceChildren();
+    const loading = text('p', 'Cargando novedades…', 'meta');
+    newsList.append(loading);
+    try {
+      const res = await api('/api/news');
+      newsList.replaceChildren();
+      const items = res.items || [];
+      if (!items.length) {
+        newsList.append(text('p', 'No hay novedades publicadas aún.', 'meta'));
+        return;
+      }
+      items.forEach(item => newsList.append(renderNewsCard(item)));
+    } catch (err) {
+      newsList.replaceChildren(text('p', `Error al cargar novedades: ${err.message}`, 'error'));
+    }
+  }
+
+  function renderNewsCard(item) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    const head = document.createElement('div');
+    head.className = 'head';
+    const titleBox = document.createElement('div');
+    titleBox.style.display = 'flex';
+    titleBox.style.alignItems = 'center';
+    titleBox.style.gap = '8px';
+    const tag = text('span', item.tag || 'novedad', `news-tag tag-${item.tag || 'novedad'}`);
+    const title = text('strong', item.title);
+    titleBox.append(tag, title);
+    head.append(titleBox, text('span', new Date(item.created_at * 1000).toLocaleString('es-PY'), 'meta'));
+    card.append(head, text('p', item.content, 'message'));
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.append(action('Eliminar novedad', 'danger', async () => {
+      if (!confirm(`¿Eliminar la publicación "${item.title}"?`)) return;
+      try {
+        await api('/api/admin/news/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+          body: JSON.stringify({ id: item.id }),
+        });
+        await loadNews();
+      } catch (err) {
+        alert(`Error al eliminar: ${err.message}`);
+      }
+    }));
+    card.append(actions);
+    return card;
+  }
+
+  newsForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    newsPublishStatus.textContent = 'Publicando…';
+    newsPublishStatus.className = 'meta';
+    try {
+      await api('/api/admin/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+        body: JSON.stringify({
+          title: newsTitle.value,
+          tag: newsTag.value,
+          content: newsContent.value,
+        }),
+      });
+      newsPublishStatus.textContent = '¡Publicado con éxito!';
+      newsPublishStatus.className = 'success';
+      newsTitle.value = '';
+      newsContent.value = '';
+      await loadNews();
+      setTimeout(() => { newsPublishStatus.textContent = ''; }, 3000);
+    } catch (err) {
+      newsPublishStatus.textContent = err.message;
+      newsPublishStatus.className = 'error';
+    }
+  });
+
   document.getElementById('loginForm').addEventListener('submit', async event => {
     event.preventDefault();
     const password = document.getElementById('password');
@@ -193,7 +348,10 @@
     }
   });
   document.getElementById('filter').addEventListener('change', () => loadComments(false));
-  document.getElementById('refresh').addEventListener('click', () => loadComments(false));
+  document.getElementById('refresh').addEventListener('click', () => {
+    if (activeTab === 'comments') loadComments(false);
+    else loadNews();
+  });
   more.addEventListener('click', () => loadComments(true));
   document.getElementById('logout').addEventListener('click', async () => {
     try {

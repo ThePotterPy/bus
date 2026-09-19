@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from observed_routes import ObservedRoutes, WINDOW, sample_time, street_edges
+from observed_routes import ObservedRoutes, TomTomMatcher, WINDOW, gps_spike, sample_time, street_edges
 
 
 NOW = 1800000000
@@ -150,6 +150,19 @@ class ObservedTests(unittest.TestCase):
         self.store.flush_idle(NOW+200)
         self.assertFalse(self.snap()['pending'])
 
+    def test_single_gps_spike_is_removed_when_bus_returns(self):
+        a = [-25.002, -57, NOW]
+        b = [-25.012, -57, NOW+10]
+        c = [-25.002, -56.9998, NOW+20]
+        self.assertTrue(gps_spike(a, b, c))
+        for point in (a, b, c):
+            self.store.observe('30', [{'unit':'spike', 'lat':point[0], 'lon':point[1],
+                                       'route':'Azul (I)'}], point[2])
+        with self.store.connect() as db:
+            samples = db.execute("SELECT lat,lon FROM observed_samples WHERE unit='spike' ORDER BY stamp").fetchall()
+        self.assertEqual(len(samples), 2)
+        self.assertNotIn((-25.012, -57.0), {(row['lat'], row['lon']) for row in samples})
+
     def test_return_to_route_preserves_completed_trail(self):
         for i in range(8):
             self.store.observe('30', [{'unit':'1','lat':-25.002,'lon':-57+i*.0003}], NOW+i*10)
@@ -179,6 +192,48 @@ class ObservedTests(unittest.TestCase):
         self.store.osrm_url = 'https://example.test'
         with patch('observed_routes.urllib.request.urlopen', return_value=Response()):
             with self.assertRaises(ValueError): self.store.match_geometry([[-25,-57,NOW],[-25,-56.999,NOW+10],[-25,-56.998,NOW+20]])
+
+    def test_tomtom_adapter_accepts_only_confident_road_geometry(self):
+        points = [[-25, -57, NOW], [-25, -56.9997, NOW+10], [-25, -56.9994, NOW+20]]
+        route = [[point[1], point[0]] for point in points]
+        payload = {
+            'projectedPoints': [
+                {'geometry': {'coordinates': [point[1], point[0]]},
+                 'properties': {'snapResult': 'Matched', 'routeIndex': 0}}
+                for point in points
+            ],
+            'route': [{'geometry': {'coordinates': route},
+                       'properties': {'id': 0, 'confidence': .96}}],
+            'distances': {'total': 60, 'road': 60, 'offRoad': 0, 'unit': 'm'},
+        }
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self, *_): return json.dumps(payload).encode()
+        with patch('observed_routes.urllib.request.urlopen', return_value=Response()) as request:
+            parts = TomTomMatcher('server-secret')(points)
+        self.assertEqual(parts, [[point[:2] for point in points]])
+        sent_request = request.call_args.args[0]
+        self.assertIn('vehicleType=Bus', sent_request.full_url)
+        self.assertNotIn('server-secret', sent_request.data.decode())
+
+    def test_tomtom_monthly_budget_is_hard_limited(self):
+        self.store.match_provider = 'tomtom'
+        self.store.monthly_match_limit = 1
+        self.assertTrue(self.store._reserve_match_request(NOW))
+        self.assertFalse(self.store._reserve_match_request(NOW+1))
+        self.assertEqual(self.store.health(NOW)['monthly_requests'], 1)
+
+    def test_shadow_mode_validates_but_does_not_publish(self):
+        self.travel()
+        self.store.shadow_mode = True
+        self.assertTrue(self.store.process_one(self.match, NOW+300))
+        with self.store.connect() as db:
+            job = db.execute('SELECT status,points,geometry FROM observed_jobs').fetchone()
+            self.assertEqual(job['status'], 'done')
+            self.assertEqual(json.loads(job['points']), [])
+            self.assertTrue(json.loads(job['geometry']))
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM observed_edges').fetchone()[0], 0)
 
 
 if __name__ == '__main__':

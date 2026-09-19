@@ -20,6 +20,28 @@ DIAGNOSTIC_FIELDS = {"device", "platform", "browser", "viewport", "app"}
 LINE_ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 
 
+NEWS_TAGS = {"novedad", "mejora", "aviso", "recorrido"}
+
+
+def validate_news(body):
+    if not isinstance(body, dict):
+        raise ValueError("datos de novedad inválidos")
+    title = body.get("title")
+    content = body.get("content")
+    tag = body.get("tag", "novedad")
+    if not isinstance(title, str) or not 3 <= len(title.strip()) <= 120:
+        raise ValueError("el título debe tener entre 3 y 120 caracteres")
+    if not isinstance(content, str) or not 5 <= len(content.strip()) <= 5000:
+        raise ValueError("el contenido debe tener entre 5 y 5000 caracteres")
+    if not isinstance(tag, str) or tag.strip().lower() not in NEWS_TAGS:
+        raise ValueError("etiqueta inválida")
+    return {
+        "title": title.strip(),
+        "content": content.strip(),
+        "tag": tag.strip().lower(),
+    }
+
+
 def validate_feedback(body):
     """Return a small, explicit record. Never persist request headers or IPs."""
     if not isinstance(body, dict) or body.get("website"):
@@ -92,6 +114,14 @@ class FeedbackStore:
                 status TEXT NOT NULL DEFAULT 'nuevo'
             )""")
             conn.execute("CREATE INDEX IF NOT EXISTS feedback_status_id ON feedback(status, id DESC)")
+            conn.execute("""CREATE TABLE IF NOT EXISTS news (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                tag TEXT NOT NULL DEFAULT 'novedad'
+            )""")
+            conn.execute("CREATE INDEX IF NOT EXISTS news_created_at ON news(created_at DESC)")
             conn.execute("""CREATE TABLE IF NOT EXISTS admin_sessions (
                 token_hash TEXT PRIMARY KEY,
                 csrf TEXT NOT NULL,
@@ -175,6 +205,27 @@ class FeedbackStore:
                 "DELETE FROM feedback WHERE id = ? AND delete_token_hash = ?",
                 (feedback_id, token_hash),
             ).rowcount == 1
+
+    def create_news(self, record):
+        with self._connect() as conn:
+            cursor = conn.execute("""INSERT INTO news
+                (created_at, title, content, tag)
+                VALUES (?, ?, ?, ?)""", (
+                int(time.time()), record["title"], record["content"], record["tag"],
+            ))
+            return cursor.lastrowid
+
+    def list_news(self, limit=30):
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id, created_at, title, content, tag FROM news ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def delete_news(self, news_id):
+        with self._connect() as conn:
+            return conn.execute("DELETE FROM news WHERE id = ?", (news_id,)).rowcount == 1
 
     def login(self, password, configured_password):
         if not configured_password or len(configured_password) < 16:

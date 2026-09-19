@@ -1,5 +1,8 @@
 __pycache__/
 *.pyc
+.env
+.env.*
+!.env.example
 data/*
 !data/asuncion_stops.json
 !data/asuncion_traffic_lights.json

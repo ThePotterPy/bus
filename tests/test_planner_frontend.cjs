@@ -36,17 +36,19 @@ function fixture() {
     return elements.get(id);
   };
   const mapHandlers = {};
+  const panes = {};
   const context = {
     AbortController, setTimeout, clearTimeout, console,
     window: { matchMedia: () => ({matches: true}) },
     currentLine: null, activePlanOption: null,
     userLocationMarker: null, lastUserAccuracy: null,
-    map: { on(event, cb) { mapHandlers[event] = cb; }, handlers: mapHandlers, removeLayer() {}, setView() {}, fitBounds() {} },
-    L: { divIcon: v => v, marker: () => ({ addTo() { return this; }, setLatLng() {} }) },
+    map: { on(event, cb) { mapHandlers[event] = cb; }, handlers: mapHandlers, removeLayer() {}, setView() {}, fitBounds() {}, getPane(name) { return panes[name] || null; }, createPane(name) { return (panes[name] = { style: {} }); } },
+    L: { divIcon: v => v, marker: () => ({ addTo() { return this; }, setLatLng() {} }), canvas: () => ({}), circleMarker: () => ({ addTo() { return this; }, bindPopup() { return this; } }), layerGroup: () => ({ clearLayers() {}, addLayer() {}, addTo() { return this; } }) },
     plannedTripLayer: { clearLayers() {} }, etaRouteLayer: { clearLayers() {} },
     applyBranchVisibility() {}, setStatus() {}, selectLine() {},
     document: { getElementById: getElement, addEventListener() {}, createElement: element },
     fetch: () => new Promise(resolve => pending.push(resolve)),
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
   };
   for (const key of ['originInput', 'destInput', 'originList', 'destList', 'originField', 'destField',
     'originAccuracy', 'planResult', 'planHint', 'planPanel', 'planBtn', 'clearPlanBtn', 'swapPlanBtn', 'calculatePlanBtn',
@@ -86,8 +88,9 @@ test('address search only runs after explicit submission, not while typing', asy
   f.context.originInput.handlers.input();
   assert.equal(f.pending.length, 0);
   f.context.originInput.handlers.keydown({key: 'Enter', preventDefault() {}});
-  assert.equal(f.pending.length, 1);
+  assert.equal(f.pending.length, 2);
   f.pending[0]({ok: true, json: async () => ({success: true, data: []})});
+  f.pending[1]({ok: true, json: async () => ({success: true, data: []})});
   await new Promise(resolve => setImmediate(resolve));
 });
 
@@ -96,6 +99,7 @@ test('clearing a pending address lookup discards its late suggestions', async ()
   const request = f.run("fetchGeocode('Terminal', originList, 'origin')");
   f.run('clearPlan()');
   f.pending[0]({ ok: true, json: async () => [{ lat: '-25', lon: '-57', display_name: 'Old result' }] });
+  f.pending[1]({ ok: true, json: async () => ({ success: true, data: [] }) });
   await request;
   assert.equal(f.context.originList.children.length, 0);
   assert.equal(f.context.originList.style.display, 'none');

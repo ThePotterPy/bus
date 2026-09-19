@@ -106,6 +106,33 @@ class FeedbackStoreTests(unittest.TestCase):
         self.store.prune()
         self.assertEqual(self.store.list()[0], [])
 
+    def test_news_validation_and_crud(self):
+        with self.assertRaises(ValueError):
+            feedback.validate_news({"title": "ab", "content": "12345"})
+        with self.assertRaises(ValueError):
+            feedback.validate_news({"title": "Valido", "content": "123"})
+        with self.assertRaises(ValueError):
+            feedback.validate_news({"title": "Valido", "content": "12345", "tag": "invalido"})
+
+        valid = feedback.validate_news({
+            "title": "Nueva función de paradas",
+            "content": "Ahora podés ver paradas oficiales en el mapa.",
+            "tag": "mejora",
+        })
+        self.assertEqual(valid["tag"], "mejora")
+        news_id = self.store.create_news(valid)
+        self.assertTrue(news_id)
+
+        items = self.store.list_news()
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["id"], news_id)
+        self.assertEqual(items[0]["title"], "Nueva función de paradas")
+        self.assertEqual(items[0]["tag"], "mejora")
+
+        self.assertTrue(self.store.delete_news(news_id))
+        self.assertFalse(self.store.delete_news(news_id))
+        self.assertEqual(self.store.list_news(), [])
+
     def test_sessions_are_revocable(self):
         password = "contraseña-muy-larga-y-unica"
         self.assertIsNone(self.store.login("incorrecta", password))
@@ -193,6 +220,48 @@ class FeedbackHttpTests(unittest.TestCase):
             self.assertFalse(self.request("/api/feedback/config")[1]["enabled"])
             self.assertEqual(self.request("/api/feedback", sample())[0], 503)
             self.assertEqual(self.request("/api/admin/feedback/login", {"password": "bad"})[0], 503)
+
+    def test_news_http_lifecycle(self):
+        # Public GET when empty
+        code, data, _ = self.request("/api/news")
+        self.assertEqual(code, 200)
+        self.assertEqual(data["items"], [])
+
+        # Unauthorized admin POST
+        self.assertEqual(self.request("/api/admin/news", {"title": "Test", "content": "Mensaje de prueba"})[0], 401)
+
+        # Login admin
+        code, _, headers = self.request("/api/admin/feedback/login", {"password": "test-admin-password-12345"})
+        self.assertEqual(code, 200)
+        cookie = headers["Set-Cookie"].split(";", 1)[0]
+        csrf = self.request("/api/admin/feedback/session", headers={"Cookie": cookie})[1]["csrf"]
+        auth_headers = {"Cookie": cookie, "X-Feedback-CSRF": csrf}
+
+        # Create news
+        code, data, _ = self.request("/api/admin/news", {
+            "title": "¡Actualización lanzada!",
+            "content": "Ya podés consultar las novedades desde la tuerca de ajustes.",
+            "tag": "novedad",
+        }, auth_headers)
+        self.assertEqual(code, 201)
+        news_id = data["id"]
+
+        # Public GET sees the new item
+        code, data, _ = self.request("/api/news")
+        self.assertEqual(code, 200)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["title"], "¡Actualización lanzada!")
+        self.assertEqual(data["items"][0]["tag"], "novedad")
+
+        # Delete news via admin
+        code, data, _ = self.request("/api/admin/news/delete", {"id": news_id}, auth_headers)
+        self.assertEqual(code, 200)
+        self.assertTrue(data["success"])
+
+        # Public GET is empty again
+        code, data, _ = self.request("/api/news")
+        self.assertEqual(code, 200)
+        self.assertEqual(data["items"], [])
 
 
 if __name__ == "__main__":

@@ -76,11 +76,10 @@ el boton de aviso de proximidad.
 - **Líneas sin recorrido oficial**: sus movimientos se guardan como “recorrido
   observado”, claramente separado de un desvío. Una descarga fallida no se
   interpreta como ausencia de ruta y se conserva el último trazado conocido.
-- **Ajuste a calles**: las posiciones originales siempre se conservan. El
-  servidor procesa cada nueva estela en una cola con reintentos y solo publica
-  la línea resultante cuando el ajuste de OSRM tiene confianza suficiente. Una
-  respuesta dudosa queda como puntos celestes, sin unir edificios con una
-  recta inventada.
+- **Ajuste a calles**: el servidor conserva las posiciones originales durante
+  siete días, descarta saltos GPS aislados y procesa las estelas en una cola
+  acotada. Solo una geometría de alta confianza puede convertirse en línea; el
+  agregado confirma cuántas unidades y pasadas recorrieron cada tramo.
 - **Comentarios privados**: desde Ajustes se puede enviar un problema o
   sugerencia con nombre o sin él. Los datos técnicos son opcionales y requieren
   una casilla marcada expresamente. Un código privado permite al remitente
@@ -123,6 +122,10 @@ proceso si falla.
 
 Variables opcionales:
 
+La plantilla [`.env.example`](.env.example) contiene la configuración inicial
+recomendada. La clave real debe cargarse como secreto del entorno, no editarse
+dentro de archivos versionados.
+
 - `DATA_DIR`: reemplaza la ubicación de datos fuera de Railway.
 - `OBSERVED_COLLECTOR=0`: desactiva el recolector central.
 - `OBSERVED_POLL_SECONDS`: intervalo objetivo del recolector (mínimo 15 s;
@@ -138,6 +141,25 @@ Variables opcionales:
 - `OSRM_MATCH_URL`: servidor compatible con la API Match de OSRM. El valor
   predeterminado es `https://router.project-osrm.org`; para más volumen se
   recomienda una instancia propia.
+- `TOMTOM_API_KEY`: clave de **Snap to Roads API**, configurada como secreto
+  exclusivamente en el servidor. Si está presente, TomTom se selecciona
+  automáticamente; nunca se incluye en JavaScript ni en respuestas HTTP.
+- `MATCH_PROVIDER`: `tomtom`, `osrm` o `disabled`. Si se elige TomTom, el modo
+  sombra está activo por defecto: valida y guarda temporalmente la geometría,
+  pero todavía no modifica las líneas visibles.
+- `MATCH_SHADOW_MODE=0`: publica los tramos validados. Activarlo debe hacerse
+  después de revisar los resultados de la fase inicial.
+- `TOMTOM_MONTHLY_LIMIT` y `TOMTOM_WEEKLY_LIMIT`: topes duros de solicitudes
+  (predeterminados: 2200 al mes y 400 por ejecución semanal). Las respuestas
+  recuperadas de caché no consumen presupuesto.
+- `TOMTOM_WEEKDAY` y `TOMTOM_HOUR`: día (`0` lunes a `6` domingo) y hora local
+  de Asunción para el lote; los valores predeterminados son domingo a las 03:00.
+- `MATCH_RUN_ON_START=1`: ejecuta un primer lote al iniciar. Se recomienda
+  dejarlo apagado hasta verificar la configuración y el presupuesto.
+- `OBSERVED_RAW_RETENTION_DAYS`: retención de puntos GPS y trabajos pendientes
+  (predeterminado: 7). Las líneas confirmadas y sus conteos agregados permanecen.
+- `MATCH_MAX_PENDING_JOBS` y `MATCH_MAX_ATTEMPTS`: límites de cola y reintentos
+  (predeterminados: 5000 y 8).
 - `FEEDBACK_ADMIN_PASSWORD`: contraseña exclusiva del panel de comentarios,
   con al menos 16 caracteres. Sin ella el panel no permite iniciar sesión.
 

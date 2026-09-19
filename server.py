@@ -40,7 +40,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs, urlencode
-from feedback import FeedbackStore, SESSION_SECONDS, validate_feedback
+from feedback import FeedbackStore, SESSION_SECONDS, validate_feedback, validate_news
 from observed_routes import ObservedRoutes
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
@@ -82,10 +82,28 @@ def feedback_enabled() -> bool:
     return len(_feedback_admin_password()) >= 16
 
 
+_tomtom_api_key = os.environ.get("TOMTOM_API_KEY", "").strip()
+_match_provider = os.environ.get(
+    "MATCH_PROVIDER", "tomtom" if _tomtom_api_key else "osrm"
+).strip().lower()
+_match_shadow_default = "1" if _match_provider == "tomtom" else "0"
 observed_routes = ObservedRoutes(
     TRACKS_DB_FILE,
-    osrm_url=os.environ.get("OSRM_MATCH_URL", "https://router.project-osrm.org"),
+    osrm_url=os.environ.get(
+        "OSRM_MATCH_URL", "https://router.project-osrm.org" if _match_provider == "osrm" else ""
+    ),
     poll_seconds=int(os.environ.get("OBSERVED_POLL_SECONDS", "30")),
+    match_provider=_match_provider,
+    tomtom_api_key=_tomtom_api_key,
+    shadow_mode=os.environ.get("MATCH_SHADOW_MODE", _match_shadow_default) != "0",
+    raw_retention_days=int(os.environ.get("OBSERVED_RAW_RETENTION_DAYS", "7")),
+    max_pending_jobs=int(os.environ.get("MATCH_MAX_PENDING_JOBS", "5000")),
+    max_job_attempts=int(os.environ.get("MATCH_MAX_ATTEMPTS", "8")),
+    monthly_match_limit=int(os.environ.get("TOMTOM_MONTHLY_LIMIT", "2200")),
+    weekly_match_limit=int(os.environ.get("TOMTOM_WEEKLY_LIMIT", "400")),
+    match_weekday=int(os.environ.get("TOMTOM_WEEKDAY", "6")),
+    match_hour=int(os.environ.get("TOMTOM_HOUR", "3")),
+    match_run_on_start=os.environ.get("MATCH_RUN_ON_START", "0") == "1",
 )
 # Un conjunto fijo de candados evita que identificadores arbitrarios enviados
 # por Internet hagan crecer un diccionario para siempre.
@@ -1500,6 +1518,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "enabled": feedback_enabled()})
             return
 
+        if parsed.path == "/api/news":
+            items = feedback_store.list_news()
+            self._send_json_obj(200, {"success": True, "items": items})
+            return
+
         if parsed.path == "/api/admin/feedback/session":
             csrf = feedback_store.session(
                 self._feedback_admin_token(), _feedback_admin_password()
@@ -1555,12 +1578,13 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/observed-health":
+            observed_health = observed_routes.health()
             self._send_json_obj(200, {
                 "success": True,
                 "collector_enabled": os.environ.get("OBSERVED_COLLECTOR", "1") != "0",
                 "last_cycle": observed_routes.last_cycle,
-                "matching_enabled": bool(observed_routes.osrm_url),
                 "railway_volume_configured": bool(os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")),
+                **observed_health,
             })
             return
 
@@ -1757,6 +1781,29 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 found = feedback_store.delete(feedback_id)
             self._send_json_obj(200 if found else 404, {"success": found})
+            return
+
+        if parsed.path == "/api/admin/news":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            try:
+                record = validate_news(body)
+            except ValueError as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+            news_id = feedback_store.create_news(record)
+            self._send_json_obj(201, {"success": True, "id": news_id})
+            return
+
+        if parsed.path == "/api/admin/news/delete":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            news_id = body.get("id") if isinstance(body, dict) else None
+            if type(news_id) is not int or not 0 < news_id <= 2**63 - 1:
+                self._send_json_obj(400, {"success": False, "error": "identificador de novedad inválido"})
+                return
+            deleted = feedback_store.delete_news(news_id)
+            self._send_json_obj(200 if deleted else 404, {"success": deleted})
             return
 
         if parsed.path == "/api/geocode":
@@ -2024,8 +2071,12 @@ def main():
     threading.Thread(target=observed_routes.matcher_loop, daemon=True).start()
     if os.environ.get("RAILWAY_ENVIRONMENT_ID") and not os.environ.get("RAILWAY_VOLUME_MOUNT_PATH"):
         print("ATENCION: Railway no tiene un volumen montado; el historial no sobrevivira a un despliegue.")
-    if not observed_routes.osrm_url:
-        print("OSRM_MATCH_URL no configurado: las estelas se conservan como puntos GPS pendientes de ajuste.")
+    if not observed_routes.matching_enabled():
+        print("Map matching no configurado: las estelas se conservan como puntos GPS pendientes de ajuste.")
+    elif observed_routes.match_provider == "tomtom":
+        mode = "sombra" if observed_routes.shadow_mode else "publicacion"
+        print(f"TomTom Snap to Roads activo en modo {mode}; lote semanal limitado a "
+              f"{observed_routes.weekly_match_limit} solicitudes.")
 
     if PUSH_AVAILABLE:
         threading.Thread(target=notifier_loop, daemon=True).start()

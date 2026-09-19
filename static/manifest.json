@@ -1,6 +1,6 @@
 {
-  "name": "Colectivos JAHA Tracker",
-  "short_name": "JahaTracker",
+  "name": "Buses Publicos",
+  "short_name": "Buses Publicos",
   "description": "Mapa en vivo de los colectivos de Asunción",
   "start_url": "/",
   "display": "standalone",
