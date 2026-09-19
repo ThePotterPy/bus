@@ -55,6 +55,7 @@ class TomTomMatcher:
         self.api_key = str(api_key or '').strip()
         self.timeout = timeout
         self.offroad_margin = max(20, min(100, int(offroad_margin)))
+        self.last_quality = {}
 
     @staticmethod
     def _heading(a, b):
@@ -65,6 +66,7 @@ class TomTomMatcher:
         return round((math.degrees(math.atan2(y, x)) + 360) % 360, 1)
 
     def __call__(self, points):
+        self.last_quality = {'input_points': len(points)}
         if not self.api_key:
             raise ValueError('TOMTOM_API_KEY no configurada')
         if len(points) < 3:
@@ -109,6 +111,8 @@ class TomTomMatcher:
         projected = data.get('projectedPoints') or []
         matched = [item for item in projected
                    if (item.get('properties') or {}).get('snapResult') == 'Matched']
+        self.last_quality['matched_points'] = len(matched)
+        self.last_quality['matched_ratio'] = round(len(matched) / len(points), 4)
         if len(matched) < math.ceil(len(points) * .9):
             raise ValueError('TomTom no pudo ajustar al menos 90% de los puntos')
 
@@ -127,6 +131,8 @@ class TomTomMatcher:
         distances = data.get('distances') or {}
         total_distance = float(distances.get('total') or 0)
         offroad_distance = float(distances.get('offRoad') or 0)
+        self.last_quality['offroad_ratio'] = round(
+            offroad_distance / total_distance, 4) if total_distance > 0 else 0
         if total_distance > 0 and offroad_distance / total_distance > .05:
             raise ValueError('TomTom detecto mas de 5% del trayecto fuera de calle')
 
@@ -141,11 +147,18 @@ class TomTomMatcher:
             if len(path) >= 2 and all(all(math.isfinite(value) for value in point) for point in path):
                 parts.append(path)
                 confidences.append(confidence)
+        if confidences:
+            self.last_quality['minimum_confidence'] = round(min(confidences), 4)
         if not parts or not confidences or min(confidences) < .8:
             raise ValueError('TomTom devolvio una geometria de baja confianza')
 
         source_length = length(points)
         matched_length = sum(length(path) for path in parts)
+        self.last_quality.update(
+            source_length_m=round(source_length, 1),
+            matched_length_m=round(matched_length, 1),
+            route_elements=len(parts),
+        )
         if matched_length > max(250, source_length * 1.6) or matched_length < source_length * .45:
             raise ValueError('La geometria TomTom no conserva una longitud razonable')
         return parts
@@ -281,7 +294,8 @@ class ObservedRoutes:
                  tomtom_api_key='', shadow_mode=False, raw_retention_days=7,
                  max_pending_jobs=5000, max_job_attempts=8,
                  monthly_match_limit=2200, weekly_match_limit=400,
-                 match_weekday=6, match_hour=3, match_run_on_start=False):
+                 match_weekday=6, match_hour=3, match_run_on_start=False,
+                 min_confirmed_buses=1, min_confirmed_passes=1):
         self.path = str(path)
         self.osrm_url = osrm_url.rstrip('/')
         self.poll_seconds = max(15, poll_seconds)
@@ -298,6 +312,8 @@ class ObservedRoutes:
         self.match_weekday = max(0, min(6, int(match_weekday)))
         self.match_hour = max(0, min(23, int(match_hour)))
         self.match_run_on_start = bool(match_run_on_start)
+        self.min_confirmed_buses = max(1, int(min_confirmed_buses))
+        self.min_confirmed_passes = max(1, int(min_confirmed_passes))
         self.lock = threading.RLock()
         self.indexes = {}
         self.stop = threading.Event()
@@ -355,7 +371,14 @@ class ObservedRoutes:
                     period TEXT, provider TEXT, requests INTEGER NOT NULL DEFAULT 0,
                     updated REAL NOT NULL,
                     PRIMARY KEY(period, provider));
+                CREATE TABLE IF NOT EXISTS observed_match_audit (
+                    job TEXT PRIMARY KEY, provider TEXT NOT NULL, result TEXT NOT NULL,
+                    metrics TEXT NOT NULL DEFAULT '{}', created REAL NOT NULL);
+                CREATE INDEX IF NOT EXISTS observed_match_audit_created
+                    ON observed_match_audit(created);
             ''')
+            db.execute("UPDATE observed_jobs SET status='pending' WHERE status='processing' AND next_try<=?",
+                       (time.time(),))
             for row in db.execute('SELECT line, data FROM observed_official'):
                 self.indexes[row['line']] = OfficialIndex(json.loads(row['data']))
 
@@ -378,19 +401,82 @@ class ObservedRoutes:
         with self.lock, self.connect() as db:
             counts = {row['status']: row['total'] for row in db.execute(
                 'SELECT status, COUNT(*) AS total FROM observed_jobs GROUP BY status')}
+            audits = {row['result']: row['total'] for row in db.execute(
+                'SELECT result, COUNT(*) AS total FROM observed_match_audit WHERE created>=? GROUP BY result',
+                (now-30*86400,))}
             row = db.execute('SELECT requests FROM observed_api_usage WHERE period=? AND provider=?',
                              (self._month_key(now), self.match_provider)).fetchone()
         used = int(row['requests']) if row else 0
+        validated = audits.get('accepted', 0)
+        rejected = audits.get('rejected', 0)
+        pending = counts.get('pending', 0) + counts.get('processing', 0)
+        warnings = []
+        if not self.matching_enabled():
+            warnings.append('Map matching no está configurado')
+        if pending >= self.max_pending_jobs * .8:
+            warnings.append('La cola de recorridos supera el 80% de su capacidad')
+        if self.match_provider == 'tomtom' and self.monthly_match_limit and used >= self.monthly_match_limit * .8:
+            warnings.append('El consumo TomTom supera el 80% del límite mensual')
+        if counts.get('failed', 0):
+            warnings.append('Hay recorridos que agotaron sus reintentos')
         return {
             'matching_enabled': self.matching_enabled(),
             'matching_provider': self.match_provider,
             'shadow_mode': self.shadow_mode,
-            'pending_jobs': counts.get('pending', 0),
+            'pending_jobs': pending,
             'failed_jobs': counts.get('failed', 0),
             'validated_jobs': counts.get('done', 0),
+            'accepted_last_30_days': validated,
+            'rejected_last_30_days': rejected,
+            'acceptance_rate': round(validated / (validated+rejected), 4) if validated+rejected else None,
             'monthly_requests': used,
             'monthly_limit': self.monthly_match_limit if self.match_provider == 'tomtom' else None,
+            'queue_limit': self.max_pending_jobs,
+            'minimum_confirmed_buses': self.min_confirmed_buses,
+            'minimum_confirmed_passes': self.min_confirmed_passes,
+            'warnings': warnings,
         }
+
+    def review(self, status='all', line='', limit=50, now=None):
+        """Return recent matching evidence for the authenticated admin panel."""
+        now = time.time() if now is None else now
+        clauses = ['j.seen>=?']
+        params = [now-30*86400]
+        if status == 'accepted':
+            clauses.append("a.result='accepted'")
+        elif status == 'rejected':
+            clauses.append("(a.result='rejected' OR j.status='failed')")
+        elif status == 'pending':
+            clauses.append("j.status IN ('pending','processing')")
+        if line:
+            clauses.append('j.line=?')
+            params.append(line)
+        params.append(max(1, min(100, int(limit))))
+        query = f'''SELECT j.id,j.line,j.route,j.kind,j.seen,j.status,j.attempts,
+                    j.error,j.points,j.geometry,a.provider,a.result AS audit_result,a.metrics
+                    FROM observed_jobs j LEFT JOIN observed_match_audit a ON a.job=j.id
+                    WHERE {' AND '.join(clauses)} ORDER BY j.seen DESC LIMIT ?'''
+        items = []
+        with self.lock, self.connect() as db:
+            rows = db.execute(query, params).fetchall()
+        for row in rows:
+            try:
+                raw_points = json.loads(row['points'] or '[]')
+                geometry = json.loads(row['geometry'] or '[]')
+                metrics = json.loads(row['metrics'] or '{}')
+            except (TypeError, json.JSONDecodeError):
+                raw_points, geometry, metrics = [], [], {}
+            items.append({
+                'id': row['id'], 'line': row['line'], 'route': row['route'],
+                'kind': row['kind'], 'seen': row['seen'], 'status': row['status'],
+                'attempts': row['attempts'], 'error': row['error'],
+                'provider': row['provider'] or self.match_provider,
+                'result': row['audit_result'], 'metrics': metrics,
+                'points': [[point[0], point[1]] for point in raw_points if len(point) >= 2],
+                'geometry': geometry,
+            })
+        return {'success': True, 'items': items, 'health': self.health(now),
+                'raw_retention_days': self.raw_retention // 86400}
 
     def _reserve_match_request(self, now):
         if self.match_provider != 'tomtom':
@@ -416,6 +502,12 @@ class ObservedRoutes:
             db.execute('''DELETE FROM observed_jobs WHERE id IN (
                 SELECT id FROM observed_jobs WHERE status='pending'
                 ORDER BY seen ASC LIMIT ?)''', (excess,))
+
+    @staticmethod
+    def _record_audit(db, job_id, provider, result, metrics, created):
+        db.execute('''INSERT OR REPLACE INTO observed_match_audit
+                      (job,provider,result,metrics,created) VALUES(?,?,?,?,?)''',
+                   (job_id, provider, result, json.dumps(metrics or {}), created))
 
     def save_official(self, line, data):
         index = OfficialIndex(data)
@@ -535,7 +627,13 @@ class ObservedRoutes:
                     COUNT(DISTINCT p.unit) AS historical_buses
                     FROM observed_edges e JOIN observed_passages p ON p.edge=e.id
                     WHERE e.line=? AND (? OR e.last_seen>=?) GROUP BY e.id
-                    ORDER BY e.last_seen DESC LIMIT 12000''', (now-WINDOW, now-WINDOW, line, int(history), now-WINDOW)).fetchall()
+                    HAVING ? OR
+                      COUNT(DISTINCT CASE WHEN p.seen>=? THEN p.unit END)>=? OR
+                      COUNT(CASE WHEN p.seen>=? THEN 1 END)>=?
+                    ORDER BY e.last_seen DESC LIMIT 12000''',
+                    (now-WINDOW, now-WINDOW, line, int(history), now-WINDOW,
+                     int(history), now-WINDOW, self.min_confirmed_buses,
+                     now-WINDOW, self.min_confirmed_passes)).fetchall()
                 alternatives = [dict(id=r['id'], points=json.loads(r['points']), route=r['route'],
                     kind=r['kind'], buses=r['buses'], passes=r['passes'], historical_buses=r['historical_buses'],
                     last_seen=r['last_seen'], archived=r['last_seen']<now-WINDOW) for r in edges]
@@ -551,6 +649,8 @@ class ObservedRoutes:
             value = dict(success=True, line=line, alternatives=alternatives, pending=pending, tails=tails,
                          window_days=14, matching_enabled=self.matching_enabled(),
                          matching_provider=self.match_provider, shadow_mode=self.shadow_mode,
+                         minimum_confirmed_buses=self.min_confirmed_buses,
+                         minimum_confirmed_passes=self.min_confirmed_passes,
                          truncated=len(edges)>=12000)
             self.cache[cache_key] = (now, value)
             return value
@@ -587,15 +687,20 @@ class ObservedRoutes:
         with self.lock, self.connect() as db:
             job = db.execute("SELECT * FROM observed_jobs WHERE status='pending' AND next_try<=? ORDER BY seen LIMIT 1", (now,)).fetchone()
             if not job: return False
+            db.execute("UPDATE observed_jobs SET status='processing',next_try=? WHERE id=?",
+                       (now+300, job['id']))
             points = json.loads(job['points'])
             provider_identity = ('custom' if matcher else
                                  TomTomMatcher.ENDPOINT if self.match_provider == 'tomtom' else self.osrm_url)
             signature = hashlib.sha256((provider_identity+json.dumps(
                 [[p[0],p[1],p[2]-points[0][2]] for p in points])).encode()).hexdigest()
             cached = db.execute('SELECT geometry FROM observed_match_cache WHERE key=? AND created>=?', (signature, now-30*86400)).fetchone()
+        provider = 'custom' if matcher is not None else self.match_provider
+        quality = {'input_points': len(points)}
         try:
             if cached:
                 parts = json.loads(cached[0])
+                quality['cache_hit'] = True
             else:
                 if matcher is not None:
                     selected_matcher = matcher
@@ -606,8 +711,13 @@ class ObservedRoutes:
                 else:
                     selected_matcher = self.match_geometry
                 parts = selected_matcher(points)
+                if selected_matcher is self.tomtom_matcher:
+                    quality = dict(self.tomtom_matcher.last_quality)
+                else:
+                    quality.update(route_elements=len(parts), cache_hit=False)
             with self.lock, self.connect() as db:
                 db.execute('INSERT OR REPLACE INTO observed_match_cache VALUES(?,?,?)', (signature, json.dumps(parts), now))
+                self._record_audit(db, job['id'], provider, 'accepted', quality, now)
                 if not self.shadow_mode:
                     index = self.indexes.get(job['line'])
                     for part in parts:
@@ -622,8 +732,9 @@ class ObservedRoutes:
                             db.execute('''INSERT INTO observed_passages VALUES(?,?,?,?)
                                 ON CONFLICT(edge,unit,passage) DO UPDATE SET seen=MAX(seen, excluded.seen)''',
                                 (key,job['unit'],job['passage'],job['seen']))
-                db.execute("UPDATE observed_jobs SET status='done',geometry=?,points='[]',error='' WHERE id=?",
-                           (json.dumps(parts),job['id']))
+                retained_points = job['points'] if self.shadow_mode else '[]'
+                db.execute("UPDATE observed_jobs SET status='done',geometry=?,points=?,error='' WHERE id=?",
+                           (json.dumps(parts), retained_points, job['id']))
                 self.cache.clear()
             return True
         except MatchBudgetExhausted as exc:
@@ -631,7 +742,7 @@ class ObservedRoutes:
             next_month = (current.replace(day=28) + timedelta(days=4)).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0).timestamp()
             with self.lock, self.connect() as db:
-                db.execute('UPDATE observed_jobs SET next_try=?, error=? WHERE id=?',
+                db.execute("UPDATE observed_jobs SET status='pending',next_try=?,error=? WHERE id=?",
                            (next_month, str(exc), job['id']))
             self.last_error = str(exc)
             return False
@@ -639,6 +750,9 @@ class ObservedRoutes:
             with self.lock, self.connect() as db:
                 attempts = job['attempts']+1
                 status = 'failed' if attempts >= self.max_job_attempts else 'pending'
+                if self.tomtom_matcher is not None and provider == 'tomtom':
+                    quality = dict(self.tomtom_matcher.last_quality)
+                self._record_audit(db, job['id'], provider, 'rejected', quality, now)
                 db.execute('UPDATE observed_jobs SET attempts=?, status=?, next_try=?, error=? WHERE id=?',
                            (attempts, status, now+min(86400, 60*2**min(attempts,10)), str(exc)[:200], job['id']))
             self.last_error = str(exc)[:200]
@@ -652,8 +766,13 @@ class ObservedRoutes:
             db.execute('DELETE FROM observed_samples WHERE stamp<?', (now-self.raw_retention,))
             db.execute("DELETE FROM observed_jobs WHERE status IN ('pending','failed') AND seen<?",
                        (now-self.raw_retention,))
+            db.execute("UPDATE observed_jobs SET status='pending' WHERE status='processing' AND next_try<=?",
+                       (now,))
+            db.execute("UPDATE observed_jobs SET points='[]' WHERE status='done' AND seen<? AND points!='[]'",
+                       (now-self.raw_retention,))
             db.execute("DELETE FROM observed_jobs WHERE status='done' AND seen<?", (now-30*86400,))
             db.execute('DELETE FROM observed_match_cache WHERE created<?', (now-30*86400,))
+            db.execute('DELETE FROM observed_match_audit WHERE created<?', (now-30*86400,))
             db.execute('DELETE FROM observed_state WHERE updated<?', (now-self.raw_retention,))
             db.execute('DELETE FROM observed_api_usage WHERE updated<?', (now-400*86400,))
             self._trim_pending(db)

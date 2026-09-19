@@ -263,6 +263,37 @@ class FeedbackHttpTests(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertEqual(data["items"], [])
 
+    def test_observed_review_is_private_and_validates_filters(self):
+        self.assertEqual(self.request("/api/admin/observed-review")[0], 401)
+        code, _, headers = self.request(
+            "/api/admin/feedback/login", {"password": "test-admin-password-12345"}
+        )
+        self.assertEqual(code, 200)
+        cookie = headers["Set-Cookie"].split(";", 1)[0]
+        csrf = self.request("/api/admin/feedback/session", headers={"Cookie": cookie})[1]["csrf"]
+        review = {"success": True, "items": [], "health": {}, "raw_retention_days": 7}
+        with patch.object(server.observed_routes, "review", return_value=review) as mocked:
+            code, data, _ = self.request(
+                "/api/admin/observed-review?status=accepted&line=30&limit=25",
+                headers={"Cookie": cookie},
+            )
+            self.assertEqual(code, 200)
+            self.assertEqual(data, review)
+            mocked.assert_called_once_with("accepted", "30", 25)
+        self.assertEqual(self.request(
+            "/api/admin/observed-review?status=invalid", headers={"Cookie": cookie}
+        )[0], 400)
+        auth = {"Cookie": cookie, "X-Feedback-CSRF": csrf}
+        with patch.object(server.observed_routes, "match_provider", "tomtom"), \
+             patch.object(server.observed_routes, "shadow_mode", True), \
+             patch.object(server.observed_routes, "matching_enabled", return_value=True), \
+             patch.object(server.observed_routes, "run_match_batch", return_value={"attempted": 1, "completed": 1}) as run, \
+             patch.object(server.observed_routes, "health", return_value={}):
+            code, data, _ = self.request("/api/admin/observed-match/run-one", {}, auth)
+            self.assertEqual(code, 200)
+            self.assertEqual(data["completed"], 1)
+            run.assert_called_once_with(limit=1)
+
 
 if __name__ == "__main__":
     unittest.main()

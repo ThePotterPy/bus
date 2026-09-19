@@ -104,6 +104,8 @@ observed_routes = ObservedRoutes(
     match_weekday=int(os.environ.get("TOMTOM_WEEKDAY", "6")),
     match_hour=int(os.environ.get("TOMTOM_HOUR", "3")),
     match_run_on_start=os.environ.get("MATCH_RUN_ON_START", "0") == "1",
+    min_confirmed_buses=int(os.environ.get("OBSERVED_MIN_CONFIRMED_BUSES", "2")),
+    min_confirmed_passes=int(os.environ.get("OBSERVED_MIN_CONFIRMED_PASSES", "2")),
 )
 # Un conjunto fijo de candados evita que identificadores arbitrarios enviados
 # por Internet hagan crecer un diccionario para siempre.
@@ -1550,6 +1552,28 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "items": items, "nextBefore": next_before})
             return
 
+        if parsed.path == "/api/admin/observed-review":
+            if not self._require_feedback_admin():
+                return
+            status = qs.get("status", ["all"])[0]
+            if status not in {"all", "accepted", "rejected", "pending"}:
+                self._send_json_obj(400, {"success": False, "error": "filtro inválido"})
+                return
+            line = qs.get("line", [""])[0].strip()
+            if line and not valid_line_id(line):
+                self._send_json_obj(400, {"success": False, "error": "línea inválida"})
+                return
+            try:
+                limit = int(qs.get("limit", ["50"])[0])
+            except (ValueError, IndexError):
+                self._send_json_obj(400, {"success": False, "error": "límite inválido"})
+                return
+            if not 1 <= limit <= 100:
+                self._send_json_obj(400, {"success": False, "error": "límite inválido"})
+                return
+            self._send_json_obj(200, observed_routes.review(status, line, limit))
+            return
+
         if parsed.path == "/api/lines":
             all_lines = get_all_lines_combined()
             self._send_json_obj(200, {"success": True, "data": all_lines})
@@ -1793,6 +1817,23 @@ class Handler(BaseHTTPRequestHandler):
                 return
             news_id = feedback_store.create_news(record)
             self._send_json_obj(201, {"success": True, "id": news_id})
+            return
+
+        if parsed.path == "/api/admin/observed-match/run-one":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            if observed_routes.match_provider != "tomtom" or not observed_routes.matching_enabled():
+                self._send_json_obj(409, {"success": False, "error": "TomTom no está configurado"})
+                return
+            if not observed_routes.shadow_mode:
+                self._send_json_obj(409, {"success": False, "error": "la prueba manual exige modo sombra"})
+                return
+            result = observed_routes.run_match_batch(limit=1)
+            self._send_json_obj(200, {
+                "success": True,
+                **result,
+                "health": observed_routes.health(),
+            })
             return
 
         if parsed.path == "/api/admin/news/delete":

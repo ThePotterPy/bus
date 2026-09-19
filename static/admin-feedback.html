@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Comentarios · Administración</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
   <style>
     :root { color-scheme: dark; font-family: system-ui, sans-serif; background:#10131b; color:#f5f6fa; }
     * { box-sizing:border-box; }
     body { margin:0; padding:20px; }
-    main { max-width:850px; margin:0 auto; }
+    main { max-width:1100px; margin:0 auto; }
     h1 { font-size:clamp(22px,4vw,32px); margin:0 0 8px; }
     p, small { color:#a6afc1; line-height:1.5; }
     .card { background:#1c2230; border:1px solid #353c4b; border-radius:14px; padding:18px; margin:14px 0; }
@@ -41,7 +43,24 @@
     .tag-aviso { background:rgba(255,180,75,0.18); color:#ffb44b; border:1px solid rgba(255,180,75,0.4); }
     .tag-recorrido { background:rgba(192,132,252,0.18); color:#c084fc; border:1px solid rgba(192,132,252,0.4); }
     .news-form-grid { display:grid; grid-template-columns: 2fr 1fr; gap:12px; }
+    .metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:14px 0; }
+    .metric { background:#121925; border:1px solid #353c4b; border-radius:10px; padding:12px; }
+    .metric strong { display:block; font-size:21px; color:#fff; margin-top:3px; }
+    .route-map { height:420px; border:1px solid #4c586d; border-radius:12px; overflow:hidden; background:#171d28; }
+    .route-review-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr); gap:14px; }
+    .route-list { max-height:420px; overflow:auto; }
+    .route-card { padding:12px; margin:0 0 9px; cursor:pointer; }
+    .route-card.selected { border-color:#00d3ec; box-shadow:0 0 0 1px #00d3ec inset; }
+    .route-status { display:inline-block; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:700; }
+    .route-accepted { background:#173b2a; color:#7bf0ae; }
+    .route-rejected { background:#482333; color:#ff9fb2; }
+    .route-pending { background:#44371c; color:#ffd17c; }
+    .route-legend { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0; font-size:13px; color:#b9c5d7; }
+    .route-legend span::before { content:''; display:inline-block; width:22px; border-top:4px solid; margin-right:6px; vertical-align:middle; }
+    .route-legend .gps::before { border-color:#8f2441; border-top-style:dashed; }
+    .route-legend .matched::before { border-color:#21d19f; }
     @media (max-width:600px) { .news-form-grid { grid-template-columns: 1fr; } }
+    @media (max-width:800px) { .route-review-grid { grid-template-columns:1fr; } .route-map { height:340px; } }
   </style>
 </head>
 <body>
@@ -60,6 +79,7 @@
     <nav class="nav-tabs">
       <button id="tabComments" class="tab-btn active" type="button">✉ Comentarios</button>
       <button id="tabNews" class="tab-btn" type="button">📢 Publicar Novedades</button>
+      <button id="tabRoutes" class="tab-btn" type="button">🚌 Auditoría de rutas</button>
       <button id="logout" type="button" style="margin-left:auto;">Salir</button>
     </nav>
 
@@ -110,8 +130,38 @@
       <h2 style="font-size:18px; margin:24px 0 10px;">Novedades publicadas actualmente</h2>
       <div id="newsList"></div>
     </div>
+
+    <!-- Pestaña privada de revisión de map matching -->
+    <div id="sectionRoutes" hidden>
+      <div id="routeMetrics" class="metric-grid"></div>
+      <div class="toolbar">
+        <label for="routeFilter" style="margin:0">Resultado</label>
+        <select id="routeFilter">
+          <option value="all">Todos</option>
+          <option value="accepted">Aceptados</option>
+          <option value="rejected">Fallidos</option>
+          <option value="pending">Pendientes</option>
+        </select>
+        <label for="routeLine" style="margin:0">Línea</label>
+        <input id="routeLine" maxlength="80" placeholder="Todas" style="width:130px">
+        <button id="refreshRoutes" type="button">Actualizar</button>
+        <button id="runOneRoute" type="button">Validar 1 ahora</button>
+      </div>
+      <p id="routeStatus" role="status"></p>
+      <div class="route-legend">
+        <span class="gps">GPS original (máximo 7 días)</span>
+        <span class="matched">Geometría ajustada</span>
+      </div>
+      <div class="route-review-grid">
+        <div id="routeMap" class="route-map" aria-label="Comparación del recorrido GPS y su geometría ajustada"></div>
+        <div id="routeList" class="route-list"></div>
+      </div>
+    </div>
   </section>
 </main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
   const loginPanel = document.getElementById('loginPanel');
   const adminPanel = document.getElementById('adminPanel');
@@ -227,8 +277,10 @@
 
   const tabComments = document.getElementById('tabComments');
   const tabNews = document.getElementById('tabNews');
+  const tabRoutes = document.getElementById('tabRoutes');
   const sectionComments = document.getElementById('sectionComments');
   const sectionNews = document.getElementById('sectionNews');
+  const sectionRoutes = document.getElementById('sectionRoutes');
   const newsForm = document.getElementById('newsForm');
   const newsTitle = document.getElementById('newsTitle');
   const newsTag = document.getElementById('newsTag');
@@ -242,15 +294,130 @@
     activeTab = tab;
     tabComments.classList.toggle('active', tab === 'comments');
     tabNews.classList.toggle('active', tab === 'news');
+    tabRoutes.classList.toggle('active', tab === 'routes');
     sectionComments.hidden = tab !== 'comments';
     sectionNews.hidden = tab !== 'news';
+    sectionRoutes.hidden = tab !== 'routes';
     if (tab === 'news') {
       loadNews();
+    } else if (tab === 'routes') {
+      loadRouteReview();
+      setTimeout(() => routeMap?.invalidateSize(), 0);
     }
   }
 
   tabComments.addEventListener('click', () => switchTab('comments'));
   tabNews.addEventListener('click', () => switchTab('news'));
+  tabRoutes.addEventListener('click', () => switchTab('routes'));
+
+  const routeMetrics = document.getElementById('routeMetrics');
+  const routeStatus = document.getElementById('routeStatus');
+  const routeList = document.getElementById('routeList');
+  const routeFilter = document.getElementById('routeFilter');
+  const routeLine = document.getElementById('routeLine');
+  let routeMap = null;
+  let routeLayers = null;
+
+  function ensureRouteMap() {
+    if (routeMap) return;
+    routeMap = L.map('routeMap', { zoomControl: true }).setView([-25.3, -57.58], 11);
+    L.maplibreGL({
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      attribution: '<a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · © OpenStreetMap',
+    }).addTo(routeMap);
+    routeLayers = L.layerGroup().addTo(routeMap);
+  }
+
+  function metric(label, value) {
+    const box = document.createElement('div');
+    box.className = 'metric';
+    box.append(text('span', label, 'meta'), text('strong', value == null ? '—' : String(value)));
+    return box;
+  }
+
+  function renderRouteMetrics(health) {
+    const rate = health.acceptance_rate == null ? '—' : `${Math.round(health.acceptance_rate * 100)}%`;
+    routeMetrics.replaceChildren(
+      metric('Aceptados · 30 días', health.accepted_last_30_days),
+      metric('Rechazados · 30 días', health.rejected_last_30_days),
+      metric('Tasa de aceptación', rate),
+      metric('Pendientes', health.pending_jobs),
+      metric('TomTom este mes', `${health.monthly_requests}/${health.monthly_limit ?? '—'}`),
+    );
+  }
+
+  function routeResult(item) {
+    if (item.status === 'done') return 'accepted';
+    if (item.status === 'failed' || item.result === 'rejected') return 'rejected';
+    return 'pending';
+  }
+
+  function showRoute(item, card) {
+    ensureRouteMap();
+    routeLayers.clearLayers();
+    routeList.querySelectorAll('.route-card').forEach(node => node.classList.remove('selected'));
+    card?.classList.add('selected');
+    const bounds = [];
+    if (item.points.length >= 2) {
+      L.polyline(item.points, { color:'#8f2441', weight:4, opacity:.9, dashArray:'8 7' })
+        .bindTooltip('GPS original').addTo(routeLayers);
+      item.points.forEach(point => bounds.push(point));
+    }
+    (item.geometry || []).forEach(part => {
+      if (!Array.isArray(part) || part.length < 2) return;
+      L.polyline(part, { color:'#21d19f', weight:5, opacity:.9 })
+        .bindTooltip('Geometría ajustada').addTo(routeLayers);
+      part.forEach(point => bounds.push(point));
+    });
+    if (bounds.length) routeMap.fitBounds(bounds, { padding:[24,24], maxZoom:17 });
+  }
+
+  function renderRouteCard(item) {
+    const card = document.createElement('article');
+    card.className = 'card route-card';
+    const result = routeResult(item);
+    const labels = { accepted:'Aceptado', rejected:'Fallido', pending:'Pendiente' };
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.append(text('strong', `Línea ${item.line} · ${item.route || 'Sin ramal'}`),
+      text('span', labels[result], `route-status route-${result}`));
+    card.append(head, text('div', new Date(item.seen * 1000).toLocaleString('es-PY'), 'meta'));
+    const details = [];
+    if (item.metrics.minimum_confidence != null) details.push(`confianza mínima ${item.metrics.minimum_confidence}`);
+    if (item.metrics.matched_ratio != null) details.push(`${Math.round(item.metrics.matched_ratio*100)}% ajustado`);
+    if (item.metrics.offroad_ratio != null) details.push(`${Math.round(item.metrics.offroad_ratio*100)}% fuera de calle`);
+    if (item.attempts) details.push(`${item.attempts} intento(s) fallido(s)`);
+    if (details.length) card.append(text('div', details.join(' · '), 'meta'));
+    if (item.error) card.append(text('p', item.error, 'error'));
+    card.addEventListener('click', () => showRoute(item, card));
+    return card;
+  }
+
+  async function loadRouteReview() {
+    ensureRouteMap();
+    routeStatus.textContent = 'Cargando auditoría…';
+    routeStatus.className = '';
+    const line = routeLine.value.trim();
+    const query = new URLSearchParams({ status:routeFilter.value, limit:'100' });
+    if (line) query.set('line', line);
+    try {
+      const data = await api(`/api/admin/observed-review?${query}`);
+      renderRouteMetrics(data.health);
+      routeList.replaceChildren();
+      data.items.forEach(item => routeList.append(renderRouteCard(item)));
+      routeStatus.textContent = data.items.length
+        ? `${data.items.length} recorrido(s). Elegí uno para comparar GPS y geometría.`
+        : 'Todavía no hay recorridos para este filtro.';
+      if (data.health.warnings?.length) {
+        routeStatus.textContent += ` Aviso: ${data.health.warnings.join(' · ')}`;
+      }
+      if (data.items.length) showRoute(data.items[0], routeList.firstElementChild);
+      else routeLayers.clearLayers();
+    } catch (error) {
+      routeStatus.textContent = error.message;
+      routeStatus.className = 'error';
+    }
+  }
 
   async function loadNews() {
     newsList.replaceChildren();
@@ -350,7 +517,35 @@
   document.getElementById('filter').addEventListener('change', () => loadComments(false));
   document.getElementById('refresh').addEventListener('click', () => {
     if (activeTab === 'comments') loadComments(false);
-    else loadNews();
+    else if (activeTab === 'news') loadNews();
+    else loadRouteReview();
+  });
+  document.getElementById('refreshRoutes').addEventListener('click', loadRouteReview);
+  document.getElementById('runOneRoute').addEventListener('click', async event => {
+    if (!confirm('Esto procesará como máximo un recorrido y puede consumir una solicitud TomTom. ¿Continuar?')) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    routeStatus.textContent = 'Validando un recorrido en modo sombra…';
+    try {
+      const result = await api('/api/admin/observed-match/run-one', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Feedback-CSRF':csrf },
+        body:'{}',
+      });
+      routeStatus.textContent = result.attempted
+        ? `Prueba terminada: ${result.completed} aceptado(s) de ${result.attempted}.`
+        : 'No había recorridos pendientes o no queda presupuesto.';
+      await loadRouteReview();
+    } catch (error) {
+      routeStatus.textContent = error.message;
+      routeStatus.className = 'error';
+    } finally {
+      button.disabled = false;
+    }
+  });
+  routeFilter.addEventListener('change', loadRouteReview);
+  routeLine.addEventListener('keydown', event => {
+    if (event.key === 'Enter') loadRouteReview();
   });
   more.addEventListener('click', () => loadComments(true));
   document.getElementById('logout').addEventListener('click', async () => {

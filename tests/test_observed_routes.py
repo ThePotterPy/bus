@@ -112,6 +112,14 @@ class ObservedTests(unittest.TestCase):
         self.assertTrue(self.snap()['pending'])
         self.assertTrue(self.store.process_one(self.match, NOW+1000))
 
+    def test_job_is_claimed_before_external_matching(self):
+        self.travel()
+        def inspect_claim(points):
+            with self.store.connect() as db:
+                self.assertEqual(db.execute('SELECT status FROM observed_jobs').fetchone()['status'], 'processing')
+            return self.match(points)
+        self.assertTrue(self.store.process_one(inspect_claim, NOW+300))
+
     def test_archived_history_survives_cleanup(self):
         self.travel(); self.process()
         later = NOW+WINDOW+1000
@@ -231,9 +239,24 @@ class ObservedTests(unittest.TestCase):
         with self.store.connect() as db:
             job = db.execute('SELECT status,points,geometry FROM observed_jobs').fetchone()
             self.assertEqual(job['status'], 'done')
-            self.assertEqual(json.loads(job['points']), [])
+            self.assertTrue(json.loads(job['points']))
             self.assertTrue(json.loads(job['geometry']))
             self.assertEqual(db.execute('SELECT COUNT(*) FROM observed_edges').fetchone()[0], 0)
+        review = self.store.review('accepted', now=NOW+301)
+        self.assertEqual(len(review['items']), 1)
+        self.assertTrue(review['items'][0]['points'])
+        self.assertEqual(review['health']['accepted_last_30_days'], 1)
+        self.store.maintain(NOW+8*86400)
+        with self.store.connect() as db:
+            self.assertEqual(json.loads(db.execute('SELECT points FROM observed_jobs').fetchone()[0]), [])
+
+    def test_public_snapshot_requires_configured_evidence(self):
+        self.store.min_confirmed_buses = 2
+        self.store.min_confirmed_passes = 2
+        self.travel('only'); self.process()
+        self.assertFalse(self.snap()['alternatives'])
+        self.travel('second', start=NOW+500); self.process(NOW+1000)
+        self.assertTrue(self.snap(now=NOW+1001)['alternatives'])
 
 
 if __name__ == '__main__':

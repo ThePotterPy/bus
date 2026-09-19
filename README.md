@@ -160,6 +160,16 @@ dentro de archivos versionados.
   (predeterminado: 7). Las líneas confirmadas y sus conteos agregados permanecen.
 - `MATCH_MAX_PENDING_JOBS` y `MATCH_MAX_ATTEMPTS`: límites de cola y reintentos
   (predeterminados: 5000 y 8).
+- `OBSERVED_MIN_CONFIRMED_BUSES` y `OBSERVED_MIN_CONFIRMED_PASSES`: evidencia
+  mínima para mostrar un tramo confirmado (predeterminado: 2 buses o 2 pasadas).
+
+El panel privado `/admin/feedback` incluye una pestaña **Auditoría de rutas**.
+Durante el modo sombra permite comparar los puntos GPS de los últimos siete
+días con la geometría ajustada, revisar confianza, rechazos, cola y presupuesto.
+Los puntos dejan de estar disponibles al vencer la retención; las métricas y
+geometrías de auditoría se conservan durante 30 días. El botón **Validar 1
+ahora** ejecuta una prueba controlada de un solo recorrido, exige sesión y token
+CSRF, solo funciona en modo sombra y respeta el límite mensual.
 - `FEEDBACK_ADMIN_PASSWORD`: contraseña exclusiva del panel de comentarios,
   con al menos 16 caracteres. Sin ella el panel no permite iniciar sesión.
 
