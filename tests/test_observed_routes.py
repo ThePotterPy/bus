@@ -120,6 +120,27 @@ class ObservedTests(unittest.TestCase):
             return self.match(points)
         self.assertTrue(self.store.process_one(inspect_claim, NOW+300))
 
+    def test_chunks_from_one_passage_share_one_match_request(self):
+        for i in range(50):
+            self.store.observe('30', [{'unit':'long', 'lat':-25.002,
+                'lon':-57+i*.0003, 'route':'Azul (I)'}], NOW+i*10)
+        self.store.flush_idle(NOW+700)
+        with self.store.connect() as db:
+            before = db.execute('SELECT COUNT(*) FROM observed_jobs').fetchone()[0]
+        self.assertGreater(before, 1)
+        calls = []
+        def match_once(points):
+            calls.append(points)
+            return self.match(points)
+        self.assertTrue(self.store.process_one(match_once, NOW+800))
+        self.assertEqual(len(calls), 1)
+        self.assertGreater(len(calls[0]), 24)
+        with self.store.connect() as db:
+            statuses = {row['status']: row['total'] for row in db.execute(
+                'SELECT status,COUNT(*) AS total FROM observed_jobs GROUP BY status')}
+        self.assertEqual(statuses.get('done'), 1)
+        self.assertEqual(statuses.get('merged'), before-1)
+
     def test_archived_history_survives_cleanup(self):
         self.travel(); self.process()
         later = NOW+WINDOW+1000

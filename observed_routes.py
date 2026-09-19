@@ -401,6 +401,9 @@ class ObservedRoutes:
         with self.lock, self.connect() as db:
             counts = {row['status']: row['total'] for row in db.execute(
                 'SELECT status, COUNT(*) AS total FROM observed_jobs GROUP BY status')}
+            pending_groups = db.execute('''SELECT COUNT(*) FROM (
+                SELECT 1 FROM observed_jobs WHERE status IN ('pending','processing')
+                GROUP BY line,unit,passage)''').fetchone()[0]
             audits = {row['result']: row['total'] for row in db.execute(
                 'SELECT result, COUNT(*) AS total FROM observed_match_audit WHERE created>=? GROUP BY result',
                 (now-30*86400,))}
@@ -424,6 +427,7 @@ class ObservedRoutes:
             'matching_provider': self.match_provider,
             'shadow_mode': self.shadow_mode,
             'pending_jobs': pending,
+            'pending_passages': pending_groups,
             'failed_jobs': counts.get('failed', 0),
             'validated_jobs': counts.get('done', 0),
             'accepted_last_30_days': validated,
@@ -440,7 +444,7 @@ class ObservedRoutes:
     def review(self, status='all', line='', limit=50, now=None):
         """Return recent matching evidence for the authenticated admin panel."""
         now = time.time() if now is None else now
-        clauses = ['j.seen>=?']
+        clauses = ['j.seen>=?', "j.status!='merged'"]
         params = [now-30*86400]
         if status == 'accepted':
             clauses.append("a.result='accepted'")
@@ -687,9 +691,27 @@ class ObservedRoutes:
         with self.lock, self.connect() as db:
             job = db.execute("SELECT * FROM observed_jobs WHERE status='pending' AND next_try<=? ORDER BY seen LIMIT 1", (now,)).fetchone()
             if not job: return False
-            db.execute("UPDATE observed_jobs SET status='processing',next_try=? WHERE id=?",
-                       (now+300, job['id']))
-            points = json.loads(job['points'])
+            jobs = [job]
+            points_by_stamp = {point[2]: point for point in json.loads(job['points'])}
+            # Consecutive chunks from the same bus passage overlap by three
+            # points. Matching them together spends one request and produces a
+            # more coherent geometry without combining different trips.
+            for candidate in db.execute('''SELECT * FROM observed_jobs
+                    WHERE status='pending' AND next_try<=? AND id!=?
+                      AND line=? AND unit=? AND passage=? AND route=? AND kind=?
+                    ORDER BY seen LIMIT 12''',
+                    (now, job['id'], job['line'], job['unit'], job['passage'],
+                     job['route'], job['kind'])).fetchall():
+                candidate_points = json.loads(candidate['points'])
+                new_stamps = {point[2] for point in candidate_points} - points_by_stamp.keys()
+                if len(points_by_stamp) + len(new_stamps) > 180:
+                    break
+                jobs.append(candidate)
+                for point in candidate_points:
+                    points_by_stamp[point[2]] = point
+            points = [points_by_stamp[stamp] for stamp in sorted(points_by_stamp)]
+            db.executemany("UPDATE observed_jobs SET status='processing',next_try=? WHERE id=?",
+                           [(now+300, row['id']) for row in jobs])
             provider_identity = ('custom' if matcher else
                                  TomTomMatcher.ENDPOINT if self.match_provider == 'tomtom' else self.osrm_url)
             signature = hashlib.sha256((provider_identity+json.dumps(
@@ -734,7 +756,11 @@ class ObservedRoutes:
                                 (key,job['unit'],job['passage'],job['seen']))
                 retained_points = job['points'] if self.shadow_mode else '[]'
                 db.execute("UPDATE observed_jobs SET status='done',geometry=?,points=?,error='' WHERE id=?",
-                           (json.dumps(parts), retained_points, job['id']))
+                           (json.dumps(parts), json.dumps(points) if self.shadow_mode else retained_points, job['id']))
+                for merged in jobs[1:]:
+                    db.execute("UPDATE observed_jobs SET status='merged',geometry='[]',points='[]',error=? WHERE id=?",
+                               (f"merged:{job['id']}", merged['id']))
+                    db.execute('DELETE FROM observed_match_audit WHERE job=?', (merged['id'],))
                 self.cache.clear()
             return True
         except MatchBudgetExhausted as exc:
@@ -742,19 +768,21 @@ class ObservedRoutes:
             next_month = (current.replace(day=28) + timedelta(days=4)).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0).timestamp()
             with self.lock, self.connect() as db:
-                db.execute("UPDATE observed_jobs SET status='pending',next_try=?,error=? WHERE id=?",
-                           (next_month, str(exc), job['id']))
+                db.executemany("UPDATE observed_jobs SET status='pending',next_try=?,error=? WHERE id=?",
+                               [(next_month, str(exc), row['id']) for row in jobs])
             self.last_error = str(exc)
             return False
         except Exception as exc:
             with self.lock, self.connect() as db:
-                attempts = job['attempts']+1
-                status = 'failed' if attempts >= self.max_job_attempts else 'pending'
                 if self.tomtom_matcher is not None and provider == 'tomtom':
                     quality = dict(self.tomtom_matcher.last_quality)
                 self._record_audit(db, job['id'], provider, 'rejected', quality, now)
-                db.execute('UPDATE observed_jobs SET attempts=?, status=?, next_try=?, error=? WHERE id=?',
-                           (attempts, status, now+min(86400, 60*2**min(attempts,10)), str(exc)[:200], job['id']))
+                for failed in jobs:
+                    attempts = failed['attempts']+1
+                    status = 'failed' if attempts >= self.max_job_attempts else 'pending'
+                    db.execute('UPDATE observed_jobs SET attempts=?, status=?, next_try=?, error=? WHERE id=?',
+                               (attempts, status, now+min(86400, 60*2**min(attempts,10)),
+                                str(exc)[:200], failed['id']))
             self.last_error = str(exc)[:200]
             return False
 
@@ -770,7 +798,7 @@ class ObservedRoutes:
                        (now,))
             db.execute("UPDATE observed_jobs SET points='[]' WHERE status='done' AND seen<? AND points!='[]'",
                        (now-self.raw_retention,))
-            db.execute("DELETE FROM observed_jobs WHERE status='done' AND seen<?", (now-30*86400,))
+            db.execute("DELETE FROM observed_jobs WHERE status IN ('done','merged') AND seen<?", (now-30*86400,))
             db.execute('DELETE FROM observed_match_cache WHERE created<?', (now-30*86400,))
             db.execute('DELETE FROM observed_match_audit WHERE created<?', (now-30*86400,))
             db.execute('DELETE FROM observed_state WHERE updated<?', (now-self.raw_retention,))

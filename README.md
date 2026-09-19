@@ -151,7 +151,9 @@ dentro de archivos versionados.
   después de revisar los resultados de la fase inicial.
 - `TOMTOM_MONTHLY_LIMIT` y `TOMTOM_WEEKLY_LIMIT`: topes duros de solicitudes
   (predeterminados: 2200 al mes y 400 por ejecución semanal). Las respuestas
-  recuperadas de caché no consumen presupuesto.
+  recuperadas de caché no consumen presupuesto. Los fragmentos consecutivos
+  del mismo bus y viaje se agrupan en una sola solicitud para reducir consumo
+  y obtener una geometría más coherente.
 - `TOMTOM_WEEKDAY` y `TOMTOM_HOUR`: día (`0` lunes a `6` domingo) y hora local
   de Asunción para el lote; los valores predeterminados son domingo a las 03:00.
 - `MATCH_RUN_ON_START=1`: ejecuta un primer lote al iniciar. Se recomienda

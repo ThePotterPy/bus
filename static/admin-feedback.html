@@ -342,6 +342,7 @@
       metric('Rechazados · 30 días', health.rejected_last_30_days),
       metric('Tasa de aceptación', rate),
       metric('Pendientes', health.pending_jobs),
+      metric('Viajes pendientes', health.pending_passages),
       metric('TomTom este mes', `${health.monthly_requests}/${health.monthly_limit ?? '—'}`),
     );
   }
