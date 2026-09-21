@@ -655,6 +655,29 @@
       .btn-follow:hover { background: rgba(255,255,255,0.2); }
       .btn-follow.following { background: rgba(58,160,255,0.2); color: var(--accent); border-color: var(--accent); }
 
+      #sharedTripBar {
+        position:absolute; left:50%; transform:translateX(-50%);
+        bottom:max(56px, calc(env(safe-area-inset-bottom) + 56px)); z-index:1100;
+        width:min(420px, calc(100vw - 24px)); padding:10px 12px;
+        background:var(--panel-2); border:1px solid var(--panel-border); border-radius:16px;
+        backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+        box-shadow:0 10px 32px rgba(0,0,0,.45);
+      }
+      #sharedTripBar[hidden] { display:none; }
+      .shared-trip-summary { display:flex; align-items:center; gap:9px; width:100%; padding:0; border:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+      .shared-trip-icon { font-size:20px; }
+      .shared-trip-copy { flex:1; min-width:0; }
+      .shared-trip-title { display:block; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .shared-trip-subtitle { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+      .shared-trip-chevron { color:var(--text); font-size:16px; padding:8px; }
+      .shared-trip-details { display:grid; gap:8px; margin-top:10px; padding-top:9px; border-top:1px solid var(--panel-border); }
+      #sharedTripBar.collapsed .shared-trip-details { display:none; }
+      .shared-trip-actions { display:flex; gap:7px; flex-wrap:wrap; }
+      .shared-trip-actions button { flex:1; min-width:100px; min-height:44px; padding:8px; border-radius:9px; border:1px solid var(--panel-border); background:rgba(255,255,255,.07); color:var(--text); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+      .shared-trip-actions button.primary { background:var(--accent); color:#06131f; border-color:var(--accent); }
+      .shared-trip-actions button.danger { color:#ff6b7a; }
+      .btn-share-trip { border-color:rgba(0,229,255,.45) !important; color:var(--accent) !important; }
+
       #empty {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         color: var(--muted); font-size: 15px; text-align: center; pointer-events: none;
@@ -702,6 +725,7 @@
     background: #00d3ec; border: 2px solid #141721; border-radius: 50%;
     box-shadow: 0 0 6px #00d3ec; pointer-events: none;
   }
+  #newsBell { position:relative; }
   .news-entry {
     width: 100%; padding: 11px 12px; border: 1px solid rgba(0, 211, 236, 0.3);
     border-radius: 10px; background: rgba(0, 211, 236, 0.08); color: var(--text);
@@ -1021,6 +1045,10 @@
       <button class="icon-btn" id="notifyBtn" aria-label="Avisos" title="Avisos">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
       </button>
+      <button class="icon-btn" id="newsBell" aria-label="Novedades" title="Novedades" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="news-unread-dot" id="newsBellDot"></span>
+      </button>
       <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes" style="position:relative;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
         <span class="news-unread-dot" id="settingsNewsDot" hidden></span>
@@ -1121,7 +1149,7 @@
 
       <div class="settings-row" id="newsSettingsRow">
         <button type="button" class="news-entry" id="newsOpen">
-          <span>📢 Últimas novedades</span>
+          <span>🔔 Últimas novedades</span>
           <span class="news-pill-new" id="newsPillNew" hidden>NUEVO</span>
         </button>
       </div>
@@ -1269,6 +1297,26 @@
     </div>
   </div>
 
+  <section id="sharedTripBar" class="collapsed" hidden aria-live="polite">
+    <button type="button" class="shared-trip-summary" id="sharedTripToggle" aria-expanded="false">
+      <span class="shared-trip-icon">🚌</span>
+      <span class="shared-trip-copy">
+        <span class="shared-trip-title" id="sharedTripTitle">Viaje compartido</span>
+        <span class="shared-trip-subtitle" id="sharedTripSubtitle"></span>
+      </span>
+      <span class="shared-trip-chevron" aria-hidden="true">▲</span>
+    </button>
+    <div class="shared-trip-details">
+      <div class="popup-row" id="sharedTripDetail"></div>
+      <div class="shared-trip-actions">
+        <button type="button" class="primary" id="sharedTripCenter">Centrar</button>
+        <button type="button" id="sharedTripShare">Compartir</button>
+        <button type="button" id="sharedTripExtend">Extender 1 h</button>
+        <button type="button" class="danger" id="sharedTripEnd">Finalizar</button>
+      </div>
+    </div>
+  </section>
+
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
 seleccion de linea</span></div>
   <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
@@ -1333,6 +1381,7 @@ seleccion de linea</span></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+<script src="/shared-trips.js"></script>
 <script>
 const PARAGUAY_BOUNDS = L.latLngBounds(
   L.latLng(-27.8, -62.8), // Suroeste de Paraguay
@@ -2670,6 +2719,9 @@ async function refreshPositions() {
         <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
           ${isFollowed ? 'Dejar de seguir' : 'Seguir unidad'}
         </button>
+        <button class="btn-follow btn-share-trip" onclick="startSharedBusTrip(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
+          Estoy en este bus
+        </button>
       `;
 
       let marker = markersById.get(unitId);
@@ -3678,6 +3730,31 @@ const municipalCanvasRenderer = L.canvas({
   tolerance: 12
 });
 
+function municipalStopPopup(stop) {
+  const isTerminal = stop.type === 'terminal';
+  const displayName = typeof stopDisplayName === 'function' ? stopDisplayName(stop) : stop.name;
+  const safeName = escapeHtml(stop.name).replace(/'/g, "\\'");
+  const safeStopId = encodeURIComponent(String(stop.id)).replace(/'/g, '%27');
+  return `
+    <div class="popup-title">🚏 ${escapeHtml(displayName)}</div>
+    ${displayName !== stop.name ? `<div class="popup-row">${escapeHtml(stop.name)}</div>` : ''}
+    <div class="popup-row">${isTerminal ? 'Terminal / Parada de Línea' : 'Refugio Oficial Habilitado'}</div>
+    <div class="popup-row" style="color:var(--muted);font-size:11px;">Municipalidad de Asunción</div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('origin', ${stop.lat}, ${stop.lon}, '${safeName}')">Salir de acá</button>
+      <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('dest', ${stop.lat}, ${stop.lon}, '${safeName}')">Ir acá</button>
+    </div>
+    <button type="button" class="btn-follow btn-share-trip" onclick="shareStop(decodeURIComponent('${safeStopId}'), 'waiting')">Estoy en esta parada</button>
+    <button type="button" class="btn-follow" onclick="setSharedDestination(decodeURIComponent('${safeStopId}'))">Quiero ir / bajar acá</button>
+    <button type="button" class="btn-follow" onclick="editStopAlias(decodeURIComponent('${safeStopId}'))">Guardar apodo</button>
+  `;
+}
+
+window.refreshMunicipalStopPopup = function(stopId) {
+  const stop = municipalStopsData.find(item => String(item.id) === String(stopId));
+  if (stop && stop._marker) stop._marker.setPopupContent(municipalStopPopup(stop));
+};
+
 // Carga perezosa de paradas (Puntos minimalistas estilo Google Maps en Canvas)
 async function loadMunicipalStops() {
   if (stopsLoaded) return;
@@ -3717,17 +3794,7 @@ async function loadMunicipalStops() {
           this.setStyle({ radius: r, fillColor: strongBlue, color: '#ffffff', weight: 2.2 });
         });
 
-        const safeName = escapeHtml(stop.name).replace(/'/g, "\\'");
-        const popupHtml = `
-          <div class="popup-title">🚏 ${escapeHtml(stop.name)}</div>
-          <div class="popup-row">${isTerminal ? 'Terminal / Parada de Línea' : 'Refugio Oficial Habilitado'}</div>
-          <div class="popup-row" style="color:var(--muted);font-size:11px;">Municipalidad de Asunción</div>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('origin', ${stop.lat}, ${stop.lon}, '${safeName}')">Salir de acá</button>
-            <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('dest', ${stop.lat}, ${stop.lon}, '${safeName}')">Ir acá</button>
-          </div>
-        `;
-        marker.bindPopup(popupHtml, { maxWidth: 260 });
+        marker.bindPopup(municipalStopPopup(stop), { maxWidth: 280 });
         stop._marker = marker;
       });
       stopsLoaded = true;

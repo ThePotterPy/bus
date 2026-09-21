@@ -42,6 +42,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs, urlencode
 from feedback import FeedbackStore, SESSION_SECONDS, validate_feedback, validate_news
 from observed_routes import ObservedRoutes
+from shared_trips import SharedTripStore
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
 # entorno PORT; en local usamos 8787 si no esta definida.
@@ -56,7 +57,9 @@ SUBS_FILE = DATA_DIR / "notify_subscriptions.json"
 VAPID_FILE = DATA_DIR / "vapid_private.pem"
 TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
 FEEDBACK_DB_FILE = DATA_DIR / "feedback.sqlite3"
+SHARED_TRIPS_DB_FILE = DATA_DIR / "shared_trips.sqlite3"
 feedback_store = FeedbackStore(FEEDBACK_DB_FILE)
+shared_trip_store = SharedTripStore(SHARED_TRIPS_DB_FILE)
 
 def _load_municipal_json(filename: str) -> list[dict]:
     for directory in (DATA_DIR, BASE_DIR / "data"):
@@ -364,6 +367,19 @@ def valid_client_id(value) -> bool:
     return isinstance(value, str) and 1 <= len(value) <= 128 and bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
 
 
+def official_stop(stop_id) -> dict | None:
+    if not isinstance(stop_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", stop_id):
+        return None
+    return next((stop for stop in _asuncion_stops if stop.get("id") == stop_id), None)
+
+
+def public_stop(stop_id) -> dict | None:
+    stop = official_stop(stop_id)
+    if not stop:
+        return None
+    return {key: stop.get(key) for key in ("id", "name", "type", "lat", "lon")}
+
+
 # ---------------------------------------------------------------------------
 # Caché de trazados (rutas/ramales) de Más Tarjeta (TTL de 15 minutos)
 # ---------------------------------------------------------------------------
@@ -597,6 +613,55 @@ def record_bus_observations(line: str, body: bytes):
         return
 
     observed_routes.observe(str(line), units)
+
+
+def current_bus(line_id: str, unit_id: str) -> dict | None:
+    """Return one public vehicle position; passenger data never enters this response."""
+    if not valid_line_id(line_id) or not isinstance(unit_id, str) or not 1 <= len(unit_id) <= 80:
+        return None
+    status, payload = get_positions_cached(line_id)
+    if status != 200:
+        return None
+    try:
+        units = json.loads(payload).get("data") or []
+    except (TypeError, ValueError):
+        return None
+    return next((unit for unit in units if str(unit.get("unit")) == unit_id), None)
+
+
+def shared_trip_payload(public_token: str) -> dict | None:
+    trip = shared_trip_store.get(public_token)
+    if not trip:
+        return None
+    result = {
+        "status": trip["status"],
+        "intent": trip["intent"],
+        "lineId": trip.get("line_id"),
+        "unitId": trip.get("unit_id"),
+        "startedAt": trip["started_at"],
+        "expiresAt": trip["expires_at"],
+        "maxExpiresAt": trip["max_expires_at"],
+        "verification": trip.get("verification"),
+        "lastVerifiedAt": trip.get("last_verified_at"),
+        "endReason": trip.get("end_reason") or None,
+        "extended": bool(trip.get("extended")),
+        "stop": public_stop(trip.get("stop_id")),
+        "destination": public_stop(trip.get("destination_stop_id")),
+        "bus": None,
+    }
+    if trip.get("line_id") and trip.get("unit_id") and trip["status"] != "ended":
+        bus = current_bus(trip["line_id"], trip["unit_id"])
+        if bus:
+            result["bus"] = {key: bus.get(key) for key in (
+                "unit", "lat", "lon", "status", "route", "time", "speed", "bearing", "provider"
+            )}
+            destination = result["destination"]
+            if destination and valid_coordinates(bus.get("lat"), bus.get("lon")):
+                result["destinationDistanceMeters"] = round(haversine_km(
+                    float(bus["lat"]), float(bus["lon"]),
+                    float(destination["lat"]), float(destination["lon"]),
+                ) * 1000)
+    return result
 
 
 def observed_tracks(line: str, days: int) -> list[list[list[float]]]:
@@ -1847,6 +1912,129 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200 if deleted else 404, {"success": deleted})
             return
 
+        if parsed.path == "/api/shared-trip/start":
+            if not self._allow_request("shared-trip-start", 10, 3600):
+                return
+            if not isinstance(body, dict) or not valid_client_id(body.get("clientId")):
+                self._send_json_obj(400, {"success": False, "error": "dispositivo invalido"})
+                return
+            kind = body.get("kind")
+            intent = body.get("intent")
+            if (kind, intent) not in {
+                ("stop", "waiting"), ("stop", "going"), ("bus", "trip"),
+            }:
+                self._send_json_obj(400, {"success": False, "error": "tipo de viaje invalido"})
+                return
+            stop_id = body.get("stopId")
+            destination_id = body.get("destinationStopId")
+            if stop_id is not None and not official_stop(stop_id):
+                self._send_json_obj(400, {"success": False, "error": "parada inexistente"})
+                return
+            if destination_id is not None and not official_stop(destination_id):
+                self._send_json_obj(400, {"success": False, "error": "destino inexistente"})
+                return
+            line_id = unit_id = None
+            if kind == "stop":
+                if not stop_id:
+                    self._send_json_obj(400, {"success": False, "error": "falta la parada"})
+                    return
+                if intent == "waiting":
+                    stop = official_stop(stop_id)
+                    try:
+                        accuracy = float(body.get("accuracy"))
+                        nearby = valid_coordinates(body.get("lat"), body.get("lon")) and 0 <= accuracy <= 250 and haversine_km(
+                            float(body["lat"]), float(body["lon"]), float(stop["lat"]), float(stop["lon"])
+                        ) * 1000 <= 500
+                    except (TypeError, ValueError):
+                        nearby = False
+                    if not nearby:
+                        self._send_json_obj(409, {"success": False, "error": "no pudimos confirmar que estes cerca de esa parada"})
+                        return
+            else:
+                line_id, unit_id = body.get("lineId"), str(body.get("unitId") or "")
+                bus = current_bus(line_id, unit_id)
+                try:
+                    accuracy = float(body.get("accuracy"))
+                    nearby = bus and 0 <= accuracy <= 250 and valid_coordinates(body.get("lat"), body.get("lon")) and haversine_km(
+                        float(body["lat"]), float(body["lon"]), float(bus["lat"]), float(bus["lon"])
+                    ) * 1000 <= 700
+                except (TypeError, ValueError):
+                    nearby = False
+                if not nearby:
+                    self._send_json_obj(409, {"success": False, "error": "no pudimos confirmar que estes cerca de ese bus"})
+                    return
+            created = shared_trip_store.create(
+                body["clientId"], intent=intent, line_id=line_id, unit_id=unit_id,
+                stop_id=stop_id, destination_stop_id=destination_id,
+            )
+            self._send_json_obj(201, {"success": True, **created})
+            return
+
+        if parsed.path == "/api/shared-trip/view":
+            if not self._allow_request("shared-trip-view", 90):
+                return
+            token = body.get("token") if isinstance(body, dict) else None
+            trip = shared_trip_payload(token)
+            self._send_json_obj(200 if trip else 404, {
+                "success": bool(trip), "trip": trip,
+                "error": None if trip else "enlace inexistente o eliminado",
+            })
+            return
+
+        if parsed.path == "/api/shared-trip/update":
+            if not self._allow_request("shared-trip-update", 90):
+                return
+            if not isinstance(body, dict):
+                self._send_json_obj(400, {"success": False, "error": "datos invalidos"})
+                return
+            token, owner_token = body.get("token"), body.get("ownerToken")
+            action = body.get("action")
+            updated = False
+            if action == "heartbeat":
+                existing = shared_trip_store.get_owned(token, owner_token)
+                bus = current_bus(existing.get("line_id"), existing.get("unit_id")) if existing else None
+                try:
+                    accuracy = float(body.get("accuracy"))
+                    reliable = bool(bus and 0 <= accuracy <= 150 and valid_coordinates(body.get("lat"), body.get("lon")))
+                    distance = haversine_km(float(body["lat"]), float(body["lon"]),
+                                            float(bus["lat"]), float(bus["lon"])) * 1000 if reliable else None
+                except (TypeError, ValueError):
+                    reliable, distance = False, None
+                updated = shared_trip_store.heartbeat(
+                    token, owner_token, reliable=reliable, distance_m=distance,
+                ) is not None
+            elif action == "destination":
+                stop_id = body.get("stopId")
+                updated = bool(official_stop(stop_id)) and shared_trip_store.set_destination(token, owner_token, stop_id)
+            elif action == "board":
+                line_id, unit_id = body.get("lineId"), str(body.get("unitId") or "")
+                destination_id = body.get("destinationStopId")
+                existing = shared_trip_store.get_owned(token, owner_token)
+                destination_valid = destination_id is None or bool(official_stop(destination_id))
+                bus = current_bus(line_id, unit_id) if existing and destination_valid else None
+                try:
+                    accuracy = float(body.get("accuracy"))
+                    nearby = bus and 0 <= accuracy <= 250 and valid_coordinates(body.get("lat"), body.get("lon")) and haversine_km(
+                        float(body["lat"]), float(body["lon"]), float(bus["lat"]), float(bus["lon"])
+                    ) * 1000 <= 700
+                except (TypeError, ValueError):
+                    nearby = False
+                if nearby:
+                    updated = shared_trip_store.board(token, owner_token, line_id, unit_id, destination_id)
+            elif action == "extend":
+                updated = shared_trip_store.extend(token, owner_token)
+            elif action == "end":
+                updated = shared_trip_store.end(token, owner_token)
+            else:
+                self._send_json_obj(400, {"success": False, "error": "accion invalida"})
+                return
+            trip = shared_trip_payload(token) if updated else None
+            self._send_json_obj(200 if updated else 403, {
+                "success": bool(updated), "trip": trip,
+                "error": None if updated else "no autorizado o viaje finalizado",
+            })
+            return
+
         if parsed.path == "/api/geocode":
             if not self._allow_request("geocode", 15):
                 return
@@ -2075,8 +2263,9 @@ def feedback_prune_loop():
     while not observed_routes.stop.is_set():
         try:
             feedback_store.prune()
+            shared_trip_store.prune()
         except sqlite3.Error as exc:
-            print(f"Error al depurar comentarios: {exc}")
+            print(f"Error al depurar datos temporales: {exc}")
         observed_routes.stop.wait(3600)
 
 
@@ -2084,6 +2273,17 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     init_tracks_db()
     feedback_store.init()
+    feedback_store.publish_release_news("shared-trips-2026-09-20", validate_news({
+        "title": "Compartí tu viaje o una parada",
+        "content": (
+            "Ahora podés indicar que estás en un bus y compartir un enlace para que otra persona siga "
+            "únicamente la ubicación pública del colectivo. También podés compartir una parada, marcar "
+            "tu posible descenso y guardar apodos privados como ‘Casa de mamá’. El seguimiento vence "
+            "automáticamente y nunca publica tu ubicación personal."
+        ),
+        "tag": "mejora",
+    }))
+    shared_trip_store.init()
     observed_routes.init()
     load_subs()
     threading.Thread(target=feedback_prune_loop, daemon=True).start()

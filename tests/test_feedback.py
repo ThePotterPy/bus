@@ -133,6 +133,19 @@ class FeedbackStoreTests(unittest.TestCase):
         self.assertFalse(self.store.delete_news(news_id))
         self.assertEqual(self.store.list_news(), [])
 
+    def test_release_news_is_published_only_once(self):
+        record = feedback.validate_news({
+            "title": "Nueva versión",
+            "content": "Contenido de la actualización.",
+            "tag": "mejora",
+        })
+        first_id, first_created = self.store.publish_release_news("release-test", record)
+        second_id, second_created = self.store.publish_release_news("release-test", record)
+        self.assertTrue(first_created)
+        self.assertFalse(second_created)
+        self.assertEqual(first_id, second_id)
+        self.assertEqual(len(self.store.list_news()), 1)
+
     def test_sessions_are_revocable(self):
         password = "contraseña-muy-larga-y-unica"
         self.assertIsNone(self.store.login("incorrecta", password))

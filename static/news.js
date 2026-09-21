@@ -1,5 +1,7 @@
 (function () {
   const settingsNewsDot = document.getElementById('settingsNewsDot');
+  const newsBell = document.getElementById('newsBell');
+  const newsBellDot = document.getElementById('newsBellDot');
   const newsOpen = document.getElementById('newsOpen');
   const newsPillNew = document.getElementById('newsPillNew');
   const newsOverlay = document.getElementById('newsOverlay');
@@ -76,6 +78,8 @@
         if (latestNewsId > lastSeen) {
           if (settingsNewsDot) settingsNewsDot.hidden = false;
           if (newsPillNew) newsPillNew.hidden = false;
+          if (newsBell) newsBell.hidden = false;
+          if (newsBellDot) newsBellDot.hidden = false;
         }
       }
     } catch {
@@ -98,6 +102,8 @@
       localStorage.setItem('jaha_last_seen_news_id', String(latestNewsId));
       if (settingsNewsDot) settingsNewsDot.hidden = true;
       if (newsPillNew) newsPillNew.hidden = true;
+      if (newsBell) newsBell.hidden = true;
+      if (newsBellDot) newsBellDot.hidden = true;
     }
   }
 
@@ -106,6 +112,7 @@
   }
 
   if (newsOpen) newsOpen.addEventListener('click', openNews);
+  if (newsBell) newsBell.addEventListener('click', openNews);
   if (newsClose) newsClose.addEventListener('click', closeNews);
   if (newsOverlay) {
     newsOverlay.addEventListener('click', (e) => {

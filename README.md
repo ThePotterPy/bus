@@ -84,6 +84,14 @@ el boton de aviso de proximidad.
   sugerencia con nombre o sin él. Los datos técnicos son opcionales y requieren
   una casilla marcada expresamente. Un código privado permite al remitente
   eliminar su comentario sin iniciar sesión.
+- **Viajes y paradas compartidos**: cada dispositivo puede compartir una parada,
+  marcar el bus en el que viaja y elegir una parada de descenso mediante un
+  enlace temporal. El receptor ve únicamente posiciones públicas del bus y las
+  paradas seleccionadas; las coordenadas del pasajero se usan en memoria para
+  validar proximidad y nunca se guardan ni se entregan. Los apodos de paradas son
+  privados y permanecen solamente en el navegador que los creó.
+- **Novedades visibles**: las actualizaciones no leídas muestran una campana en
+  la barra superior; al abrirla se marca la novedad como vista en ese navegador.
 
 ## Estructura
 
@@ -95,11 +103,15 @@ el boton de aviso de proximidad.
   almacenamiento de pasadas, ajuste a calles y estadísticas compartidas.
 - `feedback.py` - validación y almacenamiento privado de comentarios y sesiones
   de administración.
+- `shared_trips.py` - sesiones temporales, tokens separados de lectura y control,
+  expiración y verificación de proximidad sin persistir coordenadas personales.
 - `static/index.html` - mapa (Leaflet + OpenStreetMap), buscador de lineas,
   calculo de rumbo/sentido, y el panel de avisos de proximidad.
 - `static/observed-routes.js` - representa las estelas y alternativas enviadas
   por el servidor; el navegador no puede crear ni inflar evidencia compartida.
 - `static/feedback.js` - formulario de comentarios y consentimiento opcional.
+- `static/shared-trips.js` - barra plegable, enlaces compartidos, apodos locales
+  de paradas y representación pública del bus/destino.
 - `static/admin-feedback.html` - panel privado para revisar comentarios.
 - `static/sw.js` - service worker minimo, solo recibe el push y muestra la
   notificacion.

@@ -122,6 +122,11 @@ class FeedbackStore:
                 tag TEXT NOT NULL DEFAULT 'novedad'
             )""")
             conn.execute("CREATE INDEX IF NOT EXISTS news_created_at ON news(created_at DESC)")
+            conn.execute("""CREATE TABLE IF NOT EXISTS release_news (
+                release_key TEXT PRIMARY KEY,
+                news_id INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )""")
             conn.execute("""CREATE TABLE IF NOT EXISTS admin_sessions (
                 token_hash TEXT PRIMARY KEY,
                 csrf TEXT NOT NULL,
@@ -214,6 +219,25 @@ class FeedbackStore:
                 int(time.time()), record["title"], record["content"], record["tag"],
             ))
             return cursor.lastrowid
+
+    def publish_release_news(self, release_key, record):
+        """Publish a deployment announcement once, even across restarts."""
+        if not isinstance(release_key, str) or not re.fullmatch(r"[a-z0-9_-]{3,80}", release_key):
+            raise ValueError("identificador de versión inválido")
+        with self._connect() as conn:
+            existing = conn.execute(
+                "SELECT news_id FROM release_news WHERE release_key = ?", (release_key,),
+            ).fetchone()
+            if existing:
+                return existing["news_id"], False
+            created_at = int(time.time())
+            cursor = conn.execute("""INSERT INTO news
+                (created_at, title, content, tag) VALUES (?, ?, ?, ?)""", (
+                created_at, record["title"], record["content"], record["tag"],
+            ))
+            conn.execute("""INSERT INTO release_news (release_key, news_id, created_at)
+                VALUES (?, ?, ?)""", (release_key, cursor.lastrowid, created_at))
+            return cursor.lastrowid, True
 
     def list_news(self, limit=30):
         with self._connect() as conn:
