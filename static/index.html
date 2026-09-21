@@ -768,6 +768,18 @@
   .news-card-title { font-size: 14.5px; font-weight: 700; color: #fff; margin: 0; }
   .news-card-content { font-size: 13px; color: #cdd5e2; line-height: 1.45; white-space: pre-wrap; margin: 0; }
   .news-empty-state { text-align: center; color: var(--muted); padding: 24px 0; font-size: 13.5px; }
+  #shareBusOverlay[hidden] { display:none; }
+  #shareBusOverlay {
+    position:fixed; inset:0; z-index:3100; display:flex; align-items:center; justify-content:center;
+    padding:max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background:rgba(0,0,0,.62); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+  }
+  .share-bus-dialog { width:min(420px, 100%); }
+  .share-bus-destination { padding:11px 12px; border-radius:10px; background:rgba(0,229,255,.08); border:1px solid rgba(0,229,255,.28); font-size:13px; }
+  .share-bus-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .share-bus-options button { min-height:44px; padding:8px; border-radius:9px; border:1px solid var(--panel-border); background:rgba(255,255,255,.07); color:var(--text); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+  .share-bus-options button:last-child { grid-column:1 / -1; }
+  .combo-item .item-name small { display:block; color:var(--muted); font-size:10px; overflow:hidden; text-overflow:ellipsis; }
 
   #feedbackSettingsRow[hidden] { display:none; }
   #feedbackOverlay[hidden] { display: none; }
@@ -804,6 +816,13 @@
 
   /* --- Optimizaciones dedicadas para teléfonos móviles (hasta 600px) --- */
   @media (max-width: 600px) {
+    #shareBusOverlay {
+      align-items:flex-end;
+      padding:12px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    }
+    .share-bus-dialog { width:100%; max-height:calc(100dvh - 24px); border-radius:18px; }
+    .share-bus-options { grid-template-columns:1fr; }
+    .share-bus-options button:last-child { grid-column:auto; }
     /* Touch y toques táctiles instantáneos sin retraso de 300ms */
     button, input, select, textarea, .combo-item, .icon-btn, .prov-pill, .branch-pill, .layer-menu-btn {
       touch-action: manipulation;
@@ -1034,7 +1053,7 @@
       <span class="pill-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/><path d="M5 17v-4.5"/><path d="M19 17v-4.5"/><path d="M8 10V6c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v4"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
       </span>
-      <input type="text" id="lineSearch" placeholder="Buscar linea por nombre..." autocomplete="off">
+      <input type="text" id="lineSearch" placeholder="Buscar líneas o mis paradas..." autocomplete="off">
       <button class="icon-btn" id="clearSearchBtn" aria-label="Limpiar busqueda" title="Limpiar busqueda" style="display: none; background: transparent;">✕</button>
       <button class="icon-btn" id="centerRouteBtn" aria-label="Centrar ruta" title="Centrar ruta" style="display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
@@ -1317,6 +1336,23 @@
     </div>
   </section>
 
+  <div id="shareBusOverlay" hidden>
+    <div class="feedback-dialog share-bus-dialog" role="dialog" aria-modal="true" aria-labelledby="shareBusTitle">
+      <div class="feedback-head">
+        <h2 id="shareBusTitle">Compartir este bus</h2>
+        <button type="button" class="feedback-close" id="shareBusClose" aria-label="Cerrar">×</button>
+      </div>
+      <p class="feedback-note">El enlace mostrará solamente esta unidad. Podés agregar dónde querés bajar.</p>
+      <div class="share-bus-destination" id="shareBusDestination">Sin punto de bajada</div>
+      <div class="share-bus-options">
+        <button type="button" id="shareBusChooseStop">Elegir una parada</button>
+        <button type="button" id="shareBusChooseMap">Marcar en el mapa</button>
+        <button type="button" id="shareBusClearDestination" hidden>Quitar bajada</button>
+      </div>
+      <button type="button" class="btn-primary" id="shareBusConfirm" style="width:100%;min-height:44px;margin-top:12px;">Compartir enlace</button>
+    </div>
+  </div>
+
   <div id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Esperando 
 seleccion de linea</span></div>
   <div id="empty">Elegi una linea para ver las unidades en tiempo real</div>
@@ -1410,11 +1446,13 @@ const liveTailLayer = L.layerGroup().addTo(map);
 const allLinesLayer = L.layerGroup().addTo(map);
 const stopsLayer = L.layerGroup();
 const trafficLightsLayer = L.layerGroup();
+const sharedDestinationLayer = L.layerGroup().addTo(map);
 
 const topBar = document.getElementById('topBar');
 const lineSearch = document.getElementById('lineSearch');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
 const lineList = document.getElementById('lineList');
+const providerTabs = document.getElementById('providerTabs');
 const notifyBtn = document.getElementById('notifyBtn');
 const notifyPanel = document.getElementById('notifyPanel');
 const notifyLineSelect = document.getElementById('notifyLineSelect');
@@ -1452,6 +1490,9 @@ const emptyMsg = document.getElementById('empty');
 const locateBtn = document.getElementById('locateBtn');
 const observedRouteLegend = document.getElementById('observedRouteLegend');
 const observedLegendToggle = document.getElementById('observedLegendToggle');
+const shareBusOverlay = document.getElementById('shareBusOverlay');
+const shareBusDestination = document.getElementById('shareBusDestination');
+const shareBusClearDestination = document.getElementById('shareBusClearDestination');
 observedLegendToggle.addEventListener('click', () => {
   const expanded = observedRouteLegend.classList.toggle('expanded');
   observedLegendToggle.setAttribute('aria-expanded', String(expanded));
@@ -1462,6 +1503,9 @@ let currentLine = null;
 let allLines = [];
 let timer = null;
 let followedUnitId = null;
+let sharedBusView = null;
+let shareBusDraft = null;
+let shareDestinationPickMode = null;
 // Evita que una respuesta lenta de una línea anterior pise el recorrido de
 // la línea que el usuario acaba de seleccionar.
 let routeLoadGeneration = 0;
@@ -2067,8 +2111,12 @@ function renderLineList() {
   const filtered = allLines.filter(l => matchesSearch(l, q));
   const favs = filtered.filter(l => favorites.has(String(l.id)));
   const rest = filtered.filter(l => !favorites.has(String(l.id)));
+  const savedStops = (typeof getSavedStops === 'function' ? getSavedStops() : []).filter(stop => {
+    if (!q) return true;
+    return `${stop.alias || ''} ${stop.name || ''} ${stop.type || ''}`.toLowerCase().includes(q);
+  });
 
-  if (!filtered.length) {
+  if (!filtered.length && !savedStops.length) {
     lineList.innerHTML = '<div class="combo-empty">Ninguna linea coincide con la busqueda o el filtro</div>';
     return;
   }
@@ -2083,7 +2131,7 @@ function renderLineList() {
         ? '<span class="badge-prov mas">MÁS</span>'
         : '<span class="badge-prov jaha">JAHA</span>';
       return `
-        <div class="combo-item${isSelected ? ' selected' : ''}" data-id="${l.id}">
+        <div class="combo-item${isSelected ? ' selected' : ''}" data-kind="line" data-id="${l.id}">
           <span class="item-name" style="display:flex; align-items:center; gap:6px; min-width:0;">
             ${badge} <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(lineLabel(l))}</span>
           </span>
@@ -2095,7 +2143,16 @@ function renderLineList() {
     return `<div class="combo-group-label">${label}</div>${rows}`;
   };
 
-  lineList.innerHTML = renderGroup('Favoritos', favs) + renderGroup(q ? 'Resultados' : 'Líneas disponibles', rest);
+  const stopRows = savedStops.map(stop => {
+    const label = stop.alias || stop.name || 'Parada guardada';
+    const subtitle = stop.alias && stop.name && stop.alias !== stop.name ? `<small>${escapeHtml(stop.name)}</small>` : '';
+    return `<div class="combo-item" data-kind="stop" data-stop-id="${escapeHtml(String(stop.id))}">
+      <span class="item-name" style="display:flex;align-items:center;gap:7px;min-width:0;">🚏 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(label)}${subtitle}</span></span>
+      <span class="star${stop.favorite ? ' fav' : ''}" data-stop-fav-id="${escapeHtml(String(stop.id))}" title="Favorito">★</span>
+    </div>`;
+  }).join('');
+  const stopGroup = stopRows ? `<div class="combo-group-label">Mis paradas</div>${stopRows}` : '';
+  lineList.innerHTML = stopGroup + renderGroup('Líneas favoritas', favs) + renderGroup(q ? 'Resultados' : 'Líneas disponibles', rest);
 }
 
 function closeAllPanels() {
@@ -2420,6 +2477,13 @@ async function refreshAllPositions(generation) {
 
 lineList.addEventListener('mousedown', (e) => {
   // mousedown (no click) para que dispare antes del blur del input
+  const stopStar = e.target.closest('[data-stop-fav-id]');
+  if (stopStar) {
+    e.preventDefault();
+    toggleStopFavorite(stopStar.dataset.stopFavId);
+    renderLineList();
+    return;
+  }
   const starEl = e.target.closest('.star');
   if (starEl) {
     e.preventDefault();
@@ -2432,7 +2496,8 @@ lineList.addEventListener('mousedown', (e) => {
   const itemEl = e.target.closest('.combo-item');
   if (itemEl) {
     e.preventDefault();
-    selectLine(itemEl.dataset.id);
+    if (itemEl.dataset.kind === 'stop') focusSavedStop(itemEl.dataset.stopId);
+    else selectLine(itemEl.dataset.id);
   }
 });
 
@@ -2622,6 +2687,14 @@ function deviationGridKey(lat, lon) {
 
 async function refreshPositions() {
   if (!currentLine || allLinesMode) return;
+  if (sharedBusView && sharedBusView.until * 1000 <= Date.now()) {
+    markersLayer.clearLayers();
+    document.getElementById('sharedTripBar').hidden = true;
+    emptyMsg.style.display = 'block';
+    emptyMsg.textContent = 'Este enlace de seguimiento venció';
+    if (timer) clearInterval(timer);
+    return;
+  }
   const requestedLine = currentLine, generation = routeLoadGeneration;
   const sequence = ++positionRequestSequence;
   try {
@@ -2629,9 +2702,14 @@ async function refreshPositions() {
     const json = await res.json();
     if (requestedLine !== currentLine || generation !== routeLoadGeneration || sequence !== positionRequestSequence) return;
     if (!json.success) throw new Error('la API devolvio success:false');
-    const units = json.data || [];
+    const receivedUnits = json.data || [];
+    const units = sharedBusView && String(sharedBusView.lineId) === String(requestedLine)
+      ? receivedUnits.filter(unit => String(unit.unit) === String(sharedBusView.unitId))
+      : receivedUnits;
     emptyMsg.style.display = units.length ? 'none' : 'block';
-    if (!units.length) emptyMsg.textContent = 'No hay unidades reportando posicion en esta linea ahora mismo';
+    if (!units.length) emptyMsg.textContent = sharedBusView
+      ? `La unidad ${sharedBusView.unitId} no está reportando posición ahora mismo`
+      : 'No hay unidades reportando posicion en esta linea ahora mismo';
 
     const seenIds = new Set();
     etaRouteLayer.clearLayers(); // Limpiar ruta ETA anterior
@@ -2660,6 +2738,12 @@ async function refreshPositions() {
       
       // Cálculo de ETA
       let etaHtml = '';
+      const directShareEstimate = sharedBusView && String(sharedBusView.unitId) === unitId
+        ? sharedBusEstimate(u, sharedBusView.destination)
+        : null;
+      if (sharedBusView && String(sharedBusView.unitId) === unitId && sharedBusView.destination) {
+        etaHtml += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;"><div class="popup-row">🏁 Bajada: <b>${escapeHtml(sharedBusView.destination.name)}</b></div>${directShareEstimate ? `<div class="popup-row">Tiempo estimado: <b>~${directShareEstimate.minutes} min</b></div>` : ''}</div>`;
+      }
       if (planOrigin && planDest && currentRoutePolylines && currentRoutePolylines.length > 0) {
         const routePoly = bestPolylineForUnit(u, branchKey, lat, lon);
         if (routePoly) {
@@ -2719,8 +2803,8 @@ async function refreshPositions() {
         <button class="btn-follow ${isFollowed ? 'following' : ''}" onclick="toggleFollow(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
           ${isFollowed ? 'Dejar de seguir' : 'Seguir unidad'}
         </button>
-        <button class="btn-follow btn-share-trip" onclick="startSharedBusTrip(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
-          Estoy en este bus
+        <button class="btn-follow btn-share-trip" onclick="shareBusUnit(decodeURIComponent('${encodeURIComponent(unitId).replace(/'/g, '%27')}'))">
+          Compartir este bus
         </button>
       `;
 
@@ -2742,6 +2826,10 @@ async function refreshPositions() {
       // Si estamos siguiendo a esta unidad, centramos el mapa
       if (isFollowed) {
         map.panTo([lat, lon], { animate: true, duration: 1 });
+      }
+
+      if (sharedBusView && String(sharedBusView.unitId) === unitId) {
+        renderSharedBusStatus(u, directShareEstimate);
       }
 
     });
@@ -2778,7 +2866,11 @@ async function refreshPositions() {
       ? 'No hay unidades reportando ahora en el sentido de este viaje'
       : 'No hay unidades reportando en este ramal ahora mismo';
     const selectedBranch = branchByKey(currentBranch);
-    setStatus(`${usefulUnits.length} unidad(es)${selectedBranch ? ` · ${selectedBranch.label}` : ''} - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
+    if (sharedBusView) {
+      setStatus(units.length ? `Unidad ${sharedBusView.unitId} · actualizada ${new Date().toLocaleTimeString('es-PY')}` : `Unidad ${sharedBusView.unitId} sin señal`, Boolean(units.length));
+    } else {
+      setStatus(`${usefulUnits.length} unidad(es)${selectedBranch ? ` · ${selectedBranch.label}` : ''} - actualizado ${new Date().toLocaleTimeString('es-PY')}`, true);
+    }
   } catch (err) {
     if (requestedLine !== currentLine || generation !== routeLoadGeneration || sequence !== positionRequestSequence) return;
     setStatus('Error obteniendo posiciones: ' + err.message, false);
@@ -3145,8 +3237,13 @@ notifyToggleBtn.addEventListener('click', async () => {
 loadLines().then(() => {
   renderNotifyLineOptions();
   updateNotifyUI();
+  const sharedBus = sharedBusHashPayload();
+  const sharedStopId = new URLSearchParams(location.hash.replace(/^#/, '')).get('parada');
+  if (sharedBus) activateSharedBus(sharedBus);
+  else if (location.hash.includes('busLine=')) setStatus('Este enlace de seguimiento venció', false);
+  else if (sharedStopId) activateSharedStop(sharedStopId);
   const notificationLine = new URLSearchParams(location.search).get('line');
-  if (notificationLine && allLines.some(line => String(line.id) === notificationLine)) {
+  if (!sharedBus && !sharedStopId && notificationLine && allLines.some(line => String(line.id) === notificationLine)) {
     selectLine(notificationLine);
     history.replaceState(null, '', location.pathname);
   }
@@ -3378,6 +3475,17 @@ destField.addEventListener('click', event => {
 });
 
 map.on('click', (e) => {
+  if (shareDestinationPickMode === 'map' && shareBusDraft) {
+    shareBusDraft.destination = {
+      lat: Number(e.latlng.lat), lon: Number(e.latlng.lng),
+      name: 'Punto marcado en el mapa', type: 'map',
+    };
+    shareDestinationPickMode = null;
+    showSharedDestination(shareBusDraft.destination);
+    renderShareBusDialog();
+    shareBusOverlay.hidden = false;
+    return;
+  }
   if (!isPlanningMode) return;
   if (!planTarget) {
     setStatus('Para cambiar un punto, tocá A o B en el panel de viaje.', true);
@@ -3735,6 +3843,9 @@ function municipalStopPopup(stop) {
   const displayName = typeof stopDisplayName === 'function' ? stopDisplayName(stop) : stop.name;
   const safeName = escapeHtml(stop.name).replace(/'/g, "\\'");
   const safeStopId = encodeURIComponent(String(stop.id)).replace(/'/g, '%27');
+  const favorite = typeof isFavoriteStop === 'function' && isFavoriteStop(stop.id);
+  const chooseDestination = shareDestinationPickMode === 'stop' && shareBusDraft
+    ? `<button type="button" class="btn-follow btn-share-trip" onclick="chooseShareDestinationStop(decodeURIComponent('${safeStopId}'))">Usar como bajada</button>` : '';
   return `
     <div class="popup-title">🚏 ${escapeHtml(displayName)}</div>
     ${displayName !== stop.name ? `<div class="popup-row">${escapeHtml(stop.name)}</div>` : ''}
@@ -3744,11 +3855,206 @@ function municipalStopPopup(stop) {
       <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('origin', ${stop.lat}, ${stop.lon}, '${safeName}')">Salir de acá</button>
       <button type="button" class="btn-primary" style="font-size:12px;padding:4px 8px;flex:1;" onclick="setPlanPointFromMap('dest', ${stop.lat}, ${stop.lon}, '${safeName}')">Ir acá</button>
     </div>
-    <button type="button" class="btn-follow btn-share-trip" onclick="shareStop(decodeURIComponent('${safeStopId}'), 'waiting')">Estoy en esta parada</button>
-    <button type="button" class="btn-follow" onclick="setSharedDestination(decodeURIComponent('${safeStopId}'))">Quiero ir / bajar acá</button>
+    ${chooseDestination}
+    <button type="button" class="btn-follow btn-share-trip" onclick="sharePublicStop(decodeURIComponent('${safeStopId}'))">Compartir parada</button>
+    <button type="button" class="btn-follow" onclick="toggleStopFavorite(decodeURIComponent('${safeStopId}')); refreshMunicipalStopPopup(decodeURIComponent('${safeStopId}')); renderLineList();">${favorite ? '★ Quitar de favoritos' : '☆ Agregar a favoritos'}</button>
     <button type="button" class="btn-follow" onclick="editStopAlias(decodeURIComponent('${safeStopId}'))">Guardar apodo</button>
   `;
 }
+
+function sharedBusEstimate(unit, destination) {
+  if (!unit || !destination) return null;
+  const lat = Number(unit.lat), lon = Number(unit.lon);
+  if (![lat, lon, Number(destination.lat), Number(destination.lon)].every(Number.isFinite)) return null;
+  const branchKey = unit._branchKey || matchRouteToBranch(unit.route, lat, lon);
+  const route = currentRoutePolylines.length ? bestPolylineForUnit(unit, branchKey, lat, lon) : null;
+  let distance = route ? forwardDistanceOnPolyline(route, [lat, lon], [destination.lat, destination.lon]) : -1;
+  if (distance < 0) distance = Math.round(haversineMeters(lat, lon, destination.lat, destination.lon) * 1.25);
+  const speed = Number(unit.speed) >= 5 ? Math.min(55, Number(unit.speed)) : 20;
+  return { distance, minutes: Math.max(1, Math.min(180, Math.round((distance / 1000) / (speed / 60)))) };
+}
+
+function sharedBusHashPayload() {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (!params.get('busLine') || !params.get('busUnit')) return null;
+  const until = Number(params.get('until'));
+  if (!Number.isFinite(until) || until * 1000 < Date.now()) return null;
+  const lat = Number(params.get('destLat')), lon = Number(params.get('destLon'));
+  return {
+    lineId: params.get('busLine'), unitId: params.get('busUnit'), until,
+    destination: Number.isFinite(lat) && Number.isFinite(lon) ? {
+      lat, lon, name: params.get('destName') || 'Punto marcado', type: params.get('destType') || 'map',
+    } : null,
+  };
+}
+
+function sharedBusUrl(draft, estimate) {
+  const url = new URL(location.origin + location.pathname);
+  const params = new URLSearchParams({
+    busLine: String(draft.lineId), busUnit: String(draft.unitId),
+    until: String(Math.floor(Date.now() / 1000) + 3 * 60 * 60),
+  });
+  if (draft.destination) {
+    params.set('destLat', Number(draft.destination.lat).toFixed(6));
+    params.set('destLon', Number(draft.destination.lon).toFixed(6));
+    params.set('destName', draft.destination.name || 'Punto marcado');
+    params.set('destType', draft.destination.type || 'map');
+  }
+  if (estimate) params.set('eta', String(estimate.minutes));
+  url.hash = params.toString();
+  return url.toString();
+}
+
+async function shareLink(title, text, url) {
+  if (navigator.share) {
+    try { await navigator.share({ title, text, url }); return; }
+    catch (error) { if (error.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); alert('Enlace copiado.'); }
+  catch (_) { prompt('Copiá este enlace:', url); }
+}
+
+function renderShareBusDialog() {
+  const destination = shareBusDraft?.destination;
+  shareBusDestination.textContent = destination ? `Bajada: ${destination.name}` : 'Sin punto de bajada';
+  shareBusClearDestination.hidden = !destination;
+}
+
+window.shareBusUnit = function (unitId) {
+  if (!currentLine || currentLine === ALL_LINES_ID) return alert('Primero elegí una línea.');
+  shareBusDraft = { lineId: String(currentLine), unitId: String(unitId), destination: null };
+  renderShareBusDialog();
+  shareBusOverlay.hidden = false;
+};
+
+window.chooseShareDestinationStop = function (stopId) {
+  if (!shareBusDraft) return;
+  const stop = municipalStopsData.find(item => String(item.id) === String(stopId));
+  if (!stop) return;
+  shareBusDraft.destination = { id: String(stop.id), lat: Number(stop.lat), lon: Number(stop.lon), name: stopDisplayName(stop), type: 'stop' };
+  shareDestinationPickMode = null;
+  renderShareBusDialog();
+  shareBusOverlay.hidden = false;
+  map.closePopup();
+};
+
+function showSharedDestination(destination) {
+  sharedDestinationLayer.clearLayers();
+  if (!destination) return;
+  L.circleMarker([destination.lat, destination.lon], { radius:9, color:'#fff', weight:2, fillColor:'#ff3366', fillOpacity:1 })
+    .bindPopup(`Bajada: ${escapeHtml(destination.name)}`).addTo(sharedDestinationLayer);
+}
+
+function renderSharedBusStatus(unit, estimate) {
+  const bar = document.getElementById('sharedTripBar');
+  const line = allLines.find(item => String(item.id) === String(sharedBusView.lineId));
+  document.getElementById('sharedTripTitle').textContent = `${line ? lineLabel(line) : 'Línea compartida'} · Unidad ${unit.unit}`;
+  document.getElementById('sharedTripSubtitle').textContent = 'Seguimiento compartido de esta unidad';
+  document.getElementById('sharedTripDetail').textContent = sharedBusView.destination
+    ? `Bajada: ${sharedBusView.destination.name}${estimate ? ` · ${(estimate.distance / 1000).toFixed(1)} km · ~${estimate.minutes} min` : ''}`
+    : 'Sin punto de bajada';
+  document.getElementById('sharedTripExtend').hidden = true;
+  document.getElementById('sharedTripEnd').hidden = true;
+  document.getElementById('sharedTripShare').hidden = false;
+  bar.hidden = false;
+}
+
+window.centerSharedBusView = function () {
+  if (!sharedBusView) return false;
+  const marker = markersById.get(String(sharedBusView.unitId));
+  if (marker) map.setView(marker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
+  return Boolean(marker);
+};
+
+window.shareCurrentBusLink = async function () {
+  if (!sharedBusView) return false;
+  await shareLink('Seguimiento de colectivo', `Unidad ${sharedBusView.unitId}`, location.href);
+  return true;
+};
+
+window.focusSavedStop = function (stopId) {
+  const stop = (typeof getSavedStop === 'function' ? getSavedStop(stopId) : null)
+    || municipalStopsData.find(item => String(item.id) === String(stopId));
+  if (!stop || !Number.isFinite(Number(stop.lat)) || !Number.isFinite(Number(stop.lon))) return;
+  const destination = { ...stop, lat: Number(stop.lat), lon: Number(stop.lon) };
+  sharedDestinationLayer.clearLayers();
+  L.circleMarker([destination.lat, destination.lon], { radius:8, color:'#fff', weight:2, fillColor:'#0055ff', fillOpacity:1 })
+    .bindPopup(municipalStopPopup(destination), { maxWidth:260 }).addTo(sharedDestinationLayer).openPopup();
+  map.setView([destination.lat, destination.lon], Math.max(map.getZoom(), 17));
+  lineSearch.value = destination.alias || destination.name;
+  lineList.classList.remove('open');
+};
+
+window.sharePublicStop = async function (stopId) {
+  const stop = municipalStopsData.find(item => String(item.id) === String(stopId)) || (typeof getSavedStop === 'function' ? getSavedStop(stopId) : null);
+  if (!stop) return;
+  const url = new URL(location.origin + location.pathname);
+  url.hash = new URLSearchParams({ parada: String(stop.id) }).toString();
+  await shareLink('Parada compartida', `Parada: ${stopDisplayName(stop)}`, url.toString());
+};
+
+async function activateSharedStop(stopId) {
+  await loadMunicipalStops();
+  const stop = municipalStopsData.find(item => String(item.id) === String(stopId));
+  if (!stop) return setStatus('No se encontró la parada compartida', false);
+  stopsActive = false;
+  if (showStopsCheck) showStopsCheck.checked = false;
+  updateMunicipalLayers();
+  focusSavedStop(stop.id);
+  const marker = Array.from(sharedDestinationLayer.getLayers())[0];
+  if (marker) marker.setPopupContent(municipalStopPopup(stop)).openPopup();
+  setStatus('Parada compartida', true);
+}
+
+function activateSharedBus(payload) {
+  if (!payload || !allLines.some(line => String(line.id) === String(payload.lineId))) return;
+  sharedBusView = payload;
+  window.sharedBusView = payload;
+  selectLine(payload.lineId);
+  followedUnitId = String(payload.unitId);
+  showSharedDestination(payload.destination);
+  lineSearch.disabled = true;
+  clearSearchBtn.style.display = 'none';
+  providerTabs.hidden = true;
+  renderSharedBusStatus({ unit: payload.unitId }, null);
+  setStatus(`Siguiendo únicamente la unidad ${payload.unitId}`, true);
+  const remainingMs = Math.max(0, payload.until * 1000 - Date.now());
+  setTimeout(() => {
+    if (sharedBusView !== payload) return;
+    document.getElementById('sharedTripBar').hidden = true;
+    markersLayer.clearLayers();
+    emptyMsg.style.display = 'block';
+    emptyMsg.textContent = 'Este enlace de seguimiento venció';
+  }, Math.min(remainingMs + 1000, 2147483647));
+}
+
+document.getElementById('shareBusClose').addEventListener('click', () => { shareBusOverlay.hidden = true; });
+shareBusOverlay.addEventListener('click', event => { if (event.target === shareBusOverlay) shareBusOverlay.hidden = true; });
+document.getElementById('shareBusChooseStop').addEventListener('click', async () => {
+  shareBusOverlay.hidden = true;
+  shareDestinationPickMode = 'stop';
+  stopsActive = true;
+  if (showStopsCheck) showStopsCheck.checked = true;
+  await loadMunicipalStops();
+  updateMunicipalLayers();
+  setStatus('Tocá una parada y elegí “Usar como bajada”', true);
+});
+document.getElementById('shareBusChooseMap').addEventListener('click', () => {
+  shareBusOverlay.hidden = true;
+  shareDestinationPickMode = 'map';
+  setStatus('Tocá el mapa donde querés bajar', true);
+});
+shareBusClearDestination.addEventListener('click', () => { shareBusDraft.destination = null; renderShareBusDialog(); });
+document.getElementById('shareBusConfirm').addEventListener('click', async () => {
+  if (!shareBusDraft) return;
+  const unit = latestLineUnits.find(item => String(item.unit) === String(shareBusDraft.unitId));
+  const estimate = sharedBusEstimate(unit, shareBusDraft.destination);
+  const destinationText = shareBusDraft.destination ? ` hasta ${shareBusDraft.destination.name}` : '';
+  const etaText = estimate ? ` · tiempo estimado: ${estimate.minutes} min` : '';
+  const url = sharedBusUrl(shareBusDraft, estimate);
+  shareBusOverlay.hidden = true;
+  await shareLink('Seguimiento de colectivo', `Unidad ${shareBusDraft.unitId}${destinationText}${etaText}`, url);
+});
 
 window.refreshMunicipalStopPopup = function(stopId) {
   const stop = municipalStopsData.find(item => String(item.id) === String(stopId));

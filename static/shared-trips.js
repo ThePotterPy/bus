@@ -3,9 +3,11 @@
 
   const OWNER_KEY = 'jaha_shared_trip_owner_v1';
   const ALIASES_KEY = 'jaha_stop_aliases_v1';
+  const SAVED_STOPS_KEY = 'jaha_saved_stops_v2';
   const HEARTBEAT_INTERVAL = 30000;
   let owner = loadJson(OWNER_KEY, null);
-  let publicToken = tokenFromHash() || (owner && owner.publicToken) || '';
+  const directPublicLink = /(?:^#|&)(?:busLine|parada)=/.test(location.hash);
+  let publicToken = tokenFromHash() || (!directPublicLink && owner && owner.publicToken) || '';
   let currentTrip = null;
   let tripLayer = null;
   let pollTimer = null;
@@ -34,22 +36,67 @@
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
 
+  function savedStops() {
+    const value = loadJson(SAVED_STOPS_KEY, {});
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+
+  function stopById(stopId) {
+    return typeof municipalStopsData !== 'undefined'
+      ? municipalStopsData.find(item => String(item.id) === String(stopId)) : null;
+  }
+
+  function updateSavedStop(stop, changes) {
+    if (!stop) return;
+    const saved = savedStops();
+    const id = String(stop.id);
+    const previous = saved[id] || {};
+    const next = {
+      id, name: stop.name, type: stop.type, lat: Number(stop.lat), lon: Number(stop.lon),
+      favorite: Boolean(previous.favorite), alias: String(previous.alias || ''), ...changes,
+    };
+    if (!next.favorite && !next.alias) delete saved[id];
+    else saved[id] = next;
+    saveJson(SAVED_STOPS_KEY, saved);
+    if (typeof refreshMunicipalStopPopup === 'function') refreshMunicipalStopPopup(id);
+    if (typeof renderLineList === 'function') renderLineList();
+  }
+
+  window.getSavedStops = function () {
+    return Object.values(savedStops()).filter(stop => stop && (stop.favorite || stop.alias));
+  };
+
+  window.getSavedStop = function (stopId) {
+    return savedStops()[String(stopId)] || null;
+  };
+
+  window.isFavoriteStop = function (stopId) {
+    return Boolean(savedStops()[String(stopId)]?.favorite);
+  };
+
+  window.toggleStopFavorite = function (stopId) {
+    const stop = stopById(stopId) || savedStops()[String(stopId)];
+    if (!stop) return;
+    updateSavedStop(stop, { favorite: !window.isFavoriteStop(stopId) });
+  };
+
   window.stopDisplayName = function (stop) {
-    return aliases()[String(stop.id)] || stop.name;
+    const saved = savedStops()[String(stop.id)];
+    const legacyAlias = aliases()[String(stop.id)] || '';
+    if (!saved && legacyAlias) updateSavedStop(stop, { alias: legacyAlias });
+    return saved?.alias || legacyAlias || stop.name;
   };
 
   window.editStopAlias = function (stopId) {
     const stop = typeof municipalStopsData !== 'undefined'
-      ? municipalStopsData.find(item => String(item.id) === String(stopId)) : null;
+      ? municipalStopsData.find(item => String(item.id) === String(stopId)) || savedStops()[String(stopId)]
+      : savedStops()[String(stopId)];
     if (!stop) return;
-    const saved = aliases();
-    const value = prompt('Apodo privado para esta parada:', saved[String(stopId)] || '');
+    const current = savedStops()[String(stopId)];
+    const value = prompt('Apodo privado para esta parada:', current?.alias || aliases()[String(stopId)] || '');
     if (value === null) return;
     const clean = value.trim().slice(0, 60);
-    if (clean) saved[String(stopId)] = clean;
-    else delete saved[String(stopId)];
-    saveJson(ALIASES_KEY, saved);
-    if (typeof refreshMunicipalStopPopup === 'function') refreshMunicipalStopPopup(stopId);
+    updateSavedStop(stop, { alias: clean });
   };
 
   function tokenFromHash() {
@@ -190,6 +237,7 @@
       if (currentTrip.status === 'ended') {
         stopHeartbeat();
         stopPolling();
+        dismissLegacyTrip();
       }
     } catch (error) {
       showUnavailable(error.message);
@@ -361,6 +409,17 @@
     pollTimer = null;
   }
 
+  function dismissLegacyTrip() {
+    currentTrip = null;
+    publicToken = '';
+    centeredOnce = false;
+    stopHeartbeat();
+    stopPolling();
+    if (tripLayer) tripLayer.clearLayers();
+    const bar = document.getElementById('sharedTripBar');
+    if (bar) bar.hidden = true;
+  }
+
   function startPolling() {
     if (!publicToken) return;
     stopPolling();
@@ -379,10 +438,17 @@
     };
     toggle.addEventListener('click', toggleBar);
     document.getElementById('sharedTripCenter').addEventListener('click', () => {
+      if (window.sharedBusView && typeof window.centerSharedBusView === 'function') {
+        window.centerSharedBusView();
+        return;
+      }
       centeredOnce = false;
       drawPublicTrip();
     });
-    document.getElementById('sharedTripShare').addEventListener('click', shareCurrentLink);
+    document.getElementById('sharedTripShare').addEventListener('click', () => {
+      if (window.sharedBusView && typeof window.shareCurrentBusLink === 'function') window.shareCurrentBusLink();
+      else shareCurrentLink();
+    });
     document.getElementById('sharedTripExtend').addEventListener('click', async () => {
       if (!isOwner()) return;
       try {
@@ -396,14 +462,12 @@
     document.getElementById('sharedTripEnd').addEventListener('click', async () => {
       if (!isOwner() || !confirm('¿Finalizar este viaje compartido?')) return;
       try {
-        const data = await post('/api/shared-trip/update', {
+        await post('/api/shared-trip/update', {
           token: publicToken, ownerToken: owner.ownerToken, action: 'end',
         });
-        currentTrip = data.trip;
         saveJson(OWNER_KEY, null);
         owner = null;
-        stopHeartbeat();
-        renderTrip();
+        dismissLegacyTrip();
       } catch (error) { alert(error.message); }
     });
     if (publicToken) startPolling();

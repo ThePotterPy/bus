@@ -41,6 +41,7 @@ function fixture() {
     AbortController, setTimeout, clearTimeout, console,
     window: { matchMedia: () => ({matches: true}) },
     currentLine: null, activePlanOption: null,
+    shareDestinationPickMode: null, shareBusDraft: null,
     userLocationMarker: null, lastUserAccuracy: null,
     map: { on(event, cb) { mapHandlers[event] = cb; }, handlers: mapHandlers, removeLayer() {}, setView() {}, fitBounds() {}, getPane(name) { return panes[name] || null; }, createPane(name) { return (panes[name] = { style: {} }); } },
     L: { divIcon: v => v, marker: () => ({ addTo() { return this; }, setLatLng() {} }), canvas: () => ({}), circleMarker: () => ({ addTo() { return this; }, bindPopup() { return this; } }), layerGroup: () => ({ clearLayers() {}, addLayer() {}, addTo() { return this; } }) },
@@ -52,7 +53,8 @@ function fixture() {
   };
   for (const key of ['originInput', 'destInput', 'originList', 'destList', 'originField', 'destField',
     'originAccuracy', 'planResult', 'planHint', 'planPanel', 'planBtn', 'clearPlanBtn', 'swapPlanBtn', 'calculatePlanBtn',
-    'planCompactStatus', 'planCompactActions', 'planCompactToggle', 'planCompactOriginBtn', 'planCompactDestBtn', 'planCompactSearchBtn']) {
+    'planCompactStatus', 'planCompactActions', 'planCompactToggle', 'planCompactOriginBtn', 'planCompactDestBtn', 'planCompactSearchBtn',
+    'shareBusOverlay', 'shareBusDestination', 'shareBusClearDestination']) {
     context[key] = getElement(key);
   }
   vm.createContext(context);

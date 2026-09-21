@@ -30,8 +30,9 @@ el boton de aviso de proximidad.
 
 ## Funciones
 
-- **Buscador y favoritos**: filtra las lineas por nombre o numero, y permite
-  marcar favoritas (guardadas en el navegador).
+- **Buscador y favoritos**: filtra las líneas por nombre o número, permite
+  marcar líneas favoritas y muestra solamente las paradas que el usuario
+  guardó como favoritas o identificó con un apodo privado.
 - **Rumbo real de cada unidad**: la flecha de cada bus no solo usa el rumbo
   que informa JAHA (`sen`), sino que ademas calcula su propio rumbo a partir
   del desplazamiento real entre posiciones sucesivas, con suavizado (para
@@ -84,12 +85,11 @@ el boton de aviso de proximidad.
   sugerencia con nombre o sin él. Los datos técnicos son opcionales y requieren
   una casilla marcada expresamente. Un código privado permite al remitente
   eliminar su comentario sin iniciar sesión.
-- **Viajes y paradas compartidos**: cada dispositivo puede compartir una parada,
-  marcar el bus en el que viaja y elegir una parada de descenso mediante un
-  enlace temporal. El receptor ve únicamente posiciones públicas del bus y las
-  paradas seleccionadas; las coordenadas del pasajero se usan en memoria para
-  validar proximidad y nunca se guardan ni se entregan. Los apodos de paradas son
-  privados y permanecen solamente en el navegador que los creó.
+- **Buses y paradas compartidos**: desde una unidad se genera un enlace temporal
+  que muestra únicamente ese bus. La bajada es opcional y puede ser una parada
+  oficial o un punto marcado en el mapa; cuando existe, se muestran distancia y
+  tiempo estimado. Las paradas también se pueden compartir directamente. Los
+  favoritos y apodos de paradas permanecen solamente en el navegador que los creó.
 - **Novedades visibles**: las actualizaciones no leídas muestran una campana en
   la barra superior; al abrirla se marca la novedad como vista en ese navegador.
 

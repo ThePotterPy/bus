@@ -2273,13 +2273,13 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     init_tracks_db()
     feedback_store.init()
-    feedback_store.publish_release_news("shared-trips-2026-09-20", validate_news({
-        "title": "Compartí tu viaje o una parada",
+    feedback_store.publish_release_news("share-bus-links-2026-09-21", validate_news({
+        "title": "Compartí un bus y tu punto de bajada",
         "content": (
-            "Ahora podés indicar que estás en un bus y compartir un enlace para que otra persona siga "
-            "únicamente la ubicación pública del colectivo. También podés compartir una parada, marcar "
-            "tu posible descenso y guardar apodos privados como ‘Casa de mamá’. El seguimiento vence "
-            "automáticamente y nunca publica tu ubicación personal."
+            "Ahora podés compartir una unidad para que otra persona vea solamente ese bus. De forma "
+            "opcional, podés indicar dónde querés bajar eligiendo una parada o un punto del mapa; el "
+            "enlace muestra la distancia y el tiempo estimado. También podés compartir paradas, "
+            "guardarlas como favoritas y ponerles apodos privados como ‘Casa de mamá’."
         ),
         "tag": "mejora",
     }))
