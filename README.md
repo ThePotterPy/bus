@@ -145,9 +145,12 @@ dentro de archivos versionados.
 - `PLANNER_REFRESH_SECONDS`: intervalo para renovar el catálogo geográfico
   compartido del planificador (mínimo 5 minutos; predeterminado 30 minutos).
 - `GEOCODER_SEARCH_URL`: endpoint HTTPS de búsqueda compatible con Nominatim,
-  propio o contratado. Sin configurarlo se eligen puntos en el mapa o con GPS;
-  buscar por dirección muestra un aviso. Las búsquedas son explícitas (botón o
-  Enter), con caché y límite compartido, no consultas mientras se escribe.
+  propio o contratado. Si no está configurado y existe `TOMTOM_API_KEY`, la
+  búsqueda usa Geocoding de TomTom para Paraguay desde el servidor. Sin
+  ninguno de los dos proveedores se eligen puntos en el mapa o con GPS.
+  Las búsquedas son explícitas (botón o Enter), con caché y límite compartido,
+  no consultas mientras se escribe. La cobertura de números de casa en
+  Paraguay es limitada; verificá el punto devuelto en el mapa.
   No se utiliza por defecto el servidor público de Nominatim. Confirmar las
   condiciones y la atribución exigidas por el proveedor antes de configurarlo.
 - `OSRM_MATCH_URL`: servidor compatible con la API Match de OSRM. El valor
@@ -156,34 +159,59 @@ dentro de archivos versionados.
 - `TOMTOM_API_KEY`: clave de **Snap to Roads API**, configurada como secreto
   exclusivamente en el servidor. Si está presente, TomTom se selecciona
   automáticamente; nunca se incluye en JavaScript ni en respuestas HTTP.
-- `MATCH_PROVIDER`: `tomtom`, `osrm` o `disabled`. Si se elige TomTom, el modo
-  sombra está activo por defecto: valida y guarda temporalmente la geometría,
-  pero todavía no modifica las líneas visibles.
-- `MATCH_SHADOW_MODE=0`: publica los tramos validados. Activarlo debe hacerse
-  después de revisar los resultados de la fase inicial.
-- `TOMTOM_MONTHLY_LIMIT` y `TOMTOM_WEEKLY_LIMIT`: topes duros de solicitudes
-  (predeterminados: 2200 al mes y 400 por ejecución semanal). Las respuestas
+- `MATCH_PROVIDER`: `tomtom`, `osrm` o `disabled`. TomTom siempre guarda los
+  trazos como candidatos: ni siquiera `MATCH_SHADOW_MODE=0` los publica sin
+  aprobación humana. `MATCH_SHADOW_MODE` conserva su efecto para OSRM.
+- `TOMTOM_MONTHLY_LIMIT` y `TOMTOM_WEEKLY_LIMIT`: tope de solicitudes TomTom
+  para todas las acciones (2200 al mes) y tope de intentos del lote programado
+  (400 por semana) de forma predeterminada. La validación manual y el reajuste
+  no consumen el cupo del lote, pero sí el mensual. Las respuestas
   recuperadas de caché no consumen presupuesto. Los fragmentos consecutivos
   del mismo bus y viaje se agrupan en una sola solicitud para reducir consumo
   y obtener una geometría más coherente.
+- `TOMTOM_MIN_INTERVAL_SECONDS`: intervalo mínimo entre solicitudes Snap to
+  Roads, predeterminado 1 segundo. Los HTTP 429 se pausan y se registran como
+  límite de velocidad, no como mala geometría.
 - `TOMTOM_WEEKDAY` y `TOMTOM_HOUR`: día (`0` lunes a `6` domingo) y hora local
   de Asunción para el lote; los valores predeterminados son domingo a las 03:00.
+  Si la aplicación estuvo apagada a esa hora, reanuda el lote pendiente al
+  arrancar. Conserva en SQLite el número de intentos para no repetir ni superar
+  el cupo semanal después de un reinicio. En la primera instalación de este
+  programador, espera al siguiente horario semanal para evitar un gasto masivo
+  imprevisto; el botón manual sigue disponible.
 - `MATCH_RUN_ON_START=1`: ejecuta un primer lote al iniciar. Se recomienda
-  dejarlo apagado hasta verificar la configuración y el presupuesto.
+  dejarlo apagado hasta verificar la configuración y el presupuesto. El lote
+  inmediato usa el mismo cupo semanal persistente, no un cupo adicional.
 - `OBSERVED_RAW_RETENTION_DAYS`: retención de puntos GPS y trabajos pendientes
-  (predeterminado: 7). Las líneas confirmadas y sus conteos agregados permanecen.
+  (predeterminado: 7). Un candidato TomTom conserva los puntos hasta la
+  revisión o el límite de 30 días; las líneas confirmadas permanecen.
+- `VOLUME_BUDGET_BYTES`: presupuesto de datos para alertas de volumen
+  (predeterminado 5 GB). `/api/observed-health` informa bytes usados y avisa
+  desde el 80%; también estima las páginas reutilizables dentro de SQLite.
+  No ejecuta VACUUM ni borra geometrías confirmadas.
+  Las pasadas con más de 90 días se compactan gradualmente (hasta 5000 por
+  mantenimiento) en conteos por tramo y unidad; se conservan los buses
+  históricos sin acumular una fila por viaje para siempre. SQLite reutiliza
+  páginas liberadas, pero el archivo existente no se achica de inmediato.
+  Una compactación física requeriría una ventana de mantenimiento, copia de
+  seguridad y espacio adicional; no se ejecuta automáticamente en Railway.
 - `MATCH_MAX_PENDING_JOBS` y `MATCH_MAX_ATTEMPTS`: límites de cola y reintentos
   (predeterminados: 5000 y 8).
 - `OBSERVED_MIN_CONFIRMED_BUSES` y `OBSERVED_MIN_CONFIRMED_PASSES`: evidencia
   mínima para mostrar un tramo confirmado (predeterminado: 2 buses o 2 pasadas).
 
 El panel privado `/admin/feedback` incluye una pestaña **Auditoría de rutas**.
-Durante el modo sombra permite comparar los puntos GPS de los últimos siete
-días con la geometría ajustada, revisar confianza, rechazos, cola y presupuesto.
-Los puntos dejan de estar disponibles al vencer la retención; las métricas y
-geometrías de auditoría se conservan durante 30 días. El botón **Validar 1
-ahora** ejecuta una prueba controlada de un solo recorrido, exige sesión y token
-CSRF, solo funciona en modo sombra y respeta el límite mensual.
+Permite comparar GPS, puntos proyectados, confianza por tramo y geometría
+ajustada sobre OpenFreeMap o, opcionalmente, un mapa TomTom privado. Cada
+resultado TomTom se debe **aprobar y publicar** o **descartar**; una aprobación
+se puede deshacer mientras se conserve su registro (30 días). Los candidatos
+sin revisar y las métricas de auditoría se conservan hasta 30 días. El botón
+**Validar 1 ahora** consume como máximo una solicitud TomTom, exige sesión y
+token CSRF y respeta el límite mensual. Tampoco publica automáticamente.
+Si hay pocos puntos GPS interiores desplazados más de 20 m, **Reajustar puntos
+desviados** crea una alternativa con otra solicitud TomTom. El candidato
+original queda intacto; ambas geometrías se comparan en el mapa y se elige
+explícitamente cuál publicar. No se eliminan datos confirmados automáticamente.
 - `FEEDBACK_ADMIN_PASSWORD`: contraseña exclusiva del panel de comentarios,
   con al menos 16 caracteres. Sin ella el panel no permite iniciar sesión.
 

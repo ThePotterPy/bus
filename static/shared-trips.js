@@ -299,6 +299,7 @@
     document.getElementById('sharedTripEnd').hidden = !isOwner() || currentTrip.status === 'ended';
     document.getElementById('sharedTripEnd').textContent = currentTrip.status === 'on_bus' ? 'Me bajé / finalizar' : 'Finalizar';
     document.getElementById('sharedTripExtend').hidden = !isOwner() || currentTrip.status === 'ended' || currentTrip.extended;
+    document.getElementById('sharedTripLeave').hidden = isOwner();
     document.getElementById('sharedTripShare').hidden = currentTrip.status === 'ended';
     drawPublicTrip();
   }
@@ -359,6 +360,7 @@
     document.getElementById('sharedTripSubtitle').textContent = message;
     document.getElementById('sharedTripDetail').textContent = 'El enlace pudo vencer o haber sido finalizado.';
     document.getElementById('sharedTripEnd').hidden = true;
+    document.getElementById('sharedTripLeave').hidden = !publicToken || isOwner();
     document.getElementById('sharedTripShare').hidden = true;
     document.getElementById('sharedTripExtend').hidden = true;
   }
@@ -448,6 +450,15 @@
     document.getElementById('sharedTripShare').addEventListener('click', () => {
       if (window.sharedBusView && typeof window.shareCurrentBusLink === 'function') window.shareCurrentBusLink();
       else shareCurrentLink();
+    });
+    document.getElementById('sharedTripLeave').addEventListener('click', () => {
+      if (window.sharedBusView && typeof window.stopSharedBusView === 'function') {
+        window.stopSharedBusView();
+        return;
+      }
+      if (isOwner()) return;
+      history.replaceState(null, '', location.pathname + location.search);
+      dismissLegacyTrip();
     });
     document.getElementById('sharedTripExtend').addEventListener('click', async () => {
       if (!isOwner()) return;

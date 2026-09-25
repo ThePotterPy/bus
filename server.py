@@ -39,10 +39,13 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs, urlencode
+from urllib.parse import urlparse, parse_qs, urlencode, quote
+from email import policy
+from email.parser import BytesParser
 from feedback import FeedbackStore, SESSION_SECONDS, validate_feedback, validate_news
 from observed_routes import ObservedRoutes
 from shared_trips import SharedTripStore
+from stop_reports import StopReportStore, in_paraguay, haversine_meters
 
 # Railway (y otros hosts similares) asignan el puerto via la variable de
 # entorno PORT; en local usamos 8787 si no esta definida.
@@ -58,8 +61,15 @@ VAPID_FILE = DATA_DIR / "vapid_private.pem"
 TRACKS_DB_FILE = DATA_DIR / "observed_bus_tracks.sqlite3"
 FEEDBACK_DB_FILE = DATA_DIR / "feedback.sqlite3"
 SHARED_TRIPS_DB_FILE = DATA_DIR / "shared_trips.sqlite3"
+COMMUNITY_STOPS_FILE = DATA_DIR / "community_stops.json"
+STOP_PHOTOS_DIR = DATA_DIR / "stop_photos"
+STOP_REPORTS_DB_FILE = DATA_DIR / "stop_reports.sqlite3"
+PLANNER_ROUTES_CACHE_FILE = DATA_DIR / "planner_routes_cache.json"
+
 feedback_store = FeedbackStore(FEEDBACK_DB_FILE)
 shared_trip_store = SharedTripStore(SHARED_TRIPS_DB_FILE)
+stop_report_store = StopReportStore(STOP_REPORTS_DB_FILE, STOP_PHOTOS_DIR, COMMUNITY_STOPS_FILE)
+stop_report_store.init()
 
 def _load_municipal_json(filename: str) -> list[dict]:
     for directory in (DATA_DIR, BASE_DIR / "data"):
@@ -75,6 +85,31 @@ def _load_municipal_json(filename: str) -> list[dict]:
 _asuncion_stops: list[dict] = _load_municipal_json("asuncion_stops.json")
 _asuncion_traffic_lights: list[dict] = _load_municipal_json("asuncion_traffic_lights.json")
 _asuncion_pois: list[dict] = _load_municipal_json("asuncion_pois.json")
+
+
+def get_all_stops_combined() -> list[dict]:
+    """Combina paradas oficiales municipales con paradas comunitarias aprobadas."""
+    official = _asuncion_stops or []
+    community = []
+    if COMMUNITY_STOPS_FILE.exists():
+        try:
+            with open(COMMUNITY_STOPS_FILE, "r", encoding="utf-8") as f:
+                community = json.load(f)
+        except Exception:
+            pass
+    seen = set()
+    res = []
+    for s in official:
+        sid = s.get("id")
+        if sid:
+            seen.add(sid)
+        res.append(s)
+    for s in community:
+        sid = s.get("id")
+        if sid and sid not in seen:
+            seen.add(sid)
+            res.append(s)
+    return res
 
 
 def _feedback_admin_password() -> str:
@@ -109,6 +144,7 @@ observed_routes = ObservedRoutes(
     match_run_on_start=os.environ.get("MATCH_RUN_ON_START", "0") == "1",
     min_confirmed_buses=int(os.environ.get("OBSERVED_MIN_CONFIRMED_BUSES", "2")),
     min_confirmed_passes=int(os.environ.get("OBSERVED_MIN_CONFIRMED_PASSES", "2")),
+    tomtom_min_interval=float(os.environ.get("TOMTOM_MIN_INTERVAL_SECONDS", "1")),
 )
 # Un conjunto fijo de candados evita que identificadores arbitrarios enviados
 # por Internet hagan crecer un diccionario para siempre.
@@ -370,7 +406,7 @@ def valid_client_id(value) -> bool:
 def official_stop(stop_id) -> dict | None:
     if not isinstance(stop_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", stop_id):
         return None
-    return next((stop for stop in _asuncion_stops if stop.get("id") == stop_id), None)
+    return next((stop for stop in get_all_stops_combined() if stop.get("id") == stop_id), None)
 
 
 def public_stop(stop_id) -> dict | None:
@@ -801,14 +837,57 @@ GEOCODER_SEARCH_URL = os.environ.get("GEOCODER_SEARCH_URL", "").strip()
 _geocode_lock = threading.Lock()
 _geocode_cache = {}
 _geocode_last_request = 0.0
+_volume_stats_lock = threading.Lock()
+_volume_stats_cache = (0.0, {})
+
+
+def volume_stats():
+    """A cached estimate of app data against the Railway volume allowance."""
+    global _volume_stats_cache
+    with _volume_stats_lock:
+        if time.monotonic() - _volume_stats_cache[0] < 60:
+            return _volume_stats_cache[1]
+        used = 0
+        sqlite_files = []
+        for directory, _, names in os.walk(DATA_DIR):
+            for name in names:
+                try:
+                    path = Path(directory) / name
+                    used += path.stat().st_size
+                    if name.endswith('.sqlite3'):
+                        sqlite_files.append(path)
+                except OSError:
+                    pass
+        # Free SQLite pages still occupy the volume. Report their size so an
+        # operator can plan a backed-up compaction, never run one in a request.
+        reclaimable = 0
+        for path in sqlite_files:
+            try:
+                with sqlite3.connect(path, timeout=2) as db:
+                    free_pages = db.execute('PRAGMA freelist_count').fetchone()[0]
+                    page_size = db.execute('PRAGMA page_size').fetchone()[0]
+                    reclaimable += free_pages * page_size
+            except (OSError, sqlite3.Error):
+                pass
+        try:
+            budget = max(1, int(os.environ.get("VOLUME_BUDGET_BYTES", "5000000000")))
+        except ValueError:
+            budget = 5_000_000_000
+        stats = {"used_bytes": used, "budget_bytes": budget,
+                 "used_percent": round(100 * used / budget, 1),
+                 "remaining_estimate_bytes": max(0, budget - used),
+                 "sqlite_reclaimable_estimate_bytes": reclaimable}
+        _volume_stats_cache = (time.monotonic(), stats)
+        return stats
 
 
 def search_address(query):
     global _geocode_last_request
     if not isinstance(query, str) or not 3 <= len(query.strip()) <= 200:
         return 400, {"success": False, "error": "Escribí entre 3 y 200 caracteres."}
+    use_tomtom = not GEOCODER_SEARCH_URL and bool(_tomtom_api_key)
     endpoint = urlparse(GEOCODER_SEARCH_URL)
-    if endpoint.scheme != "https" or not endpoint.hostname:
+    if not use_tomtom and (endpoint.scheme != "https" or not endpoint.hostname):
         return 503, {"success": False, "error": "La búsqueda de direcciones no está configurada. Usá tu ubicación o elegí el punto en el mapa."}
     query = query.strip()
     with _geocode_lock:
@@ -819,8 +898,12 @@ def search_address(query):
         if now - _geocode_last_request < 1.1:
             return 429, {"success": False, "error": "Esperá un momento antes de buscar de nuevo."}
         _geocode_last_request = now
-        separator = "&" if endpoint.query else "?"
-        url = GEOCODER_SEARCH_URL + separator + urlencode({"format": "json", "countrycodes": "py", "limit": 5, "q": query})
+        if use_tomtom:
+            url = ("https://api.tomtom.com/search/2/geocode/" + quote(query, safe="") +
+                   ".json?" + urlencode({"key": _tomtom_api_key, "countrySet": "PY", "limit": 5}))
+        else:
+            separator = "&" if endpoint.query else "?"
+            url = GEOCODER_SEARCH_URL + separator + urlencode({"format": "json", "countrycodes": "py", "limit": 5, "q": query})
         request = urllib.request.Request(url, headers={"User-Agent": "ColectivosRoutePlanner/1.0", "Accept": "application/json"})
         try:
             with urllib.request.urlopen(request, timeout=10) as response:
@@ -828,6 +911,8 @@ def search_address(query):
             if len(raw) > 512 * 1024:
                 raise ValueError("oversized geocoder response")
             items = json.loads(raw)
+            if use_tomtom:
+                items = items.get("results") if isinstance(items, dict) else None
             if not isinstance(items, list):
                 raise ValueError("invalid geocoder response")
             results = []
@@ -835,11 +920,15 @@ def search_address(query):
                 if not isinstance(item, dict):
                     continue
                 try:
-                    lat, lon = float(item["lat"]), float(item["lon"])
+                    position = (item.get("position") or {}) if use_tomtom else item
+                    lat, lon = float(position["lat"]), float(position["lon"])
                 except (KeyError, TypeError, ValueError):
                     continue
-                if valid_coordinates(lat, lon):
-                    results.append({"lat": lat, "lon": lon, "display_name": str(item.get("display_name") or "Punto del mapa")[:500]})
+                if valid_coordinates(lat, lon) and (not use_tomtom or
+                    (item.get("address") or {}).get("countryCode", "PY") == "PY"):
+                    label = ((item.get("address") or {}).get("freeformAddress") if use_tomtom
+                             else item.get("display_name"))
+                    results.append({"lat": lat, "lon": lon, "display_name": str(label or "Punto del mapa")[:500]})
         except (OSError, ValueError):
             return 502, {"success": False, "error": "No se pudo buscar la dirección. Podés elegir el punto en el mapa."}
         if len(_geocode_cache) >= 256:
@@ -851,6 +940,50 @@ _all_paths_cache: dict[str, list[dict]] = {}
 _all_paths_lock = threading.Lock()
 _all_lines_info: list[dict] = []
 _planner_last_refresh = 0.0
+
+
+def _load_planner_routes_from_disk():
+    global _all_paths_cache
+    for path in (PLANNER_ROUTES_CACHE_FILE, BASE_DIR / "data" / "planner_routes_cache.json"):
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                loaded = {}
+                for k, rlist in data.items():
+                    loaded[k] = []
+                    for r in rlist:
+                        rc = dict(r)
+                        rc["points"] = [tuple(p) for p in rc.get("points", [])]
+                        rc["bbox"] = tuple(rc.get("bbox", (-90, -180, 90, 180)))
+                        rc["gaps"] = set(rc.get("gaps", ()))
+                        loaded[k].append(rc)
+                with _all_paths_lock:
+                    _all_paths_cache.clear()
+                    _all_paths_cache.update(loaded)
+                print(f"Rutas de colectivos cargadas desde disco: {len(loaded)} líneas")
+                return
+            except Exception as e:
+                print(f"Error cargando planner_routes_cache: {e}")
+
+
+def _save_planner_routes_to_disk():
+    try:
+        data = {}
+        with _all_paths_lock:
+            for k, rlist in _all_paths_cache.items():
+                data[k] = []
+                for r in rlist:
+                    rc = dict(r)
+                    rc["gaps"] = list(rc.get("gaps", ()))
+                    data[k].append(rc)
+        with open(PLANNER_ROUTES_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except Exception as e:
+        print(f"Error guardando planner_routes_cache: {e}")
+
+
+_load_planner_routes_from_disk()
 
 
 def planner_route_direction(value) -> str | None:
@@ -993,6 +1126,7 @@ def refresh_planner_paths(lines: list[dict] | None = None, max_workers: int = 4)
         _all_paths_cache.update(refreshed)
         _all_lines_info = lines
         _planner_last_refresh = time.time()
+    _save_planner_routes_to_disk()
     return sum(bool(routes) for routes in refreshed.values())
 
 
@@ -1042,6 +1176,74 @@ def project_point_to_planner_route(lat: float, lon: float, route: dict) -> dict 
                 "segment": index,
             }
     return best
+
+
+MAX_STOP_TO_ROUTE_DISTANCE_METERS = 150.0
+
+
+def find_nearby_bus_routes(lat: float, lon: float, max_meters: float = MAX_STOP_TO_ROUTE_DISTANCE_METERS) -> list[dict]:
+    """
+    Encuentra todos los ramales y líneas de colectivos a menos de max_meters de las coordenadas dadas.
+    Retorna lista ordenada por distancia en metros.
+    """
+    with _all_paths_lock:
+        all_routes = [r for rlist in _all_paths_cache.values() for r in rlist]
+
+    if not all_routes:
+        _load_planner_routes_from_disk()
+        with _all_paths_lock:
+            all_routes = [r for rlist in _all_paths_cache.values() for r in rlist]
+
+    lat_margin = max_meters / 111200.0
+    lon_margin = max_meters / max(20.0, 111200.0 * math.cos(math.radians(lat)))
+    results = []
+
+    for route in all_routes:
+        bbox = route.get("bbox")
+        if not bbox:
+            continue
+        if not (bbox[0] - lat_margin <= lat <= bbox[2] + lat_margin and
+                bbox[1] - lon_margin <= lon <= bbox[3] + lon_margin):
+            continue
+        proj = project_point_to_planner_route(lat, lon, route)
+        if proj and proj["distance_m"] <= max_meters:
+            results.append({
+                "line_id": str(route.get("line_id")),
+                "line_name": route.get("line_name") or f"Línea {route.get('line_id')}",
+                "route_name": route.get("route_name") or "Recorrido",
+                "direction": route.get("direction"),
+                "distance_m": round(proj["distance_m"], 1),
+            })
+
+    results.sort(key=lambda x: x["distance_m"])
+    return results
+
+
+def get_unique_nearby_lines(nearby_routes: list[dict]) -> list[dict]:
+    """Agrupa los recorridos cercanos por línea conservando la distancia mínima y sentidos."""
+    lines_map = {}
+    for r in nearby_routes:
+        lid = str(r["line_id"])
+        if lid not in lines_map:
+            lines_map[lid] = {
+                "line_id": lid,
+                "line_name": r["line_name"],
+                "distance_m": r["distance_m"],
+                "directions": set(),
+                "routes": []
+            }
+        else:
+            lines_map[lid]["distance_m"] = min(lines_map[lid]["distance_m"], r["distance_m"])
+        if r.get("direction"):
+            lines_map[lid]["directions"].add(r["direction"])
+        if r.get("route_name") and r["route_name"] not in lines_map[lid]["routes"]:
+            lines_map[lid]["routes"].append(r["route_name"])
+
+    res = list(lines_map.values())
+    for item in res:
+        item["directions"] = sorted(list(item["directions"]))
+    res.sort(key=lambda x: x["distance_m"])
+    return res
 
 
 def plan_trip(olat: float, olon: float, dlat: float, dlon: float) -> list[dict]:
@@ -1203,7 +1405,7 @@ def haversine_km(lat1, lon1, lat2, lon2) -> float:
 def find_nearest_official_stop(lat: float, lon: float, max_meters: float = 120.0) -> dict | None:
     best = None
     best_dist = float("inf")
-    for stop in _asuncion_stops:
+    for stop in get_all_stops_combined():
         dist_m = haversine_km(lat, lon, stop["lat"], stop["lon"]) * 1000.0
         if dist_m <= max_meters and dist_m < best_dist:
             best_dist = dist_m
@@ -1460,7 +1662,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "same-origin")
-        self.send_header("Permissions-Policy", "geolocation=(self), camera=(), microphone=()")
+        self.send_header("Permissions-Policy", "geolocation=(self), camera=(self), microphone=()")
         self.send_header(
             "Content-Security-Policy",
             "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
@@ -1525,6 +1727,39 @@ class Handler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, json.JSONDecodeError):
             raise RequestBodyError(400, "JSON invalido")
 
+    def _read_multipart_body(self, max_bytes: int = 5 * 1024 * 1024) -> tuple[dict[str, str], dict[str, tuple[str, bytes]]]:
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            raise RequestBodyError(400, "Content-Length invalido")
+        if length <= 0:
+            raise RequestBodyError(400, "Falta contenido en la solicitud")
+        if length > max_bytes:
+            raise RequestBodyError(413, "El archivo supera el limite de 5 MB")
+        raw = self.rfile.read(length)
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            raise RequestBodyError(400, "Se requiere Content-Type multipart/form-data")
+
+        msg_bytes = b"Content-Type: " + content_type.encode("latin-1") + b"\r\n\r\n" + raw
+        msg = BytesParser(policy=policy.default).parsebytes(msg_bytes)
+        fields = {}
+        files = {}
+        for part in msg.iter_parts():
+            disp = part.get("Content-Disposition", "")
+            if "form-data" not in disp:
+                continue
+            name = part.get_param("name", header="content-disposition")
+            filename = part.get_param("filename", header="content-disposition")
+            if not name:
+                continue
+            payload = part.get_payload(decode=True) or b""
+            if filename:
+                files[name] = (filename, payload)
+            else:
+                fields[name] = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+        return fields, files
+
     def _feedback_admin_token(self) -> str:
         try:
             cookie = SimpleCookie()
@@ -1571,7 +1806,8 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
         # No registrar parámetros: el planificador contiene coordenadas exactas.
-        print(f"GET {parsed.path}")
+        if not parsed.path.startswith("/api/admin/tomtom-tile/"):
+            print(f"GET {parsed.path}")
 
         if parsed.path == "/" or parsed.path == "/index.html":
             self._send_file("index.html")
@@ -1586,8 +1822,17 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/news":
+            client_id = qs.get("clientId", [""])[0]
+            if client_id and not valid_client_id(client_id):
+                self._send_json_obj(400, {"success": False, "error": "clientId invalido"})
+                return
             items = feedback_store.list_news()
-            self._send_json_obj(200, {"success": True, "items": items})
+            read_id = feedback_store.get_news_read_id(client_id) if client_id else 0
+            self._send_json_obj(200, {
+                "success": True,
+                "items": items,
+                "lastSeenNewsId": read_id,
+            })
             return
 
         if parsed.path == "/api/admin/feedback/session":
@@ -1617,11 +1862,154 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, {"success": True, "items": items, "nextBefore": next_before})
             return
 
+        if parsed.path == "/api/admin/stop-reports":
+            if not self._require_feedback_admin():
+                return
+            status = qs.get("status", [None])[0]
+            if status == "todos" or not status:
+                status = None
+            elif status not in {"pendiente", "aprobada", "rechazada"}:
+                self._send_json_obj(400, {"success": False, "error": "status invalido"})
+                return
+            try:
+                before = int(qs["before"][0]) if "before" in qs else None
+                limit = int(qs.get("limit", ["50"])[0])
+            except (ValueError, IndexError):
+                self._send_json_obj(400, {"success": False, "error": "paginacion invalida"})
+                return
+            items, next_before = stop_report_store.list_reports(status, before, limit)
+            usage = stop_report_store.photos_disk_usage()
+            self._send_json_obj(200, {
+                "success": True,
+                "items": items,
+                "nextBefore": next_before,
+                "storage": usage
+            })
+            return
+
+        if parsed.path == "/api/admin/stop-reports/photo":
+            if not self._require_feedback_admin():
+                return
+            try:
+                report_id = int(qs.get("id", ["0"])[0])
+            except ValueError:
+                self._send_json_obj(400, {"success": False, "error": "id invalido"})
+                return
+            photo_path = stop_report_store.get_photo_path(report_id)
+            if not photo_path or not photo_path.exists():
+                self._send_json_obj(404, {"success": False, "error": "foto no disponible (ya fue procesada o eliminada)"})
+                return
+            data = photo_path.read_bytes()
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "image/webp")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "private, max-age=3600")
+                self.end_headers()
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionAbortedError):
+                pass
+            return
+
+        if parsed.path == "/api/stop-reports/my-status":
+            if not self._allow_request("stop-report-status", 300, 3600):
+                return
+            client_id = qs.get("clientId", [""])[0]
+            if not client_id or not valid_client_id(client_id):
+                self._send_json_obj(400, {"success": False, "error": "clientId invalido"})
+                return
+            ids_raw = qs.get("ids", [""])[0]
+            ids = []
+            if ids_raw:
+                parts = [part.strip() for part in ids_raw.split(",")]
+                if len(parts) > 30 or any(not part.isdigit() or int(part) <= 0 for part in parts):
+                    self._send_json_obj(400, {"success": False, "error": "ids invalidos"})
+                    return
+                ids = list(dict.fromkeys(int(part) for part in parts))
+            reports = stop_report_store.get_user_reports_status(client_id, ids or None)
+            self._send_json_obj(200, {"success": True, "reports": reports})
+            return
+
+        if parsed.path == "/api/stop-reports/check-location":
+            if not self._allow_request("stop-report-location", 60, 3600):
+                return
+            try:
+                lat = float(qs.get("lat", [""])[0])
+                lon = float(qs.get("lon", [""])[0])
+                accuracy = float(qs.get("accuracy", ["0"])[0]) if qs.get("accuracy") else 0.0
+            except (ValueError, IndexError):
+                self._send_json_obj(400, {"success": False, "error": "Coordenadas o precision GPS invalidas"})
+                return
+
+            if not math.isfinite(accuracy) or accuracy < 0:
+                self._send_json_obj(400, {"success": False, "error": "Precision GPS invalida"})
+                return
+
+            if not in_paraguay(lat, lon):
+                self._send_json_obj(200, {
+                    "success": True,
+                    "valid": False,
+                    "reason": "out_of_bounds",
+                    "error": "La ubicación debe estar dentro del territorio paraguayo."
+                })
+                return
+
+            if accuracy > 100:
+                self._send_json_obj(200, {
+                    "success": True,
+                    "valid": False,
+                    "reason": "poor_accuracy",
+                    "error": f"La señal GPS es imprecisa (+-{int(round(accuracy))}m). Por favor acercate a la parada o salí al exterior."
+                })
+                return
+
+            nearby_stop = find_nearest_official_stop(lat, lon, max_meters=50.0)
+            if nearby_stop:
+                self._send_json_obj(200, {
+                    "success": True,
+                    "valid": False,
+                    "reason": "duplicate_stop",
+                    "error": f"Ya existe una parada registrada a {nearby_stop['distanceMeters']}m: {nearby_stop['name']}",
+                    "nearbyStop": nearby_stop
+                })
+                return
+
+            nearby_pending = stop_report_store.find_nearby_pending(lat, lon, max_meters=50.0)
+            if nearby_pending:
+                self._send_json_obj(200, {
+                    "success": True,
+                    "valid": False,
+                    "reason": "duplicate_pending",
+                    "error": f"Ya existe un reporte en revisión para esta misma ubicación (a {nearby_pending['distanceMeters']}m).",
+                    "nearbyPending": nearby_pending
+                })
+                return
+
+            nearby_routes = find_nearby_bus_routes(lat, lon, max_meters=MAX_STOP_TO_ROUTE_DISTANCE_METERS)
+            if not nearby_routes:
+                self._send_json_obj(200, {
+                    "success": True,
+                    "valid": False,
+                    "reason": "no_bus_routes",
+                    "error": f"No se detecta ningún recorrido de colectivos cerca de este punto (a menos de {int(MAX_STOP_TO_ROUTE_DISTANCE_METERS)}m). Las paradas deben estar sobre calles donde circulen buses."
+                })
+                return
+
+            unique_lines = get_unique_nearby_lines(nearby_routes)
+            self._send_json_obj(200, {
+                "success": True,
+                "valid": True,
+                "distance_to_route_m": nearby_routes[0]["distance_m"],
+                "lines": unique_lines,
+                "routes": nearby_routes[:6]
+            })
+            return
+
         if parsed.path == "/api/admin/observed-review":
             if not self._require_feedback_admin():
                 return
             status = qs.get("status", ["all"])[0]
-            if status not in {"all", "accepted", "rejected", "pending"}:
+            if status not in {"all", "accepted", "rejected", "pending", "awaiting_review", "approved", "discarded"}:
                 self._send_json_obj(400, {"success": False, "error": "filtro inválido"})
                 return
             line = qs.get("line", [""])[0].strip()
@@ -1639,13 +2027,47 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json_obj(200, observed_routes.review(status, line, limit))
             return
 
+        if parsed.path.startswith("/api/admin/tomtom-tile/"):
+            if not self._require_feedback_admin():
+                return
+            if not self._allow_request("tomtom-map-tiles", 120):
+                return
+            match = re.fullmatch(r"/api/admin/tomtom-tile/(\d{1,2})/(\d{1,8})/(\d{1,8})\.png", parsed.path)
+            if not _tomtom_api_key or not match:
+                self.send_error(404)
+                return
+            z, x, y = map(int, match.groups())
+            if z > 22 or x >= 2**z or y >= 2**z:
+                self.send_error(404)
+                return
+            url = f"https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?" + urlencode({"key": _tomtom_api_key})
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url, headers={"Accept": "image/png"}), timeout=10) as response:
+                    tile = response.read(256 * 1024 + 1)
+                if len(tile) > 256 * 1024 or not tile.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise ValueError("respuesta de mapa inválida")
+            except (OSError, ValueError):
+                self.send_error(502)
+                return
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(tile)))
+                self.send_header("Cache-Control", "private, max-age=86400")
+                self.end_headers()
+                self.wfile.write(tile)
+            except (BrokenPipeError, ConnectionAbortedError):
+                pass
+            return
+
         if parsed.path == "/api/lines":
             all_lines = get_all_lines_combined()
             self._send_json_obj(200, {"success": True, "data": all_lines})
             return
 
         if parsed.path == "/api/stops":
-            self._send_json_obj(200, {"success": True, "count": len(_asuncion_stops), "data": _asuncion_stops})
+            all_stops = get_all_stops_combined()
+            self._send_json_obj(200, {"success": True, "count": len(all_stops), "data": all_stops})
             return
 
         if parsed.path == "/api/traffic-lights":
@@ -1668,11 +2090,15 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/observed-health":
             observed_health = observed_routes.health()
+            storage = volume_stats()
+            if storage["used_percent"] >= 80:
+                observed_health["warnings"].append("El volumen de datos supera el 80% del presupuesto configurado")
             self._send_json_obj(200, {
                 "success": True,
                 "collector_enabled": os.environ.get("OBSERVED_COLLECTOR", "1") != "0",
                 "last_cycle": observed_routes.last_cycle,
                 "railway_volume_configured": bool(os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")),
+                "storage": storage,
                 **observed_health,
             })
             return
@@ -1800,10 +2226,139 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         print(f"POST {parsed.path}")
+
+        if parsed.path == "/api/stop-report":
+            if not self._allow_request("stop-report", 5, 3600):
+                return
+            try:
+                fields, files = self._read_multipart_body()
+            except RequestBodyError as exc:
+                self._send_json_obj(exc.status, {"success": False, "error": exc.message})
+                return
+
+            client_id = fields.get("clientId", "").strip()
+            if not valid_client_id(client_id):
+                self._send_json_obj(400, {"success": False, "error": "Identificador de dispositivo (clientId) invalido"})
+                return
+
+            if stop_report_store.count_recent_by_client(client_id, 24) >= 3:
+                self._send_json_obj(429, {
+                    "success": False,
+                    "error": "Alcanzaste el limite de 3 reportes en 24 horas desde este dispositivo. ¡Muchas gracias por colaborar!"
+                })
+                return
+
+            try:
+                lat = float(fields.get("lat", ""))
+                lon = float(fields.get("lon", ""))
+                accuracy = float(fields.get("accuracy", "0"))
+            except ValueError:
+                self._send_json_obj(400, {"success": False, "error": "Coordenadas o precision GPS invalidas"})
+                return
+
+            if not math.isfinite(accuracy) or accuracy < 0:
+                self._send_json_obj(400, {"success": False, "error": "Precision GPS invalida"})
+                return
+
+            if not in_paraguay(lat, lon):
+                self._send_json_obj(400, {"success": False, "error": "La ubicacion debe estar dentro del territorio paraguayo"})
+                return
+
+            if accuracy > 100:
+                self._send_json_obj(400, {
+                    "success": False,
+                    "error": f"La senial GPS es muy imprecisa (+-{int(round(accuracy))}m). Por favor acercate a la parada o sali al exterior."
+                })
+                return
+
+            nearby_stop = find_nearest_official_stop(lat, lon, max_meters=50.0)
+            if nearby_stop:
+                self._send_json_obj(409, {
+                    "success": False,
+                    "error": f"Ya existe una parada registrada a {nearby_stop['distanceMeters']}m: {nearby_stop['name']}",
+                    "nearbyStop": nearby_stop
+                })
+                return
+
+            nearby_pending = stop_report_store.find_nearby_pending(lat, lon, max_meters=50.0)
+            if nearby_pending:
+                self._send_json_obj(409, {
+                    "success": False,
+                    "error": f"Ya existe un reporte en revision para esta misma ubicacion (a {nearby_pending['distanceMeters']}m).",
+                    "nearbyPending": nearby_pending
+                })
+                return
+
+            nearby_routes = find_nearby_bus_routes(lat, lon, max_meters=MAX_STOP_TO_ROUTE_DISTANCE_METERS)
+            if not nearby_routes:
+                self._send_json_obj(400, {
+                    "success": False,
+                    "error": f"No se detectó ningún recorrido de colectivos cerca de esta ubicación (a menos de {int(MAX_STOP_TO_ROUTE_DISTANCE_METERS)}m). Las paradas deben ubicarse sobre una calle por donde circule alguna línea de transporte público."
+                })
+                return
+
+            unique_lines = get_unique_nearby_lines(nearby_routes)
+
+            if "photo" not in files:
+                self._send_json_obj(400, {"success": False, "error": "Es obligatorio adjuntar una foto de la parada"})
+                return
+
+            photo_filename, photo_bytes = files["photo"]
+            if len(photo_bytes) < 100:
+                self._send_json_obj(400, {"success": False, "error": "El archivo de imagen esta vacio o corrupto"})
+                return
+
+            description = fields.get("description", "")
+            reporter_name = fields.get("name", "")
+
+            push_sub = None
+            push_raw = fields.get("pushSubscription")
+            if push_raw:
+                try:
+                    push_sub = json.loads(push_raw)
+                    if not isinstance(push_sub, dict) or not push_sub.get("endpoint"):
+                        push_sub = None
+                except Exception:
+                    push_sub = None
+
+            try:
+                res = stop_report_store.create(
+                    lat=lat, lon=lon, accuracy=accuracy, raw_photo_bytes=photo_bytes,
+                    client_id=client_id, description=description,
+                    reporter_name=reporter_name, push_subscription=push_sub,
+                    nearby_lines=unique_lines
+                )
+            except Exception as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+
+            self._send_json_obj(201, {
+                "success": True,
+                "id": res["id"],
+                "lines": unique_lines,
+                "message": "¡Reporte enviado exitosamente! Sera revisado por un administrador."
+            })
+            return
+
         try:
             body = self._read_json_body()
         except RequestBodyError as exc:
             self._send_json_obj(exc.status, {"success": False, "error": exc.message})
+            return
+
+        if parsed.path == "/api/news/read":
+            if not self._allow_request("news-read", 60, 3600):
+                return
+            if not isinstance(body, dict):
+                self._send_json_obj(400, {"success": False, "error": "datos invalidos"})
+                return
+            client_id = body.get("clientId")
+            news_id = body.get("newsId")
+            if not valid_client_id(client_id) or type(news_id) is not int or news_id < 0:
+                self._send_json_obj(400, {"success": False, "error": "clientId o newsId invalidos"})
+                return
+            read_id = feedback_store.mark_news_read(client_id, news_id)
+            self._send_json_obj(200, {"success": True, "lastSeenNewsId": read_id})
             return
 
         if parsed.path == "/api/feedback":
@@ -1890,15 +2445,39 @@ class Handler(BaseHTTPRequestHandler):
             if observed_routes.match_provider != "tomtom" or not observed_routes.matching_enabled():
                 self._send_json_obj(409, {"success": False, "error": "TomTom no está configurado"})
                 return
-            if not observed_routes.shadow_mode:
-                self._send_json_obj(409, {"success": False, "error": "la prueba manual exige modo sombra"})
-                return
             result = observed_routes.run_match_batch(limit=1)
             self._send_json_obj(200, {
                 "success": True,
                 **result,
                 "health": observed_routes.health(),
             })
+            return
+
+        if parsed.path == "/api/admin/observed-review/decide":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            try:
+                result = observed_routes.decide_review(
+                    body.get("id") if isinstance(body, dict) else None,
+                    body.get("action") if isinstance(body, dict) else None,
+                    body.get("note", "") if isinstance(body, dict) else "",
+                    variant=body.get("variant", "original") if isinstance(body, dict) else "original")
+            except ValueError as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+            self._send_json_obj(200, result)
+            return
+
+        if parsed.path == "/api/admin/observed-review/refine":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            try:
+                result = observed_routes.refine_review(
+                    body.get("id") if isinstance(body, dict) else None)
+            except ValueError as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+            self._send_json_obj(200, result)
             return
 
         if parsed.path == "/api/admin/news/delete":
@@ -1910,6 +2489,55 @@ class Handler(BaseHTTPRequestHandler):
                 return
             deleted = feedback_store.delete_news(news_id)
             self._send_json_obj(200 if deleted else 404, {"success": deleted})
+            return
+
+        if parsed.path == "/api/admin/stop-reports/review":
+            if not self._require_feedback_admin(csrf=True):
+                return
+            report_id = body.get("id") if isinstance(body, dict) else None
+            action = body.get("action") if isinstance(body, dict) else None
+            if type(report_id) is not int or not action:
+                self._send_json_obj(400, {"success": False, "error": "Datos de revision incompletos"})
+                return
+            try:
+                res = stop_report_store.review(
+                    report_id=report_id,
+                    action=action,
+                    admin_notes=body.get("admin_notes", ""),
+                    street_name=body.get("street_name", ""),
+                    street_side=body.get("street_side", ""),
+                    stop_name=body.get("stop_name", ""),
+                    stop_type=body.get("stop_type", "refugio"),
+                    rejection_reason=body.get("rejection_reason", "")
+                )
+            except Exception as exc:
+                self._send_json_obj(400, {"success": False, "error": str(exc)})
+                return
+
+            notify_user = body.get("notify_user", True)
+            push_sub = res.get("push_subscription")
+            if notify_user and push_sub:
+                try:
+                    if action == "aprobar":
+                        sname = body.get("stop_name") or body.get("street_name") or "tu parada"
+                        send_push(
+                            push_sub,
+                            "\U0001f389 ¡Parada agregada al mapa!",
+                            f"Tu reporte de parada en {sname} fue aprobado y ya esta en JAHA."
+                        )
+                        stop_report_store.mark_notified(report_id)
+                    elif action in ("rechazar", "duplicada"):
+                        reason = body.get("rejection_reason") or "No cumple con las pautas de paradas"
+                        send_push(
+                            push_sub,
+                            "\u274c Reporte de parada no aprobado",
+                            f"Tu carga de parada no fue aprobada: {reason}"
+                        )
+                        stop_report_store.mark_notified(report_id)
+                except Exception as p_err:
+                    print(f"Error enviando push de parada: {p_err}")
+
+            self._send_json_obj(200, {"success": True, "data": res})
             return
 
         if parsed.path == "/api/shared-trip/start":
@@ -2261,11 +2889,13 @@ def osrm_processor_loop():
 
 def feedback_prune_loop():
     while not observed_routes.stop.is_set():
-        try:
-            feedback_store.prune()
-            shared_trip_store.prune()
-        except sqlite3.Error as exc:
-            print(f"Error al depurar datos temporales: {exc}")
+        for name, prune in (("comentarios", feedback_store.prune),
+                            ("viajes compartidos", shared_trip_store.prune),
+                            ("reportes de paradas", stop_report_store.prune)):
+            try:
+                prune()
+            except Exception as exc:
+                print(f"Error al depurar {name}: {exc}")
         observed_routes.stop.wait(3600)
 
 
@@ -2315,8 +2945,7 @@ def main():
     if not observed_routes.matching_enabled():
         print("Map matching no configurado: las estelas se conservan como puntos GPS pendientes de ajuste.")
     elif observed_routes.match_provider == "tomtom":
-        mode = "sombra" if observed_routes.shadow_mode else "publicacion"
-        print(f"TomTom Snap to Roads activo en modo {mode}; lote semanal limitado a "
+        print(f"TomTom Snap to Roads activo con aprobación humana; lote semanal limitado a "
               f"{observed_routes.weekly_match_limit} solicitudes.")
 
     if PUSH_AVAILABLE:

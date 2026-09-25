@@ -41,7 +41,7 @@ class TripPlannerTests(unittest.TestCase):
         self.assertEqual(server.planner_route_direction("Centro Vuelta"), "Vuelta")
 
     def test_geocoder_requires_configuration_and_never_calls_public_service(self):
-        with patch.object(server, "GEOCODER_SEARCH_URL", ""), patch.object(server.urllib.request, "urlopen") as request:
+        with patch.object(server, "GEOCODER_SEARCH_URL", ""), patch.object(server, "_tomtom_api_key", ""), patch.object(server.urllib.request, "urlopen") as request:
             status, result = server.search_address("Terminal")
         self.assertEqual(status, 503)
         self.assertFalse(result["success"])
@@ -65,6 +65,23 @@ class TripPlannerTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(limited[0], 429)
         request.assert_called_once()
+
+    def test_geocoder_uses_tomtom_server_side_for_paraguay(self):
+        response = Mock()
+        response.read.return_value = (b'{"results":['
+            b'{"position":{"lat":-25.3,"lon":-57.6},"address":{"countryCode":"PY","freeformAddress":"Terminal, Asunci\\u00f3n"}},'
+            b'{"position":{"lat":-34,"lon":-58},"address":{"countryCode":"AR","freeformAddress":"Buenos Aires"}}]}')
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        with patch.object(server, "GEOCODER_SEARCH_URL", ""), patch.object(server, "_tomtom_api_key", "server-secret"), \
+             patch.object(server, "_geocode_cache", {}), patch.object(server, "_geocode_last_request", 0), \
+             patch.object(server.urllib.request, "urlopen", return_value=response) as request:
+            status, payload = server.search_address("Terminal")
+        self.assertEqual(status, 200)
+        self.assertEqual(len(payload["data"]), 1)
+        self.assertEqual(payload["data"][0]["display_name"], "Terminal, Asunción")
+        self.assertIn("countrySet=PY", request.call_args.args[0].full_url)
+        self.assertNotIn("server-secret", str(payload))
 
     def setUp(self):
         self.line = {"id": "30", "name": "LINEA 30", "provider": "jaha"}

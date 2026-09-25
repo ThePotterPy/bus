@@ -150,6 +150,20 @@ class ObservedTests(unittest.TestCase):
         self.assertTrue(archived)
         self.assertTrue(all(e['archived'] and e['buses']==0 and e['historical_buses']==1 for e in archived))
 
+    def test_old_passages_are_compacted_without_inflating_bus_history(self):
+        self.travel(); self.process()
+        later = NOW+91*86400
+        self.store.maintain(later)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM observed_passages').fetchone()[0], 0)
+            self.assertGreater(db.execute('SELECT COUNT(*) FROM observed_passage_archive').fetchone()[0], 0)
+        self.travel(start=later)
+        self.process(later+300)
+        archived = self.snap(now=later+301, history=True)['alternatives']
+        self.assertTrue(archived)
+        self.assertTrue(all(edge['historical_buses'] == 1 and edge['buses'] == 1
+                            for edge in archived))
+
     def test_unreliable_offline_flag_accepts_real_movement_only(self):
         self.assertEqual(sample_time({'online':0}, NOW), NOW)
         # A frozen coordinate marked offline establishes a baseline but never
@@ -252,6 +266,156 @@ class ObservedTests(unittest.TestCase):
         self.assertTrue(self.store._reserve_match_request(NOW))
         self.assertFalse(self.store._reserve_match_request(NOW+1))
         self.assertEqual(self.store.health(NOW)['monthly_requests'], 1)
+
+    def test_tomtom_candidate_requires_human_approval_and_can_be_retracted(self):
+        self.travel()
+        class Matcher:
+            last_quality = {'minimum_confidence': .96, 'matched_ratio': 1}
+            last_details = {'projected_points': [{'index': 0, 'point': [-25.002, -57], 'offset_m': 0}],
+                            'segments': [{'confidence': .96, 'roadUse': 'Local'}]}
+            def __call__(self, points):
+                return [[p[:2] for p in points]]
+        self.store.match_provider = 'tomtom'
+        self.store.tomtom_matcher = Matcher()
+        self.store.shadow_mode = False
+        self.assertTrue(self.store.process_one(now=NOW+300))
+        review = self.store.review('awaiting_review', now=NOW+301)
+        self.assertEqual(len(review['items']), 1)
+        item = review['items'][0]
+        self.assertEqual(item['matching_details']['segments'][0]['roadUse'], 'Local')
+        self.assertFalse(self.snap()['alternatives'])
+        self.assertEqual(self.store.decide_review(item['id'], 'approve', now=NOW+302)['status'], 'approved')
+        self.assertTrue(self.snap()['alternatives'])
+        self.assertFalse(self.store.decide_review(item['id'], 'approve', now=NOW+303)['changed'])
+        self.assertEqual(self.store.decide_review(item['id'], 'discard', 'Cruza una casa', NOW+304)['status'], 'discarded')
+        self.assertFalse(self.snap()['alternatives'])
+        self.assertEqual(self.store.review('discarded', now=NOW+305)['items'][0]['review_note'], 'Cruza una casa')
+
+    def test_tomtom_rate_limit_is_not_treated_as_bad_geometry(self):
+        from urllib.error import HTTPError
+        self.travel()
+        class Matcher:
+            last_quality = {}
+            last_details = {}
+            def __call__(self, _points):
+                raise HTTPError('https://api.tomtom.com/snapToRoads/1', 429, 'Too Many Requests',
+                                {'Retry-After': '7'}, None)
+        self.store.match_provider = 'tomtom'
+        self.store.tomtom_matcher = Matcher()
+        self.assertFalse(self.store.process_one(now=NOW+300))
+        with self.store.connect() as db:
+            row = db.execute('SELECT status,attempts,next_try FROM observed_jobs').fetchone()
+            audit = db.execute('SELECT result FROM observed_match_audit').fetchone()
+        self.assertEqual((row['status'], row['attempts'], audit['result']), ('pending', 0, 'rate_limited'))
+        self.assertEqual(row['next_try'], NOW+307)
+        self.assertEqual(self.store.run_match_batch(limit=1, now=NOW+301)['attempted'], 0)
+
+    def test_missed_weekly_run_is_resumed_once_with_persistent_cap(self):
+        self.travel()
+        self.store.match_provider = 'tomtom'
+        self.store.tomtom_matcher = object()
+        self.store.weekly_match_limit = 2
+        with self.store.connect() as db:
+            previous = db.execute('SELECT MAX(scheduled_at) FROM observed_weekly_runs').fetchone()[0]
+        with patch.object(self.store, 'process_one', return_value=True) as startup_process:
+            self.assertEqual(self.store.run_due_weekly(now=previous+1)['attempted'], 0)
+        startup_process.assert_not_called()
+        missed = previous + 7*86400 + 1
+        with patch.object(self.store, 'process_one', return_value=True) as process:
+            first = self.store.run_due_weekly(now=missed)
+            second = self.store.run_due_weekly(now=missed+3600)
+        self.assertEqual(first['attempted'], 2)
+        self.assertEqual(second['attempted'], 0)
+        self.assertEqual(process.call_count, 2)
+        reopened = ObservedRoutes(self.db, match_provider='tomtom', weekly_match_limit=2)
+        reopened.tomtom_matcher = object()
+        reopened.init()
+        with patch.object(reopened, 'process_one', return_value=True) as process_after_restart:
+            self.assertEqual(reopened.run_due_weekly(now=missed+7200)['attempted'], 0)
+        process_after_restart.assert_not_called()
+
+    def test_tomtom_refinement_is_an_explicit_alternative(self):
+        self.travel()
+        class Matcher:
+            last_quality = {}
+            last_details = {}
+            calls = 0
+            def __call__(self, points):
+                self.calls += 1
+                self.last_quality = {'matched_ratio': 1}
+                self.last_details = ({'projected_points': [
+                    {'index': 3, 'point': points[3][:2], 'offset_m': 35}]}
+                    if self.calls == 1 else {'projected_points': []})
+                shift = .001 if self.calls == 2 else 0
+                return [[[point[0]-shift, point[1]] for point in points]]
+        self.store.match_provider = 'tomtom'
+        matcher = Matcher()
+        self.store.tomtom_matcher = matcher
+        self.assertTrue(self.store.process_one(now=NOW+300))
+        item = self.store.review('awaiting_review', now=NOW+301)['items'][0]
+        original = item['geometry']
+        self.assertEqual(self.store.refine_review(item['id'], now=NOW+302)['removed_gps_points'], 1)
+        self.assertFalse(self.store.refine_review(item['id'], now=NOW+303)['changed'])
+        item = self.store.review('awaiting_review', now=NOW+304)['items'][0]
+        self.assertEqual(item['geometry'], original)
+        self.assertNotEqual(item['refinement']['geometry'], original)
+        self.assertEqual(item['refinement']['metrics']['removed_gps_points'], [3])
+        self.assertEqual(matcher.calls, 2)
+        self.store.decide_review(item['id'], 'approve', now=NOW+305, variant='refined')
+        approved = self.store.review('approved', now=NOW+306)['items'][0]
+        self.assertEqual(approved['approved_variant'], 'refined')
+        with self.assertRaisesRegex(ValueError, 'descartá primero'):
+            self.store.decide_review(item['id'], 'approve', now=NOW+307, variant='original')
+
+    def test_discarding_one_review_preserves_other_approved_passages(self):
+        self.travel(unit='1')
+        self.travel(unit='2', start=NOW+500)
+        class Matcher:
+            last_quality = {}
+            last_details = {}
+            def __call__(self, points):
+                return [[p[:2] for p in points]]
+        self.store.match_provider = 'tomtom'
+        self.store.tomtom_matcher = Matcher()
+        self.assertTrue(self.store.process_one(now=NOW+900))
+        self.assertTrue(self.store.process_one(now=NOW+901))
+        ids = [item['id'] for item in self.store.review('awaiting_review', now=NOW+902)['items']]
+        self.assertEqual(len(ids), 2)
+        for job_id in ids:
+            self.store.decide_review(job_id, 'approve', now=NOW+903)
+        self.store.decide_review(ids[0], 'discard', now=NOW+904)
+        with self.store.connect() as db:
+            self.assertGreater(db.execute('SELECT COUNT(*) FROM observed_passages').fetchone()[0], 0)
+        self.store.decide_review(ids[1], 'discard', now=NOW+905)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM observed_passages').fetchone()[0], 0)
+
+    def test_overlapping_approvals_restore_original_passage_time(self):
+        self.travel()
+        class Matcher:
+            last_quality = {}
+            last_details = {}
+            def __call__(self, points):
+                return [[p[:2] for p in points]]
+        self.store.match_provider = 'tomtom'
+        self.store.tomtom_matcher = Matcher()
+        self.assertTrue(self.store.process_one(now=NOW+300))
+        with self.store.connect() as db:
+            first = db.execute("SELECT * FROM observed_jobs WHERE status='done'").fetchone()
+            db.execute('''INSERT INTO observed_jobs
+                (id,line,unit,route,passage,kind,points,seen)
+                VALUES(?,?,?,?,?,?,?,?)''',
+                ('b' * 64, first['line'], first['unit'], first['route'], first['passage'],
+                 first['kind'], first['points'], first['seen']+100))
+        self.assertTrue(self.store.process_one(now=NOW+500))
+        self.store.decide_review(first['id'], 'approve', now=NOW+501)
+        self.store.decide_review('b' * 64, 'approve', now=NOW+502)
+        self.store.decide_review('b' * 64, 'discard', now=NOW+503)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT MAX(seen) FROM observed_passages').fetchone()[0], first['seen'])
+        self.store.decide_review(first['id'], 'discard', now=NOW+504)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM observed_passages').fetchone()[0], 0)
 
     def test_tomtom_requeues_recent_legacy_provider_failures_once(self):
         self.travel()

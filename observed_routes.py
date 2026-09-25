@@ -12,6 +12,7 @@ import threading
 import time
 import unicodedata
 import urllib.request
+import urllib.error
 from datetime import datetime, timezone, timedelta
 from contextlib import contextmanager
 from urllib.parse import urlencode
@@ -56,6 +57,7 @@ class TomTomMatcher:
         self.timeout = timeout
         self.offroad_margin = max(20, min(100, int(offroad_margin)))
         self.last_quality = {}
+        self.last_details = {}
 
     @staticmethod
     def _heading(a, b):
@@ -67,6 +69,7 @@ class TomTomMatcher:
 
     def __call__(self, points):
         self.last_quality = {'input_points': len(points)}
+        self.last_details = {}
         if not self.api_key:
             raise ValueError('TOMTOM_API_KEY no configurada')
         if len(points) < 3:
@@ -87,7 +90,7 @@ class TomTomMatcher:
             })
 
         fields = ('{projectedPoints{geometry{coordinates},properties{routeIndex,snapResult}},'
-                  'route{geometry{coordinates},properties{id,confidence}},'
+                  'route{geometry{coordinates},properties{id,confidence,privateRoad,roadUse,formOfWay,frc}},'
                   'distances{total,road,offRoad,unit}}')
         query = urlencode({
             'key': self.api_key,
@@ -117,15 +120,23 @@ class TomTomMatcher:
             raise ValueError('TomTom no pudo ajustar al menos 90% de los puntos')
 
         projected_by_input = []
-        for source, item in zip(points, projected):
+        review_points = []
+        for index, (source, item) in enumerate(zip(points, projected)):
             props = item.get('properties') or {}
             coords = (item.get('geometry') or {}).get('coordinates')
             if props.get('snapResult') != 'Matched' or not isinstance(coords, list) or len(coords) < 2:
                 continue
             snapped = [float(coords[1]), float(coords[0])]
+            if not all(map(math.isfinite, snapped)) or not (-90 < snapped[0] < 90 and -180 < snapped[1] < 180):
+                continue
+            offset = round(distance(source, snapped), 1)
             projected_by_input.append((source, snapped))
-        if projected_by_input and sum(distance(source, snapped) <= self.offroad_margin
-                                      for source, snapped in projected_by_input) < math.ceil(len(points) * .9):
+            review_points.append({'index': index, 'point': snapped, 'offset_m': offset,
+                                  'route_index': props.get('routeIndex')})
+        self.last_details['projected_points'] = review_points
+        self.last_quality['projected_points'] = len(review_points)
+        if sum(distance(source, snapped) <= self.offroad_margin
+               for source, snapped in projected_by_input) < math.ceil(len(points) * .9):
             raise ValueError('Demasiados puntos quedaron lejos de la calle ajustada')
 
         distances = data.get('distances') or {}
@@ -136,7 +147,7 @@ class TomTomMatcher:
         if total_distance > 0 and offroad_distance / total_distance > .05:
             raise ValueError('TomTom detecto mas de 5% del trayecto fuera de calle')
 
-        parts, confidences = [], []
+        parts, confidences, review_segments = [], [], []
         for element in data.get('route') or []:
             coords = (element.get('geometry') or {}).get('coordinates') or []
             try:
@@ -144,13 +155,30 @@ class TomTomMatcher:
                 confidence = float((element.get('properties') or {})['confidence'])
             except (KeyError, TypeError, ValueError, IndexError):
                 continue
-            if len(path) >= 2 and all(all(math.isfinite(value) for value in point) for point in path):
+            if (len(path) >= 2 and math.isfinite(confidence) and 0 < confidence <= 1 and
+                all(math.isfinite(lat) and math.isfinite(lon) and
+                    -90 < lat < 90 and -180 < lon < 180 for lat, lon in path)):
                 parts.append(path)
                 confidences.append(confidence)
+                props = element.get('properties') or {}
+                review_segments.append({key: props.get(key) for key in
+                                        ('id', 'confidence', 'privateRoad', 'roadUse', 'formOfWay', 'frc')})
+        self.last_details['segments'] = review_segments
         if confidences:
             self.last_quality['minimum_confidence'] = round(min(confidences), 4)
         if not parts or not confidences or min(confidences) < .8:
             raise ValueError('TomTom devolvio una geometria de baja confianza')
+
+        source_segments = list(zip(points, points[1:]))
+        for path, segment in zip(parts, review_segments):
+            stride = max(1, len(path) // 100)
+            sampled = path[::stride] + ([path[-1]] if path[-1] != path[::stride][-1] else [])
+            corridor_gap = max(min(point_distance(vertex, a, b) for a, b in source_segments)
+                               for vertex in sampled)
+            segment['max_gps_corridor_m'] = round(corridor_gap, 1)
+            segment['review_flag'] = bool(segment.get('privateRoad') or
+                                          float(segment['confidence']) < .9 or corridor_gap > 50)
+        self.last_quality['flagged_segments'] = sum(s['review_flag'] for s in review_segments)
 
         source_length = length(points)
         matched_length = sum(length(path) for path in parts)
@@ -295,7 +323,8 @@ class ObservedRoutes:
                  max_pending_jobs=5000, max_job_attempts=8,
                  monthly_match_limit=2200, weekly_match_limit=400,
                  match_weekday=6, match_hour=3, match_run_on_start=False,
-                 min_confirmed_buses=1, min_confirmed_passes=1):
+                 min_confirmed_buses=1, min_confirmed_passes=1,
+                 tomtom_min_interval=1.0):
         self.path = str(path)
         self.osrm_url = osrm_url.rstrip('/')
         self.poll_seconds = max(15, poll_seconds)
@@ -303,6 +332,10 @@ class ObservedRoutes:
         if self.match_provider not in {'disabled', 'osrm', 'tomtom'}:
             raise ValueError('MATCH_PROVIDER debe ser disabled, osrm o tomtom')
         self.tomtom_matcher = TomTomMatcher(tomtom_api_key) if tomtom_api_key else None
+        self.tomtom_min_interval = max(.2, float(tomtom_min_interval))
+        self._tomtom_slot = threading.Lock()
+        self._tomtom_next_request = 0.0
+        self._tomtom_pause_until = 0.0
         self.shadow_mode = bool(shadow_mode)
         self.raw_retention = max(1, int(raw_retention_days)) * 86400
         self.max_pending_jobs = max(100, int(max_pending_jobs))
@@ -321,6 +354,7 @@ class ObservedRoutes:
         self.last_error = ''
         self.last_cycle = 0
         self.path_retry = {}
+        self._refining_jobs = set()
 
     def matching_enabled(self):
         return ((self.match_provider == 'tomtom' and self.tomtom_matcher is not None) or
@@ -331,6 +365,7 @@ class ObservedRoutes:
         conn = sqlite3.connect(self.path, timeout=30)
         conn.row_factory = sqlite3.Row
         conn.execute('PRAGMA busy_timeout=30000')
+        conn.execute('PRAGMA journal_size_limit=67108864')
         try:
             with conn:
                 yield conn
@@ -365,18 +400,71 @@ class ObservedRoutes:
                     edge TEXT, unit TEXT, passage TEXT, seen REAL,
                     PRIMARY KEY(edge, unit, passage));
                 CREATE INDEX IF NOT EXISTS observed_passages_seen ON observed_passages(edge, seen);
+                CREATE TABLE IF NOT EXISTS observed_passage_archive (
+                    edge TEXT NOT NULL, unit TEXT NOT NULL, passes INTEGER NOT NULL,
+                    last_seen REAL NOT NULL, PRIMARY KEY(edge,unit));
                 CREATE TABLE IF NOT EXISTS observed_match_cache (
                     key TEXT PRIMARY KEY, geometry TEXT, created REAL);
+                CREATE TABLE IF NOT EXISTS observed_review_publications (
+                    job TEXT NOT NULL, edge TEXT NOT NULL, unit TEXT NOT NULL,
+                    passage TEXT NOT NULL, baseline INTEGER NOT NULL DEFAULT 0,
+                    baseline_seen REAL, published_seen REAL,
+                    PRIMARY KEY(job,edge));
                 CREATE TABLE IF NOT EXISTS observed_api_usage (
                     period TEXT, provider TEXT, requests INTEGER NOT NULL DEFAULT 0,
                     updated REAL NOT NULL,
                     PRIMARY KEY(period, provider));
+                CREATE TABLE IF NOT EXISTS observed_api_events (
+                    provider TEXT NOT NULL, kind TEXT NOT NULL, created REAL NOT NULL);
+                CREATE INDEX IF NOT EXISTS observed_api_events_created ON observed_api_events(created);
                 CREATE TABLE IF NOT EXISTS observed_match_audit (
                     job TEXT PRIMARY KEY, provider TEXT NOT NULL, result TEXT NOT NULL,
                     metrics TEXT NOT NULL DEFAULT '{}', created REAL NOT NULL);
                 CREATE INDEX IF NOT EXISTS observed_match_audit_created
                     ON observed_match_audit(created);
+                CREATE TABLE IF NOT EXISTS observed_weekly_runs (
+                    scheduled_at INTEGER PRIMARY KEY,
+                    attempted INTEGER NOT NULL DEFAULT 0,
+                    completed INTEGER NOT NULL DEFAULT 0,
+                    skipped INTEGER NOT NULL DEFAULT 0,
+                    updated REAL NOT NULL);
             ''')
+            weekly_columns = {row['name'] for row in db.execute('PRAGMA table_info(observed_weekly_runs)')}
+            if 'skipped' not in weekly_columns:
+                db.execute('ALTER TABLE observed_weekly_runs ADD COLUMN skipped INTEGER NOT NULL DEFAULT 0')
+                db.execute('''UPDATE observed_weekly_runs SET skipped=1
+                    WHERE attempted=0 AND completed=0 AND scheduled_at=(
+                        SELECT MAX(scheduled_at) FROM observed_weekly_runs)''')
+            # Existing installations must not spend a full weekly API budget
+            # immediately on the first deployment of this scheduler.
+            if not db.execute('SELECT 1 FROM observed_weekly_runs LIMIT 1').fetchone():
+                stamp = time.time()
+                db.execute('''INSERT INTO observed_weekly_runs
+                    (scheduled_at,attempted,completed,skipped,updated) VALUES(?,0,0,?,?)''',
+                    (self._latest_weekly_slot(stamp), 0 if self.match_run_on_start else 1, stamp))
+            job_columns = {row['name'] for row in db.execute('PRAGMA table_info(observed_jobs)')}
+            for name, definition in (
+                ('review_status', "TEXT NOT NULL DEFAULT 'pending'"),
+                ('reviewed_at', 'REAL'),
+                ('review_note', "TEXT NOT NULL DEFAULT ''"),
+                ('matching_details', "TEXT NOT NULL DEFAULT '{}'"),
+                ('refined_geometry', "TEXT NOT NULL DEFAULT '[]'"),
+                ('refined_details', "TEXT NOT NULL DEFAULT '{}'"),
+                ('refined_metrics', "TEXT NOT NULL DEFAULT '{}'"),
+                ('refined_at', 'REAL'),
+                ('approved_variant', "TEXT NOT NULL DEFAULT 'original'"),
+            ):
+                if name not in job_columns:
+                    db.execute(f'ALTER TABLE observed_jobs ADD COLUMN {name} {definition}')
+            if 'review_status' not in job_columns:
+                db.execute("UPDATE observed_jobs SET review_status='legacy' WHERE status='done'")
+            cache_columns = {row['name'] for row in db.execute('PRAGMA table_info(observed_match_cache)')}
+            if 'details' not in cache_columns:
+                db.execute("ALTER TABLE observed_match_cache ADD COLUMN details TEXT NOT NULL DEFAULT '{}'")
+            publication_columns = {row['name'] for row in db.execute('PRAGMA table_info(observed_review_publications)')}
+            for name in ('baseline_seen', 'published_seen'):
+                if name not in publication_columns:
+                    db.execute(f'ALTER TABLE observed_review_publications ADD COLUMN {name} REAL')
             db.execute("UPDATE observed_jobs SET status='pending' WHERE status='processing' AND next_try<=?",
                        (time.time(),))
             if self.match_provider == 'tomtom':
@@ -416,8 +504,19 @@ class ObservedRoutes:
             audits = {row['result']: row['total'] for row in db.execute(
                 'SELECT result, COUNT(*) AS total FROM observed_match_audit WHERE created>=? GROUP BY result',
                 (now-30*86400,))}
+            api_events = {row['kind']: row['total'] for row in db.execute(
+                "SELECT kind,COUNT(*) AS total FROM observed_api_events WHERE created>=? GROUP BY kind",
+                (now-30*86400,))}
+            awaiting_review = db.execute("SELECT COUNT(*) FROM observed_jobs WHERE status='done' AND review_status='pending' AND id IN (SELECT job FROM observed_match_audit WHERE provider='tomtom')").fetchone()[0]
+            review_counts = {row['review_status']: row['total'] for row in db.execute('''
+                SELECT j.review_status,COUNT(*) AS total FROM observed_jobs j
+                JOIN observed_match_audit a ON a.job=j.id
+                WHERE j.status='done' AND a.provider='tomtom'
+                GROUP BY j.review_status''')}
             row = db.execute('SELECT requests FROM observed_api_usage WHERE period=? AND provider=?',
                              (self._month_key(now), self.match_provider)).fetchone()
+            weekly = db.execute('''SELECT attempted,completed FROM observed_weekly_runs
+                WHERE scheduled_at=?''', (self._latest_weekly_slot(now),)).fetchone()
         used = int(row['requests']) if row else 0
         validated = audits.get('accepted', 0)
         rejected = audits.get('rejected', 0)
@@ -431,6 +530,10 @@ class ObservedRoutes:
             warnings.append('El consumo TomTom supera el 80% del límite mensual')
         if counts.get('failed', 0):
             warnings.append('Hay recorridos que agotaron sus reintentos')
+        if api_events.get('rate_limited', 0):
+            warnings.append('TomTom limitó solicitudes; se aplicó una pausa')
+        if api_events.get('provider_error', 0):
+            warnings.append('Hay errores del proveedor de mapas para revisar')
         return {
             'matching_enabled': self.matching_enabled(),
             'matching_provider': self.match_provider,
@@ -439,10 +542,18 @@ class ObservedRoutes:
             'pending_passages': pending_groups,
             'failed_jobs': counts.get('failed', 0),
             'validated_jobs': counts.get('done', 0),
+            'awaiting_review': awaiting_review,
+            'approved_reviews': review_counts.get('approved', 0),
+            'discarded_reviews': review_counts.get('discarded', 0),
+            'rate_limited_last_30_days': api_events.get('rate_limited', 0),
+            'provider_errors_last_30_days': api_events.get('provider_error', 0),
             'accepted_last_30_days': validated,
             'rejected_last_30_days': rejected,
             'acceptance_rate': round(validated / (validated+rejected), 4) if validated+rejected else None,
             'monthly_requests': used,
+            'weekly_attempted': int(weekly['attempted']) if weekly else 0,
+            'weekly_completed': int(weekly['completed']) if weekly else 0,
+            'weekly_limit': self.weekly_match_limit if self.match_provider == 'tomtom' else None,
             'monthly_limit': self.monthly_match_limit if self.match_provider == 'tomtom' else None,
             'queue_limit': self.max_pending_jobs,
             'minimum_confirmed_buses': self.min_confirmed_buses,
@@ -461,12 +572,18 @@ class ObservedRoutes:
             clauses.append("(a.result='rejected' OR j.status='failed')")
         elif status == 'pending':
             clauses.append("j.status IN ('pending','processing')")
+        elif status in {'awaiting_review', 'approved', 'discarded'}:
+            clauses.append("j.status='done' AND j.review_status=?")
+            params.append('pending' if status == 'awaiting_review' else status)
         if line:
             clauses.append('j.line=?')
             params.append(line)
         params.append(max(1, min(100, int(limit))))
         query = f'''SELECT j.id,j.line,j.route,j.kind,j.seen,j.status,j.attempts,
-                    j.error,j.points,j.geometry,a.provider,a.result AS audit_result,a.metrics
+                    j.error,j.points,j.geometry,j.review_status,j.reviewed_at,j.review_note,
+                    j.matching_details,j.refined_geometry,j.refined_details,
+                    j.refined_metrics,j.refined_at,j.approved_variant,
+                    a.provider,a.result AS audit_result,a.metrics
                     FROM observed_jobs j LEFT JOIN observed_match_audit a ON a.job=j.id
                     WHERE {' AND '.join(clauses)} ORDER BY j.seen DESC LIMIT ?'''
         items = []
@@ -477,14 +594,25 @@ class ObservedRoutes:
                 raw_points = json.loads(row['points'] or '[]')
                 geometry = json.loads(row['geometry'] or '[]')
                 metrics = json.loads(row['metrics'] or '{}')
+                details = json.loads(row['matching_details'] or '{}')
+                refined_geometry = json.loads(row['refined_geometry'] or '[]')
+                refined_details = json.loads(row['refined_details'] or '{}')
+                refined_metrics = json.loads(row['refined_metrics'] or '{}')
             except (TypeError, json.JSONDecodeError):
-                raw_points, geometry, metrics = [], [], {}
+                raw_points, geometry, metrics, details = [], [], {}, {}
+                refined_geometry, refined_details, refined_metrics = [], {}, {}
             items.append({
                 'id': row['id'], 'line': row['line'], 'route': row['route'],
                 'kind': row['kind'], 'seen': row['seen'], 'status': row['status'],
                 'attempts': row['attempts'], 'error': row['error'],
                 'provider': row['provider'] or self.match_provider,
                 'result': row['audit_result'], 'metrics': metrics,
+                'review_status': row['review_status'], 'reviewed_at': row['reviewed_at'],
+                'review_note': row['review_note'], 'matching_details': details,
+                'approved_variant': row['approved_variant'],
+                'refinement': ({'geometry': refined_geometry, 'details': refined_details,
+                                'metrics': refined_metrics, 'created': row['refined_at']}
+                               if row['refined_at'] else None),
                 'points': [[point[0], point[1]] for point in raw_points if len(point) >= 2],
                 'geometry': geometry,
             })
@@ -507,6 +635,21 @@ class ObservedRoutes:
                           requests=requests+1, updated=excluded.updated''',
                        (period, 'tomtom', now))
         return True
+
+    def _wait_for_tomtom_slot(self):
+        # All matching entry points share one conservative request cadence.
+        with self._tomtom_slot:
+            remaining = max(self._tomtom_next_request, self._tomtom_pause_until) - time.monotonic()
+            if remaining > 0 and self.stop.wait(remaining):
+                raise RuntimeError('matching detenido')
+            self._tomtom_next_request = time.monotonic() + self.tomtom_min_interval
+
+    @staticmethod
+    def _retry_after(exc):
+        try:
+            return max(5, min(3600, int(exc.headers.get('Retry-After', '60'))))
+        except (AttributeError, TypeError, ValueError):
+            return 60
 
     def _trim_pending(self, db):
         count = db.execute("SELECT COUNT(*) FROM observed_jobs WHERE status='pending'").fetchone()[0]
@@ -637,8 +780,13 @@ class ObservedRoutes:
                 edges = db.execute('''SELECT e.*,
                     COUNT(DISTINCT CASE WHEN p.seen>=? THEN p.unit END) AS buses,
                     COUNT(CASE WHEN p.seen>=? THEN 1 END) AS passes,
-                    COUNT(DISTINCT p.unit) AS historical_buses
-                    FROM observed_edges e JOIN observed_passages p ON p.edge=e.id
+                    COUNT(DISTINCT p.unit) + (
+                        SELECT COUNT(*) FROM observed_passage_archive a
+                        WHERE a.edge=e.id AND NOT EXISTS (
+                            SELECT 1 FROM observed_passages current
+                            WHERE current.edge=e.id AND current.unit=a.unit)
+                    ) AS historical_buses
+                    FROM observed_edges e LEFT JOIN observed_passages p ON p.edge=e.id
                     WHERE e.line=? AND (? OR e.last_seen>=?) GROUP BY e.id
                     HAVING ? OR
                       COUNT(DISTINCT CASE WHEN p.seen>=? THEN p.unit END)>=? OR
@@ -725,12 +873,14 @@ class ObservedRoutes:
                                  TomTomMatcher.ENDPOINT if self.match_provider == 'tomtom' else self.osrm_url)
             signature = hashlib.sha256((provider_identity+json.dumps(
                 [[p[0],p[1],p[2]-points[0][2]] for p in points])).encode()).hexdigest()
-            cached = db.execute('SELECT geometry FROM observed_match_cache WHERE key=? AND created>=?', (signature, now-30*86400)).fetchone()
+            cached = db.execute('SELECT geometry,details FROM observed_match_cache WHERE key=? AND created>=?', (signature, now-30*86400)).fetchone()
         provider = 'custom' if matcher is not None else self.match_provider
         quality = {'input_points': len(points)}
+        details = {}
         try:
             if cached:
                 parts = json.loads(cached[0])
+                details = json.loads(cached[1] or '{}')
                 quality['cache_hit'] = True
             else:
                 if matcher is not None:
@@ -738,34 +888,28 @@ class ObservedRoutes:
                 elif self.match_provider == 'tomtom':
                     if not self._reserve_match_request(now):
                         raise MatchBudgetExhausted('Presupuesto mensual TomTom agotado')
+                    self._wait_for_tomtom_slot()
                     selected_matcher = self.tomtom_matcher
                 else:
                     selected_matcher = self.match_geometry
                 parts = selected_matcher(points)
                 if selected_matcher is self.tomtom_matcher:
                     quality = dict(self.tomtom_matcher.last_quality)
+                    details = dict(self.tomtom_matcher.last_details)
                 else:
                     quality.update(route_elements=len(parts), cache_hit=False)
             with self.lock, self.connect() as db:
-                db.execute('INSERT OR REPLACE INTO observed_match_cache VALUES(?,?,?)', (signature, json.dumps(parts), now))
+                db.execute('''INSERT OR REPLACE INTO observed_match_cache
+                              (key,geometry,created,details) VALUES(?,?,?,?)''',
+                           (signature, json.dumps(parts), now, json.dumps(details)))
                 self._record_audit(db, job['id'], provider, 'accepted', quality, now)
-                if not self.shadow_mode:
-                    index = self.indexes.get(job['line'])
-                    for part in parts:
-                        for geom_key, edge in street_edges(part):
-                            middle = [(edge[0][i]+edge[1][i])/2 for i in (0, 1)]
-                            if index and index.cells and index.measure(middle, job['route']) < 40: continue
-                            identity = f"{job['line']}|{branch_key(job['route'])}|{geom_key}"
-                            key = hashlib.sha256(identity.encode()).hexdigest()
-                            db.execute('''INSERT INTO observed_edges VALUES(?,?,?,?,?,?,?)
-                                ON CONFLICT(id) DO UPDATE SET last_seen=MAX(last_seen, excluded.last_seen)''',
-                                (key,job['line'],branch_key(job['route']),job['route'],job['kind'],json.dumps(edge),job['seen']))
-                            db.execute('''INSERT INTO observed_passages VALUES(?,?,?,?)
-                                ON CONFLICT(edge,unit,passage) DO UPDATE SET seen=MAX(seen, excluded.seen)''',
-                                (key,job['unit'],job['passage'],job['seen']))
-                retained_points = job['points'] if self.shadow_mode else '[]'
-                db.execute("UPDATE observed_jobs SET status='done',geometry=?,points=?,error='' WHERE id=?",
-                           (json.dumps(parts), json.dumps(points) if self.shadow_mode else retained_points, job['id']))
+                human_review = provider == 'tomtom'
+                if not self.shadow_mode and not human_review:
+                    self._publish_match(db, job, parts, track_publication=False)
+                db.execute('''UPDATE observed_jobs SET status='done',geometry=?,points=?,error='',
+                              matching_details=?,review_status=? WHERE id=?''',
+                           (json.dumps(parts), json.dumps(points) if self.shadow_mode or human_review else '[]',
+                            json.dumps(details), 'pending' if human_review else 'legacy', job['id']))
                 for merged in jobs[1:]:
                     db.execute("UPDATE observed_jobs SET status='merged',geometry='[]',points='[]',error=? WHERE id=?",
                                (f"merged:{job['id']}", merged['id']))
@@ -781,6 +925,43 @@ class ObservedRoutes:
                                [(next_month, str(exc), row['id']) for row in jobs])
             self.last_error = str(exc)
             return False
+        except urllib.error.HTTPError as exc:
+            rate_limited = provider == 'tomtom' and exc.code == 429
+            permanent = 400 <= exc.code < 500 and not rate_limited
+            retry_delay = self._retry_after(exc) if rate_limited else 60
+            exc.close()
+            if rate_limited:
+                self._tomtom_pause_until = time.monotonic() + retry_delay
+            with self.lock, self.connect() as db:
+                self._record_audit(db, job['id'], provider,
+                                   'rate_limited' if rate_limited else 'provider_error',
+                                   {'http_status': exc.code, **quality}, now)
+                db.execute('INSERT INTO observed_api_events VALUES(?,?,?)',
+                           (provider, 'rate_limited' if rate_limited else 'provider_error', now))
+                for failed in jobs:
+                    attempts = (self.max_job_attempts if permanent else
+                                failed['attempts'] + (0 if rate_limited else 1))
+                    status = 'failed' if permanent or attempts >= self.max_job_attempts else 'pending'
+                    db.execute('UPDATE observed_jobs SET attempts=?,status=?,next_try=?,error=? WHERE id=?',
+                               (attempts, status, now + retry_delay,
+                                f'TomTom HTTP {exc.code}' if provider == 'tomtom' else f'Proveedor HTTP {exc.code}',
+                                failed['id']))
+            self.last_error = f'{provider} HTTP {exc.code}'
+            return False
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            with self.lock, self.connect() as db:
+                self._record_audit(db, job['id'], provider, 'provider_error', quality, now)
+                db.execute('INSERT INTO observed_api_events VALUES(?,?,?)',
+                           (provider, 'provider_error', now))
+                for failed in jobs:
+                    attempts = failed['attempts'] + 1
+                    db.execute('''UPDATE observed_jobs SET attempts=?,status=?,next_try=?,error=?
+                                  WHERE id=?''',
+                               (attempts, 'failed' if attempts >= self.max_job_attempts else 'pending',
+                                now + min(86400, 60 * 2**min(attempts, 10)),
+                                f'Proveedor no disponible ({type(exc).__name__})', failed['id']))
+            self.last_error = f'{provider} {type(exc).__name__}'
+            return False
         except Exception as exc:
             with self.lock, self.connect() as db:
                 if self.tomtom_matcher is not None and provider == 'tomtom':
@@ -795,6 +976,161 @@ class ObservedRoutes:
             self.last_error = str(exc)[:200]
             return False
 
+    def _publish_match(self, db, job, parts, track_publication):
+        index = self.indexes.get(job['line'])
+        published = 0
+        for part in parts:
+            for geom_key, edge in street_edges(part):
+                middle = [(edge[0][i]+edge[1][i])/2 for i in (0, 1)]
+                if index and index.cells and index.measure(middle, job['route']) < 40:
+                    continue
+                identity = f"{job['line']}|{branch_key(job['route'])}|{geom_key}"
+                key = hashlib.sha256(identity.encode()).hexdigest()
+                if track_publication:
+                    other_publication = db.execute('''SELECT baseline_seen FROM observed_review_publications
+                        WHERE edge=? AND unit=? AND passage=? LIMIT 1''',
+                        (key, job['unit'], job['passage'])).fetchone()
+                    existing_passage = db.execute('''SELECT seen FROM observed_passages
+                        WHERE edge=? AND unit=? AND passage=?''',
+                        (key, job['unit'], job['passage'])).fetchone()
+                    baseline_seen = (other_publication['baseline_seen'] if other_publication else
+                                     existing_passage['seen'] if existing_passage else None)
+                    db.execute('''INSERT OR IGNORE INTO observed_review_publications
+                                  (job,edge,unit,passage,baseline,baseline_seen,published_seen)
+                                  VALUES(?,?,?,?,?,?,?)''',
+                               (job['id'], key, job['unit'], job['passage'],
+                                int(baseline_seen is not None), baseline_seen, job['seen']))
+                db.execute('''INSERT INTO observed_edges VALUES(?,?,?,?,?,?,?)
+                    ON CONFLICT(id) DO UPDATE SET last_seen=MAX(last_seen,excluded.last_seen)''',
+                    (key, job['line'], branch_key(job['route']), job['route'], job['kind'],
+                     json.dumps(edge), job['seen']))
+                db.execute('''INSERT INTO observed_passages VALUES(?,?,?,?)
+                    ON CONFLICT(edge,unit,passage) DO UPDATE SET seen=MAX(seen,excluded.seen)''',
+                    (key, job['unit'], job['passage'], job['seen']))
+                published += 1
+        return published
+
+    def refine_review(self, job_id, now=None):
+        """Offer a second candidate after removing a few displaced GPS fixes."""
+        if not re.fullmatch(r'[0-9a-f]{64}', str(job_id)):
+            raise ValueError('recorrido inválido')
+        if self.match_provider != 'tomtom' or self.tomtom_matcher is None:
+            raise ValueError('TomTom no está configurado')
+        now = time.time() if now is None else now
+        with self.lock, self.connect() as db:
+            job = db.execute('''SELECT * FROM observed_jobs WHERE id=? AND status='done'
+                AND review_status='pending' ''', (job_id,)).fetchone()
+            if not job:
+                raise ValueError('recorrido no disponible para reajuste')
+            if job['refined_at'] is not None:
+                return {'success': True, 'changed': False}
+            if job_id in self._refining_jobs:
+                raise ValueError('este recorrido ya se está reajustando')
+            points = json.loads(job['points'] or '[]')
+            details = json.loads(job['matching_details'] or '{}')
+            displaced = {p.get('index') for p in details.get('projected_points', [])
+                         if isinstance(p, dict) and isinstance(p.get('offset_m'), (int, float))
+                         and p['offset_m'] > 20}
+            removable = {i for i in displaced if type(i) is int and 0 < i < len(points)-1}
+            if not removable or len(removable) > max(1, len(points)//5) or len(points)-len(removable) < 4:
+                raise ValueError('no hay pocos puntos GPS interiores claramente desplazados para depurar')
+            cleaned = [point for i, point in enumerate(points) if i not in removable]
+            self._refining_jobs.add(job_id)
+        try:
+            if not self._reserve_match_request(now):
+                raise ValueError('presupuesto mensual TomTom agotado')
+            self._wait_for_tomtom_slot()
+            base = self.tomtom_matcher
+            matcher = (TomTomMatcher(base.api_key, timeout=base.timeout,
+                                     offroad_margin=base.offroad_margin)
+                       if isinstance(base, TomTomMatcher) else base)
+            try:
+                parts = matcher(cleaned)
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429:
+                    self._tomtom_pause_until = time.monotonic() + self._retry_after(exc)
+                code = exc.code
+                exc.close()
+                raise ValueError(f'TomTom HTTP {code}; el trazo original permanece sin cambios') from None
+            except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                raise ValueError(f'TomTom no disponible ({type(exc).__name__}); el trazo original permanece sin cambios') from None
+            with self.lock, self.connect() as db:
+                db.execute('''UPDATE observed_jobs SET refined_geometry=?,refined_details=?,
+                    refined_metrics=?,refined_at=? WHERE id=? AND review_status='pending' ''',
+                    (json.dumps(parts), json.dumps(matcher.last_details),
+                     json.dumps({**matcher.last_quality, 'removed_gps_points': sorted(removable)}),
+                     now, job_id))
+            return {'success': True, 'changed': True, 'removed_gps_points': len(removable)}
+        finally:
+            with self.lock:
+                self._refining_jobs.discard(job_id)
+
+    def decide_review(self, job_id, action, note='', now=None, variant='original'):
+        """Approve a TomTom candidate or remove only evidence this review introduced."""
+        if action not in {'approve', 'discard'} or not re.fullmatch(r'[0-9a-f]{64}', str(job_id)):
+            raise ValueError('decisión o recorrido inválido')
+        if not isinstance(note, str) or len(note) > 500:
+            raise ValueError('nota demasiado larga')
+        if variant not in {'original', 'refined'}:
+            raise ValueError('variante inválida')
+        now = time.time() if now is None else now
+        with self.lock, self.connect() as db:
+            job = db.execute('''SELECT j.*,a.provider FROM observed_jobs j
+                                JOIN observed_match_audit a ON a.job=j.id WHERE j.id=?''',
+                             (job_id,)).fetchone()
+            if not job or job['provider'] != 'tomtom' or job['status'] != 'done' or job['review_status'] == 'legacy':
+                raise ValueError('recorrido no disponible para revisión')
+            target = 'approved' if action == 'approve' else 'discarded'
+            if job['review_status'] == target:
+                if action == 'approve' and job['approved_variant'] != variant:
+                    raise ValueError('descartá primero la variante aprobada antes de cambiarla')
+                return {'success': True, 'status': target, 'changed': False}
+            if action == 'approve':
+                if variant == 'refined' and job['refined_at'] is None:
+                    raise ValueError('no existe un reajuste para este recorrido')
+                parts = json.loads(job['refined_geometry'] if variant == 'refined'
+                                   else job['geometry'] or '[]')
+                published = self._publish_match(db, job, parts, track_publication=True)
+                if not published:
+                    raise ValueError('no hay segmentos publicables en este recorrido')
+            else:
+                publications = db.execute('''SELECT edge,unit,passage,baseline_seen
+                    FROM observed_review_publications WHERE job=?''', (job_id,)).fetchall()
+                for pub in publications:
+                    other = db.execute('''SELECT MAX(published_seen) AS latest
+                        FROM observed_review_publications
+                        WHERE job!=? AND edge=? AND unit=? AND passage=?''',
+                        (job_id, pub['edge'], pub['unit'], pub['passage'])).fetchone()
+                    remaining_seen = [value for value in (pub['baseline_seen'], other['latest'])
+                                      if value is not None]
+                    if not remaining_seen:
+                        db.execute('''DELETE FROM observed_passages
+                                      WHERE edge=? AND unit=? AND passage=?''',
+                                   (pub['edge'], pub['unit'], pub['passage']))
+                    else:
+                        db.execute('''UPDATE observed_passages SET seen=?
+                                      WHERE edge=? AND unit=? AND passage=?''',
+                                   (max(remaining_seen), pub['edge'], pub['unit'], pub['passage']))
+                    last_seen = db.execute('''SELECT MAX(seen) FROM observed_passages
+                                              WHERE edge=?''', (pub['edge'],)).fetchone()[0]
+                    archive_seen = db.execute('''SELECT MAX(last_seen) FROM observed_passage_archive
+                                                 WHERE edge=?''', (pub['edge'],)).fetchone()[0]
+                    if last_seen is not None or archive_seen is not None:
+                        db.execute('UPDATE observed_edges SET last_seen=? WHERE id=?',
+                                   (max(value for value in (last_seen, archive_seen) if value is not None),
+                                    pub['edge']))
+                    db.execute('''DELETE FROM observed_edges WHERE id=? AND NOT EXISTS
+                        (SELECT 1 FROM observed_passages WHERE edge=?) AND NOT EXISTS
+                        (SELECT 1 FROM observed_passage_archive WHERE edge=?)''',
+                        (pub['edge'], pub['edge'], pub['edge']))
+                db.execute('DELETE FROM observed_review_publications WHERE job=?', (job_id,))
+            db.execute('''UPDATE observed_jobs SET review_status=?,reviewed_at=?,review_note=?,
+                          approved_variant=? WHERE id=?''',
+                       (target, now, note.strip(), variant if action == 'approve'
+                        else job['approved_variant'], job_id))
+            self.cache.clear()
+        return {'success': True, 'status': target, 'changed': True}
+
     def maintain(self, now=None):
         now = time.time() if now is None else now
         with self.lock, self.connect() as db:
@@ -805,13 +1141,36 @@ class ObservedRoutes:
                        (now-self.raw_retention,))
             db.execute("UPDATE observed_jobs SET status='pending' WHERE status='processing' AND next_try<=?",
                        (now,))
-            db.execute("UPDATE observed_jobs SET points='[]' WHERE status='done' AND seen<? AND points!='[]'",
+            db.execute("UPDATE observed_jobs SET points='[]' WHERE status='done' AND review_status!='pending' AND seen<? AND points!='[]'",
                        (now-self.raw_retention,))
             db.execute("DELETE FROM observed_jobs WHERE status IN ('done','merged') AND seen<?", (now-30*86400,))
+            # Older approved evidence is now permanent aggregate data; its
+            # per-review undo records no longer need volume space.
+            db.execute('''DELETE FROM observed_review_publications
+                          WHERE job NOT IN (SELECT id FROM observed_jobs)''')
             db.execute('DELETE FROM observed_match_cache WHERE created<?', (now-30*86400,))
             db.execute('DELETE FROM observed_match_audit WHERE created<?', (now-30*86400,))
             db.execute('DELETE FROM observed_state WHERE updated<?', (now-self.raw_retention,))
             db.execute('DELETE FROM observed_api_usage WHERE updated<?', (now-400*86400,))
+            db.execute('DELETE FROM observed_api_events WHERE created<?', (now-30*86400,))
+            # A bounded migration of old evidence keeps the historical bus
+            # count while avoiding one permanent row per trip. Review undo
+            # records have already expired well before this 90-day boundary.
+            old_passages = db.execute('''SELECT rowid,edge,unit,seen FROM observed_passages
+                WHERE seen<? LIMIT 5000''', (now-90*86400,)).fetchall()
+            archived = {}
+            for passage in old_passages:
+                key = (passage['edge'], passage['unit'])
+                count, latest = archived.get(key, (0, 0))
+                archived[key] = (count + 1, max(latest, passage['seen']))
+            for (edge, unit), (count, latest) in archived.items():
+                db.execute('''INSERT INTO observed_passage_archive VALUES(?,?,?,?)
+                    ON CONFLICT(edge,unit) DO UPDATE SET
+                    passes=passes+excluded.passes,
+                    last_seen=MAX(last_seen,excluded.last_seen)''',
+                    (edge, unit, count, latest))
+            db.executemany('DELETE FROM observed_passages WHERE rowid=?',
+                           [(passage['rowid'],) for passage in old_passages])
             self._trim_pending(db)
 
     def collector(self, catalog, positions, paths):
@@ -852,6 +1211,8 @@ class ObservedRoutes:
         attempted = completed = 0
         while attempted < limit and not self.stop.is_set():
             stamp = time.time() if now is None else now
+            if self.match_provider == 'tomtom' and time.monotonic() < self._tomtom_pause_until:
+                break
             if self.match_provider == 'tomtom' and self.remaining_match_budget(stamp) <= 0:
                 break
             with self.lock, self.connect() as db:
@@ -874,20 +1235,75 @@ class ObservedRoutes:
             target += timedelta(days=7)
         return max(1, target.timestamp()-now)
 
+    def _latest_weekly_slot(self, now):
+        local_now = datetime.fromtimestamp(now, MATCH_TIMEZONE)
+        days = (local_now.weekday()-self.match_weekday) % 7
+        target = (local_now-timedelta(days=days)).replace(
+            hour=self.match_hour, minute=0, second=0, microsecond=0)
+        if target > local_now:
+            target -= timedelta(days=7)
+        return int(target.timestamp())
+
+    def run_due_weekly(self, now=None):
+        """Resume the latest missed weekly slot, with a persistent attempt cap."""
+        now = time.time() if now is None else now
+        slot = self._latest_weekly_slot(now)
+        if not self.matching_enabled():
+            return {'attempted': 0, 'completed': 0, 'scheduled_at': slot}
+        attempted = completed = 0
+        while not self.stop.is_set():
+            with self.lock, self.connect() as db:
+                latest = db.execute('SELECT MAX(scheduled_at) FROM observed_weekly_runs').fetchone()[0]
+                if latest is not None and slot < latest:
+                    break
+                db.execute('''INSERT OR IGNORE INTO observed_weekly_runs
+                    (scheduled_at,attempted,completed,updated) VALUES(?,0,0,?)''', (slot, now))
+                row = db.execute('SELECT attempted,skipped FROM observed_weekly_runs WHERE scheduled_at=?',
+                                 (slot,)).fetchone()
+                if row['skipped'] or row['attempted'] >= self.weekly_match_limit:
+                    break
+                if self.match_provider == 'tomtom' and (
+                    time.monotonic() < self._tomtom_pause_until or self.remaining_match_budget(now) <= 0
+                ):
+                    break
+                eligible = db.execute('''SELECT 1 FROM observed_jobs
+                    WHERE status='pending' AND next_try<=? LIMIT 1''', (now,)).fetchone()
+                if not eligible:
+                    break
+                # Reserve the slot before making an external request, including
+                # across a crash/restart. An unused reservation is safer than
+                # accidentally exceeding the weekly quota.
+                db.execute('''UPDATE observed_weekly_runs SET attempted=attempted+1,updated=?
+                    WHERE scheduled_at=?''', (now, slot))
+            attempted += 1
+            if self.process_one(now=now):
+                completed += 1
+                with self.lock, self.connect() as db:
+                    db.execute('''UPDATE observed_weekly_runs SET completed=completed+1,updated=?
+                        WHERE scheduled_at=?''', (now, slot))
+        return {'attempted': attempted, 'completed': completed, 'scheduled_at': slot}
+
+    def _has_retryable_rate_limit(self):
+        with self.lock, self.connect() as db:
+            return db.execute('''SELECT 1 FROM observed_jobs WHERE status='pending'
+                AND error='TomTom HTTP 429' AND next_try<=? LIMIT 1''',
+                (time.time(),)).fetchone() is not None
+
     def matcher_loop(self):
         if self.match_provider == 'tomtom':
             if self.match_run_on_start and not self.stop.is_set():
-                try: self.run_match_batch()
+                try:
+                    with self.lock, self.connect() as db:
+                        db.execute('''UPDATE observed_weekly_runs SET skipped=0
+                            WHERE scheduled_at=?''', (self._latest_weekly_slot(time.time()),))
                 except Exception as exc: self.last_error = str(exc)[:200]
             while not self.stop.is_set():
-                # Wake hourly so shutdowns and configuration changes are not
-                # held by one week-long wait.
-                until_run = self._seconds_until_weekly_run()
-                if self.stop.wait(min(3600, until_run)):
+                try: self.run_due_weekly()
+                except Exception as exc: self.last_error = str(exc)[:200]
+                # Wake hourly to resume rate-limited work and catch up on a
+                # scheduled run missed while the service was offline.
+                if self.stop.wait(min(3600, self._seconds_until_weekly_run())):
                     break
-                if until_run <= 3600:
-                    try: self.run_match_batch()
-                    except Exception as exc: self.last_error = str(exc)[:200]
             return
         while not self.stop.is_set():
             try: self.process_one()

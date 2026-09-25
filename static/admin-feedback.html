@@ -55,11 +55,28 @@
     .route-accepted { background:#173b2a; color:#7bf0ae; }
     .route-rejected { background:#482333; color:#ff9fb2; }
     .route-pending { background:#44371c; color:#ffd17c; }
+    .route-review { background:#35304e; color:#d8c6ff; }
     .route-legend { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0; font-size:13px; color:#b9c5d7; }
     .route-legend span::before { content:''; display:inline-block; width:22px; border-top:4px solid; margin-right:6px; vertical-align:middle; }
     .route-legend .gps::before { border-color:#8f2441; border-top-style:dashed; }
     .route-legend .matched::before { border-color:#21d19f; }
-    @media (max-width:600px) { .news-form-grid { grid-template-columns: 1fr; } }
+
+    /* Paradas comunitarias */
+    .stop-card { padding:18px; margin:14px 0; border:1px solid #353c4b; }
+    .stop-preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0; }
+    .stop-photo-box { height:220px; border-radius:10px; overflow:hidden; background:#111722; border:1px solid #353c4b; display:flex; align-items:center; justify-content:center; }
+    .stop-photo-img { width:100%; height:100%; object-fit:cover; cursor:pointer; transition:transform .2s; }
+    .stop-photo-img:hover { transform:scale(1.02); }
+    .stop-photo-deleted { color:#a6afc1; font-size:12px; text-align:center; padding:16px; font-style:italic; }
+    .stop-mini-map { height:220px; border-radius:10px; overflow:hidden; border:1px solid #353c4b; background:#111722; }
+    .stop-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+    .stop-status-badge { display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+    .status-pendiente { background:rgba(255,209,124,0.18); color:#ffd17c; border:1px solid rgba(255,209,124,0.4); }
+    .status-aprobada { background:rgba(123,240,174,0.18); color:#7bf0ae; border:1px solid rgba(123,240,174,0.4); }
+    .status-rechazada { background:rgba(255,159,178,0.18); color:#ff9fb2; border:1px solid rgba(255,159,178,0.4); }
+    .reject-preset-btn { background:#1e2738; border:1px solid #353c4b; color:#d8e2f0; text-align:left; padding:8px 12px; border-radius:8px; font-size:13px; cursor:pointer; }
+    .reject-preset-btn:hover { background:#2a364d; border-color:#00d3ec; }
+    @media (max-width:600px) { .news-form-grid { grid-template-columns: 1fr; } .stop-preview-grid { grid-template-columns:1fr; } .stop-form-grid { grid-template-columns:1fr; } }
     @media (max-width:800px) { .route-review-grid { grid-template-columns:1fr; } .route-map { height:340px; } }
   </style>
 </head>
@@ -78,6 +95,7 @@
   <section id="adminPanel" hidden>
     <nav class="nav-tabs">
       <button id="tabComments" class="tab-btn active" type="button">✉ Comentarios</button>
+      <button id="tabStops" class="tab-btn" type="button">📍 Paradas comunitarias</button>
       <button id="tabNews" class="tab-btn" type="button">📢 Publicar Novedades</button>
       <button id="tabRoutes" class="tab-btn" type="button">🚌 Auditoría de rutas</button>
       <button id="logout" type="button" style="margin-left:auto;">Salir</button>
@@ -98,6 +116,50 @@
       <div id="comments"></div>
       <button id="more" type="button" hidden>Ver más</button>
     </div>
+
+    <!-- Pestaña de Paradas Comunitarias -->
+    <div id="sectionStops" hidden>
+      <div class="toolbar">
+        <label for="stopFilter" style="margin:0">Ver</label>
+        <select id="stopFilter">
+          <option value="pendiente">Pendientes de revisión</option>
+          <option value="todos">Todos</option>
+          <option value="aprobada">Aprobadas</option>
+          <option value="rechazada">Rechazadas</option>
+        </select>
+        <button id="refreshStops" type="button">Actualizar</button>
+        <div id="stopStorageMeter" style="font-size:13px; color:#b9c5d7; padding:5px 12px; background:#111722; border:1px solid #353c4b; border-radius:8px;"></div>
+      </div>
+      <p id="stopsStatus" role="status"></p>
+      <div id="stopReportsList"></div>
+      <button id="moreStops" type="button" hidden>Ver más reportes</button>
+    </div>
+
+    <!-- Modal de Rechazo -->
+    <dialog id="rejectModal" style="background:#1c2230; border:1px solid #4c586d; border-radius:14px; color:#fff; max-width:480px; width:90%; padding:20px; box-shadow:0 10px 35px rgba(0,0,0,0.8);">
+      <h3 style="margin-top:0; font-size:18px;">❌ Rechazar reporte de parada</h3>
+      <p style="font-size:13px; color:#a6afc1; margin-bottom:12px;">Seleccioná un motivo rápido o editá el mensaje que recibirá el usuario:</p>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+        <button type="button" class="reject-preset-btn" data-reason="Foto poco clara o no se distingue señal ni refugio de parada.">📸 Foto poco clara / no se ve parada</button>
+        <button type="button" class="reject-preset-btn" data-reason="La ubicación GPS es imprecisa o no coincide con la foto.">📍 Ubicación GPS imprecisa o errónea</button>
+        <button type="button" class="reject-preset-btn" data-reason="Ya existe una parada registrada en este mismo punto.">🔁 Parada ya registrada o duplicada</button>
+        <button type="button" class="reject-preset-btn" data-reason="El lugar reportado no corresponde a una parada de bus habilitada.">🚫 No es parada de bus habilitada</button>
+      </div>
+
+      <label for="rejectReasonInput" style="font-size:13px; font-weight:600;">Mensaje al usuario:</label>
+      <textarea id="rejectReasonInput" style="min-height:80px; margin-bottom:12px;"></textarea>
+
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; margin-bottom:16px;">
+        <input type="checkbox" id="rejectNotifyUser" checked style="width:auto;">
+        Enviar notificación Push y aviso in-app al usuario
+      </label>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" id="rejectCancelBtn">Cancelar</button>
+        <button type="button" id="rejectConfirmBtn" class="danger">Confirmar rechazo y borrar foto</button>
+      </div>
+    </dialog>
 
     <!-- Pestaña de Novedades -->
     <div id="sectionNews" hidden>
@@ -137,20 +199,26 @@
       <div class="toolbar">
         <label for="routeFilter" style="margin:0">Resultado</label>
         <select id="routeFilter">
+          <option value="awaiting_review">Por aprobar</option>
           <option value="all">Todos</option>
-          <option value="accepted">Aceptados</option>
+          <option value="accepted">Ajustes válidos</option>
+          <option value="approved">Aprobados</option>
+          <option value="discarded">Descartados</option>
           <option value="rejected">Fallidos</option>
-          <option value="pending">Pendientes</option>
+          <option value="pending">En cola</option>
         </select>
         <label for="routeLine" style="margin:0">Línea</label>
         <input id="routeLine" maxlength="80" placeholder="Todas" style="width:130px">
         <button id="refreshRoutes" type="button">Actualizar</button>
         <button id="runOneRoute" type="button">Validar 1 ahora</button>
+        <label for="tomtomBase" style="margin:0"><input id="tomtomBase" type="checkbox" style="width:auto"> Mapa TomTom</label>
       </div>
       <p id="routeStatus" role="status"></p>
       <div class="route-legend">
         <span class="gps">GPS original (máximo 7 días)</span>
         <span class="matched">Geometría ajustada</span>
+        <span style="color:#3274d9">● Reajuste alternativo</span>
+        <span style="color:#ffb44b">● Puntos desplazados más de 20 m</span>
       </div>
       <div class="route-review-grid">
         <div id="routeMap" class="route-map" aria-label="Comparación del recorrido GPS y su geometría ajustada"></div>
@@ -276,29 +344,42 @@
   }
 
   const tabComments = document.getElementById('tabComments');
+  const tabStops = document.getElementById('tabStops');
   const tabNews = document.getElementById('tabNews');
   const tabRoutes = document.getElementById('tabRoutes');
   const sectionComments = document.getElementById('sectionComments');
+  const sectionStops = document.getElementById('sectionStops');
   const sectionNews = document.getElementById('sectionNews');
   const sectionRoutes = document.getElementById('sectionRoutes');
-  const newsForm = document.getElementById('newsForm');
-  const newsTitle = document.getElementById('newsTitle');
-  const newsTag = document.getElementById('newsTag');
-  const newsContent = document.getElementById('newsContent');
-  const newsPublishStatus = document.getElementById('newsPublishStatus');
-  const newsList = document.getElementById('newsList');
+  const stopFilter = document.getElementById('stopFilter');
+  const refreshStops = document.getElementById('refreshStops');
+  const stopStorageMeter = document.getElementById('stopStorageMeter');
+  const stopsStatus = document.getElementById('stopsStatus');
+  const stopReportsList = document.getElementById('stopReportsList');
+  const moreStops = document.getElementById('moreStops');
+  const rejectModal = document.getElementById('rejectModal');
+  const rejectReasonInput = document.getElementById('rejectReasonInput');
+  const rejectNotifyUser = document.getElementById('rejectNotifyUser');
+  const rejectCancelBtn = document.getElementById('rejectCancelBtn');
+  const rejectConfirmBtn = document.getElementById('rejectConfirmBtn');
+  let currentRejectReportId = null;
+  let nextStopBefore = null;
 
   let activeTab = 'comments';
 
   function switchTab(tab) {
     activeTab = tab;
     tabComments.classList.toggle('active', tab === 'comments');
+    tabStops.classList.toggle('active', tab === 'stops');
     tabNews.classList.toggle('active', tab === 'news');
     tabRoutes.classList.toggle('active', tab === 'routes');
     sectionComments.hidden = tab !== 'comments';
+    sectionStops.hidden = tab !== 'stops';
     sectionNews.hidden = tab !== 'news';
     sectionRoutes.hidden = tab !== 'routes';
-    if (tab === 'news') {
+    if (tab === 'stops') {
+      loadStopReports(false);
+    } else if (tab === 'news') {
       loadNews();
     } else if (tab === 'routes') {
       loadRouteReview();
@@ -307,6 +388,7 @@
   }
 
   tabComments.addEventListener('click', () => switchTab('comments'));
+  tabStops.addEventListener('click', () => switchTab('stops'));
   tabNews.addEventListener('click', () => switchTab('news'));
   tabRoutes.addEventListener('click', () => switchTab('routes'));
 
@@ -317,11 +399,12 @@
   const routeLine = document.getElementById('routeLine');
   let routeMap = null;
   let routeLayers = null;
+  let routeBaseLayer = null;
 
   function ensureRouteMap() {
     if (routeMap) return;
     routeMap = L.map('routeMap', { zoomControl: true }).setView([-25.3, -57.58], 11);
-    L.maplibreGL({
+    routeBaseLayer = L.maplibreGL({
       style: 'https://tiles.openfreemap.org/styles/positron',
       attribution: '<a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · © OpenStreetMap',
     }).addTo(routeMap);
@@ -338,16 +421,23 @@
   function renderRouteMetrics(health) {
     const rate = health.acceptance_rate == null ? '—' : `${Math.round(health.acceptance_rate * 100)}%`;
     routeMetrics.replaceChildren(
-      metric('Aceptados · 30 días', health.accepted_last_30_days),
-      metric('Rechazados · 30 días', health.rejected_last_30_days),
-      metric('Tasa de aceptación', rate),
+      metric('Ajustes válidos · 30 días', health.accepted_last_30_days),
+      metric('Ajustes fallidos · 30 días', health.rejected_last_30_days),
+      metric('Éxito del ajuste', rate),
       metric('Pendientes', health.pending_jobs),
+      metric('Por aprobar', health.awaiting_review),
+      metric('Aprobados', health.approved_reviews),
+      metric('Descartados', health.discarded_reviews),
+      metric('Límite de velocidad · 30 días', health.rate_limited_last_30_days),
       metric('Viajes pendientes', health.pending_passages),
       metric('TomTom este mes', `${health.monthly_requests}/${health.monthly_limit ?? '—'}`),
+      metric('Lote semanal', `${health.weekly_attempted ?? 0}/${health.weekly_limit ?? '—'}`),
     );
   }
 
   function routeResult(item) {
+    if (item.status === 'done' && item.review_status === 'pending' && item.provider === 'tomtom') return 'review';
+    if (item.status === 'done' && item.review_status === 'discarded') return 'rejected';
     if (item.status === 'done') return 'accepted';
     if (item.status === 'failed' || item.result === 'rejected') return 'rejected';
     return 'pending';
@@ -364,11 +454,28 @@
         .bindTooltip('GPS original').addTo(routeLayers);
       item.points.forEach(point => bounds.push(point));
     }
-    (item.geometry || []).forEach(part => {
+    (item.geometry || []).forEach((part, index) => {
       if (!Array.isArray(part) || part.length < 2) return;
-      L.polyline(part, { color:'#21d19f', weight:5, opacity:.9 })
-        .bindTooltip('Geometría ajustada').addTo(routeLayers);
+      const segment = item.matching_details?.segments?.[index] || {};
+      const flagged = segment.review_flag || segment.privateRoad || (segment.confidence != null && segment.confidence < .9);
+      L.polyline(part, { color:flagged ? '#ffb44b' : '#21d19f', weight:5, opacity:.9 })
+        .bindTooltip(`Tramo ${index+1} · confianza ${segment.confidence ?? '—'} · ${segment.roadUse || segment.formOfWay || 'calle'} · separación GPS máx. ${segment.max_gps_corridor_m ?? '—'} m${segment.privateRoad ? ' · vía privada' : ''}`)
+        .addTo(routeLayers);
       part.forEach(point => bounds.push(point));
+    });
+    (item.refinement?.geometry || []).forEach((part, index) => {
+      if (!Array.isArray(part) || part.length < 2) return;
+      L.polyline(part, { color:'#3274d9', weight:4, opacity:.9, dashArray:'10 4' })
+        .bindTooltip(`Reajuste alternativo · tramo ${index+1}`)
+        .addTo(routeLayers);
+      part.forEach(point => bounds.push(point));
+    });
+    (item.matching_details?.projected_points || []).forEach(point => {
+      if (!Array.isArray(point.point)) return;
+      L.circleMarker(point.point, { radius:point.offset_m > 20 ? 5 : 3,
+        color:point.offset_m > 20 ? '#ffb44b' : '#50aaff', weight:1, fillOpacity:.85 })
+        .bindTooltip(`Punto ${point.index+1} · desplazamiento ${point.offset_m} m`)
+        .addTo(routeLayers);
     });
     if (bounds.length) routeMap.fitBounds(bounds, { padding:[24,24], maxZoom:17 });
   }
@@ -377,7 +484,9 @@
     const card = document.createElement('article');
     card.className = 'card route-card';
     const result = routeResult(item);
-    const labels = { accepted:'Aceptado', rejected:'Fallido', pending:'Pendiente' };
+    const labels = { accepted:item.review_status === 'approved' ? 'Aprobado' : 'Ajustado',
+      rejected:item.review_status === 'discarded' ? 'Descartado' : 'Fallido',
+      pending:'En cola', review:'Por aprobar' };
     const head = document.createElement('div');
     head.className = 'head';
     head.append(text('strong', `Línea ${item.line} · ${item.route || 'Sin ramal'}`),
@@ -387,9 +496,64 @@
     if (item.metrics.minimum_confidence != null) details.push(`confianza mínima ${item.metrics.minimum_confidence}`);
     if (item.metrics.matched_ratio != null) details.push(`${Math.round(item.metrics.matched_ratio*100)}% ajustado`);
     if (item.metrics.offroad_ratio != null) details.push(`${Math.round(item.metrics.offroad_ratio*100)}% fuera de calle`);
+    if (item.metrics.flagged_segments) details.push(`${item.metrics.flagged_segments} tramo(s) a revisar con atención`);
     if (item.attempts) details.push(`${item.attempts} intento(s) fallido(s)`);
     if (details.length) card.append(text('div', details.join(' · '), 'meta'));
     if (item.error) card.append(text('p', item.error, 'error'));
+    if (item.review_note) card.append(text('p', `Nota: ${item.review_note}`, 'meta'));
+    if (item.refinement) card.append(text('p',
+      `Alternativa con ${item.refinement.metrics?.removed_gps_points?.length || 0} punto(s) GPS depurados. Compará ambas líneas en el mapa.`, 'meta'));
+    if (item.review_status === 'approved') card.append(text('p',
+      `Publicada: ${item.approved_variant === 'refined' ? 'alternativa' : 'original'}`, 'meta'));
+    if (item.provider === 'tomtom' && item.status === 'done' && item.review_status !== 'legacy') {
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      if (item.review_status === 'pending' && !item.refinement) {
+        const refine = document.createElement('button');
+        refine.type = 'button';
+        refine.textContent = 'Reajustar puntos desviados';
+        refine.addEventListener('click', async event => {
+          event.stopPropagation();
+          if (!confirm('Se usará hasta una solicitud TomTom para crear otra opción. El trazo original no cambiará. ¿Continuar?')) return;
+          refine.disabled = true;
+          try {
+            await api('/api/admin/observed-review/refine', { method:'POST',
+              headers:{ 'Content-Type':'application/json', 'X-Feedback-CSRF':csrf },
+              body:JSON.stringify({ id:item.id }) });
+            await loadRouteReview();
+          } catch (error) { routeStatus.textContent = error.message; routeStatus.className = 'error'; }
+          finally { refine.disabled = false; }
+        });
+        actions.append(refine);
+      }
+      const decisions = [['approve','Aprobar original','original'],
+        ...(item.refinement ? [['approve','Aprobar alternativa','refined']] : []),
+        ['discard','Descartar','original']];
+      for (const [action, label, variant] of decisions) {
+        if ((action === 'approve' && item.review_status === 'approved') ||
+            (action === 'discard' && item.review_status === 'discarded')) continue;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = action === 'discard' ? 'danger' : 'primary';
+        button.textContent = label;
+        button.addEventListener('click', async event => {
+          event.stopPropagation();
+          const note = prompt(`${label}: escribí una nota opcional para el historial. Cancelar no cambia nada.`, item.review_note || '');
+          if (note === null) return;
+          if (!confirm(`${label} este recorrido de la línea ${item.line}?`)) return;
+          button.disabled = true;
+          try {
+            await api('/api/admin/observed-review/decide', { method:'POST',
+              headers:{ 'Content-Type':'application/json', 'X-Feedback-CSRF':csrf },
+              body:JSON.stringify({ id:item.id, action, note, variant }) });
+            await loadRouteReview();
+          } catch (error) { routeStatus.textContent = error.message; routeStatus.className = 'error'; }
+          finally { button.disabled = false; }
+        });
+        actions.append(button);
+      }
+      card.append(actions);
+    }
     card.addEventListener('click', () => showRoute(item, card));
     return card;
   }
@@ -498,6 +662,277 @@
     }
   });
 
+  // --- LÓGICA DE PARADAS COMUNITARIAS ---
+
+  async function loadStopReports(append = false) {
+    const filter = stopFilter.value;
+    const before = append && nextStopBefore ? `&before=${nextStopBefore}` : '';
+    stopsStatus.textContent = 'Cargando reportes de paradas…';
+    stopsStatus.className = 'meta';
+
+    try {
+      const data = await api(`/api/admin/stop-reports?status=${encodeURIComponent(filter)}&limit=30${before}`);
+      if (!append) stopReportsList.replaceChildren();
+
+      if (data.storage) {
+        stopStorageMeter.textContent = `💾 Buffer fotos: ${data.storage.used_mb} MB / ${data.storage.budget_mb} MB (${data.storage.percent}%) · Zero-Retention activa`;
+      }
+
+      data.items.forEach(item => stopReportsList.append(renderStopReportCard(item)));
+      nextStopBefore = data.nextBefore;
+      moreStops.hidden = !nextStopBefore;
+
+      stopsStatus.textContent = stopReportsList.children.length
+        ? `${stopReportsList.children.length} reporte(s) en este filtro.`
+        : 'No hay reportes de paradas en este filtro.';
+      stopsStatus.className = '';
+    } catch (err) {
+      stopsStatus.textContent = `Error: ${err.message}`;
+      stopsStatus.className = 'error';
+    }
+  }
+
+  function renderStopReportCard(report) {
+    const card = document.createElement('article');
+    card.className = 'card stop-card';
+    card.id = `stop-report-${report.id}`;
+
+    // Encabezado
+    const head = document.createElement('div');
+    head.className = 'head';
+    const titleBox = document.createElement('div');
+    titleBox.style.display = 'flex';
+    titleBox.style.alignItems = 'center';
+    titleBox.style.gap = '8px';
+
+    const statusBadge = text('span', report.status, `stop-status-badge status-${report.status}`);
+    const title = text('strong', `Reporte #${report.id} · ${report.reporter_name || 'Anónimo'}`);
+    titleBox.append(statusBadge, title);
+
+    const dateStr = new Date(report.created_at * 1000).toLocaleString('es-PY');
+    head.append(titleBox, text('span', dateStr, 'meta'));
+    card.append(head);
+
+    // Contenedor visual: Foto + Mini Mapa
+    const previewGrid = document.createElement('div');
+    previewGrid.className = 'stop-preview-grid';
+
+    // 1. Caja de Foto
+    const photoBox = document.createElement('div');
+    photoBox.className = 'stop-photo-box';
+    if (report.photo_filename && report.photo_filename !== 'deleted') {
+      const img = document.createElement('img');
+      img.className = 'stop-photo-img';
+      img.src = `/api/admin/stop-reports/photo?id=${report.id}`;
+      img.alt = `Foto de parada reporte #${report.id}`;
+      img.loading = 'lazy';
+      img.addEventListener('click', () => {
+        window.open(img.src, '_blank');
+      });
+      photoBox.append(img);
+    } else {
+      photoBox.append(text('div', '📷 Foto eliminada del disco tras la moderación (ahorro de espacio).', 'stop-photo-deleted'));
+    }
+
+    // 2. Caja de Mini Mapa Leaflet
+    const mapBox = document.createElement('div');
+    mapBox.className = 'stop-mini-map';
+    const mapId = `map-report-${report.id}`;
+    mapBox.id = mapId;
+
+    previewGrid.append(photoBox, mapBox);
+    card.append(previewGrid);
+
+    // Inicializar Leaflet al insertar en DOM
+    setTimeout(() => {
+      const mapEl = document.getElementById(mapId);
+      if (mapEl && !mapEl._leaflet_id) {
+        const miniMap = L.map(mapId, {
+          center: [report.lat, report.lon],
+          zoom: 16,
+          attributionControl: false,
+          zoomControl: false
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(miniMap);
+        L.marker([report.lat, report.lon]).addTo(miniMap)
+          .bindPopup(`<b>Parada reportada #${report.id}</b><br>GPS: ${report.lat}, ${report.lon}`);
+        L.circle([report.lat, report.lon], { radius: report.accuracy || 15, color: '#00d3ec', fillOpacity: 0.15 }).addTo(miniMap);
+      }
+    }, 100);
+
+    // Datos y descripción
+    const desc = report.description ? text('p', `💬 "${report.description}"`, 'message') : null;
+    if (desc) card.append(desc);
+
+    const gpsMeta = text('div', `📍 Coordenadas: ${report.lat}, ${report.lon} (precisión: ±${report.accuracy || 0}m) · <a href="https://www.google.com/maps/search/?api=1&query=${report.lat},${report.lon}" target="_blank" style="color:#00d3ec;">Ver en Google Maps</a>`, 'meta');
+    card.append(gpsMeta);
+
+    // Mostrar líneas de colectivos detectadas en la parada
+    if (report.nearby_lines && report.nearby_lines.length > 0) {
+      const linesBox = document.createElement('div');
+      linesBox.style.cssText = 'background:rgba(0,211,236,0.06); border:1px solid rgba(0,211,236,0.25); border-radius:10px; padding:10px 14px; margin:10px 0; font-size:13px;';
+      const linesTitle = document.createElement('div');
+      linesTitle.style.cssText = 'font-weight:700; color:#00d3ec; margin-bottom:6px; display:flex; align-items:center; gap:6px;';
+      linesTitle.innerHTML = '<span>🚌 Colectivos que circulan por acá:</span>';
+      linesBox.append(linesTitle);
+
+      const badgesWrap = document.createElement('div');
+      badgesWrap.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px;';
+
+      report.nearby_lines.forEach(nl => {
+        const badge = document.createElement('button');
+        badge.type = 'button';
+        badge.style.cssText = 'background:#162232; border:1px solid #354a63; color:#fff; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; text-align:left;';
+        const dirs = nl.directions && nl.directions.length ? ` · ${nl.directions.join('/')}` : '';
+        badge.textContent = `${nl.line_name}${dirs} (${Math.round(nl.distance_m)}m)`;
+        badge.title = 'Hacé clic para usar los datos de esta línea';
+        badgesWrap.append(badge);
+      });
+      linesBox.append(badgesWrap);
+      card.append(linesBox);
+    }
+
+    // Si está pendiente: Formulario de revisión
+    if (report.status === 'pendiente') {
+      const formBox = document.createElement('div');
+      formBox.className = 'stop-form-grid';
+
+      const streetInput = document.createElement('input');
+      streetInput.type = 'text';
+      streetInput.placeholder = 'Nombre de calle / avenida (ej: Av. Mcal. López)';
+      streetInput.value = report.street_name || '';
+
+      const sideSelect = document.createElement('select');
+      sideSelect.innerHTML = `
+        <option value="">Lado de la calle (indeterminado)</option>
+        <option value="ida">Ida (hacia el centro / salida)</option>
+        <option value="vuelta">Vuelta</option>
+      `;
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Nombre visible de la parada (ej: Mcal. López y Boggiani)';
+
+      const typeSelect = document.createElement('select');
+      typeSelect.innerHTML = `
+        <option value="refugio">Refugio con techo</option>
+        <option value="poste">Poste indicador</option>
+        <option value="señal">Cartel / Señal vial</option>
+      `;
+
+      formBox.append(streetInput, sideSelect, nameInput, typeSelect);
+      card.append(formBox);
+
+      // Auto-generar sugerencia de nombre al tipear calle
+      streetInput.addEventListener('input', () => {
+        if (!nameInput.value || nameInput.dataset.autogen === '1') {
+          nameInput.value = streetInput.value ? `${streetInput.value} (${sideSelect.value || 'Parada'})` : '';
+          nameInput.dataset.autogen = '1';
+        }
+      });
+      sideSelect.addEventListener('change', () => {
+        if (nameInput.dataset.autogen === '1' && streetInput.value) {
+          nameInput.value = `${streetInput.value} (${sideSelect.value || 'Parada'})`;
+        }
+      });
+
+      // Botones de acción
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const approveBtn = action('✅ Aprobar y Publicar', 'primary', async () => {
+        approveBtn.disabled = true;
+        try {
+          await api('/api/admin/stop-reports/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+            body: JSON.stringify({
+              id: report.id,
+              action: 'aprobar',
+              street_name: streetInput.value.trim(),
+              street_side: sideSelect.value,
+              stop_name: nameInput.value.trim(),
+              stop_type: typeSelect.value,
+              notify_user: true
+            })
+          });
+          await loadStopReports(false);
+        } catch (err) {
+          alert(`Error al aprobar: ${err.message}`);
+          approveBtn.disabled = false;
+        }
+      });
+
+      const rejectBtn = action('❌ Rechazar con Motivo', 'danger', () => {
+        openRejectModal(report.id);
+      });
+
+      actions.append(approveBtn, rejectBtn);
+      card.append(actions);
+    } else if (report.status === 'aprobada') {
+      const info = text('div', `✅ Aprobada como parada comunitaria [${report.approved_stop_id}]. Calle: ${report.street_name || 'Sin especificar'} (${report.street_side || 'lado no fijado'}).`, 'success');
+      info.style.marginTop = '10px';
+      card.append(info);
+    } else if (report.status === 'rechazada') {
+      const info = text('div', `❌ Reporte rechazado. Motivo enviado al usuario: "${report.rejection_reason || 'Sin motivo'}"`, 'error');
+      info.style.marginTop = '10px';
+      card.append(info);
+    }
+
+    return card;
+  }
+
+  function openRejectModal(reportId) {
+    currentRejectReportId = reportId;
+    rejectReasonInput.value = 'Foto poco clara o no se distingue señal ni refugio de parada.';
+    rejectModal.showModal();
+  }
+
+  document.querySelectorAll('.reject-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      rejectReasonInput.value = btn.dataset.reason;
+    });
+  });
+
+  rejectCancelBtn.addEventListener('click', () => {
+    rejectModal.close();
+    currentRejectReportId = null;
+  });
+
+  rejectConfirmBtn.addEventListener('click', async () => {
+    if (!currentRejectReportId) return;
+    const reason = rejectReasonInput.value.trim();
+    if (!reason) {
+      alert('Por favor especificá un motivo de rechazo.');
+      return;
+    }
+
+    rejectConfirmBtn.disabled = true;
+    try {
+      await api('/api/admin/stop-reports/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Feedback-CSRF': csrf },
+        body: JSON.stringify({
+          id: currentRejectReportId,
+          action: 'rechazar',
+          rejection_reason: reason,
+          notify_user: rejectNotifyUser.checked
+        })
+      });
+      rejectModal.close();
+      await loadStopReports(false);
+    } catch (err) {
+      alert(`Error al rechazar: ${err.message}`);
+    } finally {
+      rejectConfirmBtn.disabled = false;
+      currentRejectReportId = null;
+    }
+  });
+
+  stopFilter.addEventListener('change', () => loadStopReports(false));
+  refreshStops.addEventListener('click', () => loadStopReports(false));
+  moreStops.addEventListener('click', () => loadStopReports(true));
+
   document.getElementById('loginForm').addEventListener('submit', async event => {
     event.preventDefault();
     const password = document.getElementById('password');
@@ -518,15 +953,25 @@
   document.getElementById('filter').addEventListener('change', () => loadComments(false));
   document.getElementById('refresh').addEventListener('click', () => {
     if (activeTab === 'comments') loadComments(false);
+    else if (activeTab === 'stops') loadStopReports(false);
     else if (activeTab === 'news') loadNews();
     else loadRouteReview();
   });
   document.getElementById('refreshRoutes').addEventListener('click', loadRouteReview);
+  document.getElementById('tomtomBase').addEventListener('change', event => {
+    ensureRouteMap();
+    routeMap.removeLayer(routeBaseLayer);
+    routeBaseLayer = event.currentTarget.checked
+      ? L.tileLayer('/api/admin/tomtom-tile/{z}/{x}/{y}.png', { attribution:'© TomTom', maxZoom:19 })
+      : L.maplibreGL({ style:'https://tiles.openfreemap.org/styles/positron',
+          attribution:'© OpenFreeMap · © OpenStreetMap' });
+    routeBaseLayer.addTo(routeMap);
+  });
   document.getElementById('runOneRoute').addEventListener('click', async event => {
     if (!confirm('Esto procesará como máximo un recorrido y puede consumir una solicitud TomTom. ¿Continuar?')) return;
     const button = event.currentTarget;
     button.disabled = true;
-    routeStatus.textContent = 'Validando un recorrido en modo sombra…';
+    routeStatus.textContent = 'Validando un recorrido como candidato…';
     try {
       const result = await api('/api/admin/observed-match/run-one', {
         method:'POST',

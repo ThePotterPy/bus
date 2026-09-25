@@ -17,6 +17,15 @@ test('shared bus links isolate the selected unit and expire', () => {
   assert.match(html, /Este enlace de seguimiento venció/);
 });
 
+test('a shared bus can be dismissed and restores the normal line view', () => {
+  assert.match(html, /id="sharedTripLeave">Dejar de seguir</);
+  assert.match(html, /window\.stopSharedBusView = function/);
+  assert.match(html, /sharedBusView = null;/);
+  assert.match(html, /lineSearch\.disabled = false;/);
+  assert.match(html, /providerTabs\.hidden = false;/);
+  assert.match(html, /history\.replaceState\(null, '', location\.pathname \+ location\.search\)/);
+});
+
 test('destination is optional and supports stops or a map point', () => {
   assert.match(html, /id="shareBusChooseStop"/);
   assert.match(html, /id="shareBusChooseMap"/);

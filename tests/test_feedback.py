@@ -306,6 +306,21 @@ class FeedbackHttpTests(unittest.TestCase):
             self.assertEqual(code, 200)
             self.assertEqual(data["completed"], 1)
             run.assert_called_once_with(limit=1)
+        with patch.object(server.observed_routes, "decide_review", return_value={"success": True, "status": "approved", "changed": True}) as decide:
+            self.assertEqual(self.request("/api/admin/observed-review/decide", {
+                "id": "a" * 64, "action": "approve"}, {"Cookie": cookie})[0], 403)
+            code, data, _ = self.request("/api/admin/observed-review/decide", {
+                "id": "a" * 64, "action": "approve", "note": "Sobre la calle"}, auth)
+            self.assertEqual((code, data["status"]), (200, "approved"))
+            decide.assert_called_once_with("a" * 64, "approve", "Sobre la calle", variant="original")
+        with patch.object(server.observed_routes, "refine_review", return_value={
+            "success": True, "changed": True, "removed_gps_points": 1}) as refine:
+            self.assertEqual(self.request("/api/admin/observed-review/refine", {
+                "id": "a" * 64}, {"Cookie": cookie})[0], 403)
+            code, data, _ = self.request("/api/admin/observed-review/refine", {
+                "id": "a" * 64}, auth)
+            self.assertEqual((code, data["removed_gps_points"]), (200, 1))
+            refine.assert_called_once_with("a" * 64)
 
 
 if __name__ == "__main__":

@@ -781,11 +781,11 @@
   .share-bus-options button:last-child { grid-column:1 / -1; }
   .combo-item .item-name small { display:block; color:var(--muted); font-size:10px; overflow:hidden; text-overflow:ellipsis; }
 
-  #feedbackSettingsRow[hidden] { display:none; }
-  #feedbackOverlay[hidden] { display: none; }
-  #feedbackOverlay {
+  #feedbackSettingsRow[hidden], #stopReportSettingsRow[hidden] { display:none; }
+  #feedbackOverlay[hidden], #stopReportOverlay[hidden] { display: none !important; }
+  #feedbackOverlay, #stopReportOverlay {
     position: fixed; inset: 0; z-index: 3000; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-    background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);
   }
   .feedback-dialog {
     width: min(100%, 440px); max-height: 100%; overflow-y: auto;
@@ -1064,9 +1064,9 @@
       <button class="icon-btn" id="notifyBtn" aria-label="Avisos" title="Avisos">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
       </button>
-      <button class="icon-btn" id="newsBell" aria-label="Novedades y actualizaciones" title="Novedades y actualizaciones" hidden>
+      <button class="icon-btn" id="newsBell" aria-label="Novedades y actualizaciones" title="Novedades y actualizaciones">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3Z"></path><path d="m11.6 16.8 1.4 4.2H7l-1.8-6.2"></path></svg>
-        <span class="news-unread-dot" id="newsBellDot"></span>
+        <span class="news-unread-dot" id="newsBellDot" hidden></span>
       </button>
       <button class="icon-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes" style="position:relative;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
@@ -1173,6 +1173,10 @@
         </button>
       </div>
 
+      <div class="settings-row" id="stopReportSettingsRow">
+        <button type="button" class="feedback-entry" id="stopReportOpen">📍 Reportar nueva parada</button>
+      </div>
+
       <div class="settings-row" id="feedbackSettingsRow">
         <button type="button" class="feedback-entry" id="feedbackOpen">✉ Enviar comentario o sugerencia</button>
       </div>
@@ -1277,6 +1281,11 @@
           <option value="2000">2 km</option>
         </select>
       </div>
+      <div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--panel-border);">
+        <button type="button" class="layer-menu-config" id="openReportFromLayers" style="color:#00d3ec; text-align:left; padding:4px 0; width:100%; cursor:pointer;">
+          ➕ ¿Falta una parada acá? Reportarla
+        </button>
+      </div>
 
       <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:4px; margin-top:6px;">🚦 Modo Semáforos</div>
       <select id="menuTlModeSelect" style="width:100%; padding:6px 8px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--panel-border); font-size:12px; margin-bottom:6px; cursor:pointer;">
@@ -1331,6 +1340,7 @@
         <button type="button" class="primary" id="sharedTripCenter">Centrar</button>
         <button type="button" id="sharedTripShare">Compartir</button>
         <button type="button" id="sharedTripExtend">Extender 1 h</button>
+        <button type="button" id="sharedTripLeave">Dejar de seguir</button>
         <button type="button" class="danger" id="sharedTripEnd">Finalizar</button>
       </div>
     </div>
@@ -1400,6 +1410,88 @@ seleccion de linea</span></div>
       </details>
     </div>
   </div>
+
+  <div id="stopReportOverlay" hidden>
+    <div class="feedback-dialog stop-report-dialog" role="dialog" aria-modal="true" aria-labelledby="stopReportTitle" style="max-width:480px; width:92%; max-height:90vh; overflow-y:auto;">
+      <div class="feedback-head" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--panel-border, #353c4b); padding-bottom:10px; margin-bottom:14px;">
+        <h2 id="stopReportTitle" style="margin:0; font-size:18px; color:var(--text, #fff); display:flex; align-items:center; gap:8px;">
+          <span>📍 Reportar parada</span>
+        </h2>
+        <button type="button" class="feedback-close" id="stopReportClose" aria-label="Cerrar" style="background:transparent; border:none; color:var(--muted, #a6afc1); font-size:24px; cursor:pointer;">×</button>
+      </div>
+
+      <p style="font-size:13px; color:var(--muted, #a6afc1); margin:0 0 14px; line-height:1.4;">
+        Ayudá a mejorar el mapa reportando paradas de colectivo en cualquier ciudad del país. Solo necesitás estar en el lugar y sacar una foto.
+      </p>
+
+      <form id="stopReportForm">
+        <!-- Paso 1: GPS -->
+        <div style="background:rgba(255,255,255,0.04); border:1px solid var(--panel-border, #353c4b); border-radius:10px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:13px; font-weight:700; color:var(--text, #fff);">1. Ubicación actual</span>
+            <span id="stopGpsBadge" style="font-size:11px; padding:2px 8px; border-radius:999px; background:#44371c; color:#ffd17c;">Sin ubicación</span>
+          </div>
+          <button type="button" class="btn-primary" id="stopGetGpsBtn" style="width:100%; min-height:40px; margin-top:4px;">
+            🛰️ Obtener mi ubicación actual
+          </button>
+          <div id="stopGpsText" style="font-size:12px; color:var(--muted, #a6afc1); margin-top:6px;"></div>
+          <div id="stopNearbyWarning" style="display:none; font-size:12px; color:#ffd17c; background:rgba(255,209,124,0.12); border:1px solid rgba(255,209,124,0.3); border-radius:8px; padding:8px; margin-top:8px;"></div>
+        </div>
+
+        <!-- Paso 2: Foto -->
+        <div style="background:rgba(255,255,255,0.04); border:1px solid var(--panel-border, #353c4b); border-radius:10px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:13px; font-weight:700; color:var(--text, #fff); margin-bottom:6px;">
+            2. Foto de la parada o refugio
+          </div>
+          <p style="font-size:12px; color:var(--muted, #a6afc1); margin:0 0 8px;">
+            Sacá una foto clara donde se vea el cartel, refugio o la vereda de la parada.
+          </p>
+          <input type="file" id="stopPhotoInput" accept="image/*" capture="environment" style="display:none;">
+          <button type="button" id="stopPhotoBtn" style="width:100%; min-height:42px; border:1px dashed #00d3ec; background:rgba(0,211,236,0.08); color:#00d3ec; border-radius:8px; font-weight:600; cursor:pointer;">
+            📸 Sacar o elegir foto
+          </button>
+          <div id="stopPhotoPreviewContainer" style="display:none; margin-top:10px; text-align:center;">
+            <img id="stopPhotoPreview" src="" alt="Vista previa" style="max-height:160px; max-width:100%; border-radius:8px; border:1px solid #4c586d; object-fit:cover;">
+            <div style="margin-top:6px;">
+              <button type="button" id="stopPhotoRemoveBtn" style="font-size:12px; background:transparent; border:none; color:#ff9fb2; text-decoration:underline; cursor:pointer;">Cambiar foto</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 3: Detalles opcionales -->
+        <div style="margin-bottom:14px;">
+          <label for="stopDescInput" style="display:block; font-size:13px; font-weight:600; color:var(--text, #fff); margin-bottom:4px;">
+            Descripción o referencia (opcional)
+          </label>
+          <input type="text" id="stopDescInput" maxlength="300" placeholder="Ej: Hay un refugio metálico frente a la farmacia" style="width:100%; padding:10px; border-radius:8px; background:var(--panel, #111722); color:#fff; border:1px solid var(--panel-border, #4c586d); font-size:13px;">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label for="stopNameInput" style="display:block; font-size:13px; font-weight:600; color:var(--text, #fff); margin-bottom:4px;">
+            Tu nombre o alias (opcional)
+          </label>
+          <input type="text" id="stopNameInput" maxlength="60" placeholder="Podés dejarlo vacío" style="width:100%; padding:10px; border-radius:8px; background:var(--panel, #111722); color:#fff; border:1px solid var(--panel-border, #4c586d); font-size:13px;">
+        </div>
+
+        <!-- Paso 4: Notificaciones -->
+        <div style="margin-bottom:16px;">
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:13px; color:var(--text, #fff); cursor:pointer;">
+            <input type="checkbox" id="stopNotifyCheck" checked style="margin-top:2px; width:auto;">
+            <span>Recibir aviso push además del aviso dentro de JAHA (si ya activaste notificaciones en este dispositivo).</span>
+          </label>
+        </div>
+
+        <div id="stopSubmitStatus" role="status" style="font-size:13px; margin-bottom:10px; min-height:18px;"></div>
+
+        <button type="submit" class="btn-primary" id="stopSubmitBtn" style="width:100%; min-height:44px; font-size:15px; font-weight:700;" disabled>
+          Enviar reporte de parada
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="stopToastContainer" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; flex-direction:column; gap:10px; max-width:90%; width:380px; pointer-events:none;"></div>
+
 
   <div id="newsOverlay" hidden>
     <div class="news-dialog" role="dialog" aria-modal="true" aria-labelledby="newsDialogTitle">
@@ -3954,6 +4046,7 @@ function renderSharedBusStatus(unit, estimate) {
     ? `Bajada: ${sharedBusView.destination.name}${estimate ? ` · ${(estimate.distance / 1000).toFixed(1)} km · ~${estimate.minutes} min` : ''}`
     : 'Sin punto de bajada';
   document.getElementById('sharedTripExtend').hidden = true;
+  document.getElementById('sharedTripLeave').hidden = false;
   document.getElementById('sharedTripEnd').hidden = true;
   document.getElementById('sharedTripShare').hidden = false;
   bar.hidden = false;
@@ -3969,6 +4062,22 @@ window.centerSharedBusView = function () {
 window.shareCurrentBusLink = async function () {
   if (!sharedBusView) return false;
   await shareLink('Seguimiento de colectivo', `Unidad ${sharedBusView.unitId}`, location.href);
+  return true;
+};
+
+window.stopSharedBusView = function () {
+  if (!sharedBusView) return false;
+  sharedBusView = null;
+  window.sharedBusView = null;
+  followedUnitId = null;
+  sharedDestinationLayer.clearLayers();
+  document.getElementById('sharedTripBar').hidden = true;
+  lineSearch.disabled = false;
+  clearSearchBtn.style.display = lineSearch.value ? '' : 'none';
+  providerTabs.hidden = false;
+  history.replaceState(null, '', location.pathname + location.search);
+  setStatus('Seguimiento finalizado. Mostrando todas las unidades de la línea.', true);
+  refreshPositions();
   return true;
 };
 
@@ -4477,9 +4586,18 @@ if (trafficLightsActive) loadMunicipalTrafficLights();
 updateQuickBadge('stops', stopsActive, stopsActive ? '...' : 'OFF');
 updateQuickBadge('tl', trafficLightsActive, trafficLightsActive ? '...' : 'OFF');
 
+const openReportFromLayers = document.getElementById('openReportFromLayers');
+if (openReportFromLayers) {
+  openReportFromLayers.addEventListener('click', () => {
+    if (typeof layersMenu !== 'undefined' && layersMenu) layersMenu.classList.remove('open');
+    if (typeof layersBtn !== 'undefined' && layersBtn) layersBtn.classList.remove('active');
+    if (window.openStopReportModal) window.openStopReportModal();
+  });
+}
 </script>
 <script src="/feedback.js"></script>
 <script src="/news.js"></script>
 <script src="/observed-routes.js"></script>
+<script src="/community-stops.js"></script>
 </body>
 </html>

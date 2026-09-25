@@ -122,6 +122,12 @@ class FeedbackStore:
                 tag TEXT NOT NULL DEFAULT 'novedad'
             )""")
             conn.execute("CREATE INDEX IF NOT EXISTS news_created_at ON news(created_at DESC)")
+            conn.execute("""CREATE TABLE IF NOT EXISTS news_read_cursors (
+                client_hash TEXT PRIMARY KEY,
+                news_id INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            )""")
+            conn.execute("CREATE INDEX IF NOT EXISTS news_read_cursors_updated ON news_read_cursors(updated_at)")
             conn.execute("""CREATE TABLE IF NOT EXISTS release_news (
                 release_key TEXT PRIMARY KEY,
                 news_id INTEGER NOT NULL,
@@ -246,6 +252,40 @@ class FeedbackStore:
                 (limit,),
             ).fetchall()
             return [dict(row) for row in rows]
+
+    @staticmethod
+    def _news_client_hash(client_id):
+        if not isinstance(client_id, str) or not client_id:
+            raise ValueError("identificador de dispositivo inválido")
+        return hashlib.sha256(client_id.encode("utf-8")).hexdigest()
+
+    def get_news_read_id(self, client_id):
+        client_hash = self._news_client_hash(client_id)
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT news_id FROM news_read_cursors WHERE client_hash = ?",
+                (client_hash,),
+            ).fetchone()
+            return int(row["news_id"]) if row else 0
+
+    def mark_news_read(self, client_id, news_id):
+        """Advance a device's news cursor without allowing it to move backward."""
+        client_hash = self._news_client_hash(client_id)
+        now = int(time.time())
+        with self._connect() as conn:
+            conn.execute("DELETE FROM news_read_cursors WHERE updated_at < ?", (now - 400 * 86400,))
+            latest = conn.execute("SELECT COALESCE(MAX(id), 0) AS id FROM news").fetchone()["id"]
+            bounded_id = min(max(0, int(news_id)), int(latest))
+            conn.execute("""INSERT INTO news_read_cursors (client_hash, news_id, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(client_hash) DO UPDATE SET
+                    news_id = MAX(news_read_cursors.news_id, excluded.news_id),
+                    updated_at = excluded.updated_at""", (client_hash, bounded_id, now))
+            row = conn.execute(
+                "SELECT news_id FROM news_read_cursors WHERE client_hash = ?",
+                (client_hash,),
+            ).fetchone()
+            return int(row["news_id"])
 
     def delete_news(self, news_id):
         with self._connect() as conn:
